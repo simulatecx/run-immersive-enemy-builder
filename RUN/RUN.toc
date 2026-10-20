@@ -1,0 +1,22 @@
+## Interface: 16001
+## Title: RUN
+## Notes: Fight it or run? Live combat odds for the enemy in front of you - and the sense to flee - on WoW: Forever.
+## Author: SimulateCX
+## Version: 0.1.0
+## SavedVariables: RUNDB
+## IconTexture: Interface\Icons\Ability_Rogue_Sprint
+## X-License: All Rights Reserved
+## OptionalDeps: Foresight, TomTom
+
+core\guards.lua
+core\init.lua
+core\settings.lua
+core\bridge.lua
+data\generated\rares.lua
+data\overrides.lua
+model\detect.lua
+model\odds.lua
+model\attribution.lua
+ui\waypoint.lua
+ui\panel.lua
+selftest.lua
