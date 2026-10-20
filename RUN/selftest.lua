@@ -84,9 +84,46 @@ function RUN.selftest()
     check("overrides win on merge", RUN.raresMerged()[999999].name == "Test Rare")
     RUN.overrides.rares[999999] = nil
 
+    -- ---- kill ranking (the passive mouseover layer) ----
+    check("rank 0 kills -> none", A.rankForKills(0) == nil)
+    check("rank 1 kill -> Blooded", A.rankForKills(1).label == "Blooded")
+    check("rank 3 kills -> Dangerous", A.rankForKills(3).label == "Dangerous")
+    check("rank 6 kills -> Deadly", A.rankForKills(6).label == "Deadly")
+    check("rank 12 kills -> Infamous", A.rankForKills(12).label == "Infamous")
+    check("rank garbage tolerated", A.rankForKills("junk") == nil)
+    check("killsBy counts npc matches", (function()
+        local db = RUN.db()
+        local saved = db.deaths
+        db.deaths = {
+            { when = 1, killer = "Hogger", npc = 448 },
+            { when = 2, killer = "Hogger", npc = 448 },
+            { when = 3, killer = "a fall" },
+            { when = "tampered", npc = 448 },  -- invalid entry must not count
+        }
+        local n = A.killsBy(448)
+        db.deaths = saved
+        return n == 2
+    end)())
+    check("killsBy nil npc -> 0", A.killsBy(nil) == 0)
+
+    -- ---- tooltip flag layer (pure) ----
+    local T = RUN.Tooltip
+    check("flag rare", T.flagFor("rare").label == "Rare (silver dragon)")
+    check("flag rareelite", T.flagFor("rareelite") ~= nil)
+    check("flag worldboss", T.flagFor("worldboss") ~= nil)
+    check("flag normal -> none", T.flagFor("normal") == nil)
+    check("flagLine flag+rank", T.flagLine({ label = "Elite" }, { label = "Deadly" }, 5)
+        == "Elite - Deadly (killed you 5x)")
+    check("flagLine flag only", T.flagLine({ label = "Rare (silver dragon)" }, nil, 0)
+        == "Rare (silver dragon)")
+    check("flagLine rank only", T.flagLine(nil, { label = "Blooded" }, 1)
+        == "Blooded - killed you 1x")
+    check("flagLine nothing -> nil", T.flagLine(nil, nil, 0) == nil)
+
     -- ---- settings: defaults + validation ----
     local S = RUN.Settings
-    check("settings default panel", S.get("panel") == true)
+    check("settings default flags on", S.get("flags") == true)
+    check("settings default expansiveStats off", S.get("expansiveStats") == false)
     check("settings unknown key nil", S.get("nope") == nil)
     check("settings set/get", (function()
         local before = S.get("autoMark")

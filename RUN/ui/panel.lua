@@ -104,11 +104,7 @@ function Panel.showFor(unit)
     anchor()
     f:Show()
 
-    -- a notable sighting drops a "I saw it here" waypoint (toggleable)
-    if c.notable and RUN.Settings.get("autoMark") and not Panel._marked then
-        Panel._marked = c.guid
-        RUN.Waypoint.markHere(c.name or "RUN rare")
-    end
+    RUN.Waypoint.autoMarkFor(c)
 end
 
 function Panel.hide() f:Hide() end
@@ -118,7 +114,9 @@ function Panel.refresh()
 end
 
 function Panel.update()
-    if not RUN.Settings.get("panel") then Panel.hide() return end
+    -- The panel IS part of Expansive Enemy Stats; the passive layer is the
+    -- tooltip flags (ui/tooltip.lua), which need no option and no command.
+    if not RUN.Settings.get("expansiveStats") then Panel.hide() return end
     local exists = RUN.Guards.call(_G.UnitExists, "target")
     if exists then
         Panel.showFor("target")
@@ -128,9 +126,9 @@ function Panel.update()
 end
 
 function Panel.toggle()
-    local now = not RUN.Settings.get("panel")
-    RUN.Settings.set("panel", now)
-    RUN.print("odds panel " .. (now and "on" or "off"))
+    local now = not RUN.Settings.get("expansiveStats")
+    RUN.Settings.set("expansiveStats", now)
+    RUN.print("Expansive Enemy Stats " .. (now and "on - win-chance shows on tooltips and under your target" or "off"))
     Panel.update()
 end
 
@@ -156,7 +154,7 @@ RUN.on("UNIT_HEALTH", function(unit)
 end)
 
 RUN.on("UPDATE_MOUSEOVER_UNIT", function()
-    if not RUN.Settings.get("mouseoverPreview") then return end
+    if not RUN.Settings.get("expansiveStats") then return end
     if RUN.Guards.call(_G.UnitExists, "target") then return end  -- target wins
     local info = Detect.unitInfo("mouseover")
     if info and info.hostile and info.notable and not info.dead then

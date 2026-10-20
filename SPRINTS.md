@@ -16,6 +16,12 @@ separate-repo decision); full handoff spec kept at
   deferred until the owner flips it.
 - Slash is `/runadvisor` (+ `/runa`, `/ra`): plain `/run` is Blizzard's
   built-in script command and can never be taken by an addon.
+- 2026-10-19 (owner): **passive-first UX** - players must never RELY on slash
+  commands. The always-on layer is mouseover/target tooltip FLAGS (Elite /
+  Rare / Rare Elite / Boss) + a kill-earned danger rank (Blooded 1 /
+  Dangerous 2+ / Deadly 5+ / Infamous 10+; local journal now, crowd body
+  count later). Win-chance displays live behind ONE option, "Expansive Enemy
+  Stats" (off by default). `/ra` exists only to set options.
 
 ## Epic
 
@@ -50,5 +56,11 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 
 ## Shipped
 
+- v0.2.0 (2026-10-19, private beta): passive-first redesign. Always-on
+  tooltip flags (classification + kill-earned danger rank via
+  `ui/tooltip.lua`, TooltipDataProcessor w/ classic HookScript fallback);
+  "Expansive Enemy Stats" option gates the win-chance tooltip line + the
+  odds panel; auto-mark centralized (`Waypoint.autoMarkFor`, once per
+  creature). Gate: compliance green, selftest 61/61.
 - v0.1.0 (2026-10-19, private beta): RUN-A + RUN-C core. Gate: compliance
   green, selftest 44/44. Distributed as a direct zip to testers only.

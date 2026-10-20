@@ -1,4 +1,6 @@
 -- RUN settings: one spine, type-validated on every read (RUNDB is user-editable).
+-- The addon is PASSIVE by design - everything below influences automatic
+-- behaviour (mouseover flags, tooltips, marks); /ra set is just the lever.
 
 local _, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; _G.RunAdvisor = RUN end
@@ -7,10 +9,10 @@ local Settings = {}
 RUN.Settings = Settings
 
 Settings.defaults = {
-    panel = true,              -- show the odds panel when you target a hostile
-    mouseoverPreview = true,   -- flash the panel for notable (rare+) mouseovers
-    autoMark = true,           -- drop a Blizzard waypoint at your feet when a rare appears
-    recordDeaths = true,       -- keep a local journal of what killed you (never leaves your machine)
+    flags = true,            -- mouseover/target tooltip flags: Elite / Rare / Boss + kill rank
+    expansiveStats = false,  -- Expansive Enemy Stats: your win-chance on the tooltip + the odds panel
+    autoMark = true,         -- drop a map waypoint at your feet when a rare appears
+    recordDeaths = true,     -- local journal of what killed you (never leaves your machine)
 }
 
 local function store()
@@ -41,7 +43,7 @@ function Settings.all()
     return out
 end
 
--- "/ra set autoMark off"
+-- "/ra set expansiveStats on"
 function Settings.slashSet(rest)
     local key, val = tostring(rest or ""):match("^(%S+)%s+(%S+)$")
     if not key or Settings.defaults[key] == nil then

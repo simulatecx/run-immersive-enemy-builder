@@ -69,4 +69,15 @@ function Waypoint.clear()
     RUN.print("waypoint cleared.")
 end
 
+-- Passive auto-mark: a NOTABLE (rare+) sighting drops the pin once per creature,
+-- from whichever surface saw it first (tooltip flag or the odds panel).
+local lastMarkGuid
+function Waypoint.autoMarkFor(info)
+    if not RUN.Settings.get("autoMark") then return end
+    if not info or not info.notable or info.dead then return end
+    if info.guid and info.guid == lastMarkGuid then return end
+    lastMarkGuid = info.guid
+    Waypoint.markHere(info.name or "RUN rare")
+end
+
 return Waypoint

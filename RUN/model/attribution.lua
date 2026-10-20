@@ -47,6 +47,37 @@ function Attribution.validEntry(e)
         and (type(e.killer) == "string" or e.killer == nil)
 end
 
+-- ---------------------------------------------------------------------------
+-- Kill ranking: how dangerous has this creature PROVEN itself? Beta = kills of
+-- YOU from the local journal; the crowd body count feeds these same tiers in a
+-- later phase. Pure + headless-tested.
+-- ---------------------------------------------------------------------------
+local RANKS = {
+    { min = 10, label = "Infamous",  r = 1.00, g = 0.25, b = 0.25 },
+    { min = 5,  label = "Deadly",    r = 1.00, g = 0.45, b = 0.30 },
+    { min = 2,  label = "Dangerous", r = 1.00, g = 0.65, b = 0.30 },
+    { min = 1,  label = "Blooded",   r = 0.95, g = 0.85, b = 0.55 },
+}
+
+-- n kills -> { label, r, g, b } or nil below one kill (clean tooltips).
+function Attribution.rankForKills(n)
+    n = tonumber(n) or 0
+    for i = 1, #RANKS do
+        if n >= RANKS[i].min then return RANKS[i] end
+    end
+    return nil
+end
+
+-- How many times has npcID killed you (valid journal entries only)?
+function Attribution.killsBy(npcID)
+    if not npcID then return 0 end
+    local count = 0
+    for _, e in ipairs(RUN.db().deaths) do
+        if Attribution.validEntry(e) and e.npc == npcID then count = count + 1 end
+    end
+    return count
+end
+
 -- Everything below wires the client.
 if not _G.CreateFrame then return Attribution end
 

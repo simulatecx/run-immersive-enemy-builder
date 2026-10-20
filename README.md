@@ -14,19 +14,28 @@ standalone, sharper when Foresight is installed (future bridge).
 NOT on CurseForge yet - access comes via the waitlist. Betas are handed out as
 direct zips.
 
-## Beta 0.1.0 - what's in the file
+## Beta 0.2.0 - what's in the file
 
-- **Detection**: target / mouseover / nameplate-adjacent reads -> npcID +
-  classification; rares flagged "RARE SPOTTED".
-- **The odds panel**: anchored under the Blizzard target frame; band + ~% (p),
-  coarse model (level delta + classification + your current health). Wide
-  honest bands; every number carries "(p)" in beta.
-- **Waypoints**: notable sightings auto-mark your position with the native
-  supertracked map arrow (TomTom supported). `/ra mark`, `/ra clear`.
+**RUN is fully automatic - no commands needed to play with it.** The slash
+(`/ra`) exists only to change options.
+
+- **Passive tooltip flags (always on)**: mouse over or target ANY enemy and
+  its tooltip gains a RUN line - Elite / Rare (silver dragon) / Rare Elite /
+  World Boss - plus a **danger rank earned from kills**: Blooded (1) ->
+  Dangerous (2+) -> Deadly (5+) -> Infamous (10+). Beta ranks count kills of
+  YOU from the local journal; the crowd body count feeds the same tiers in a
+  later phase.
+- **Expansive Enemy Stats (option, off by default)**: `/ra set expansiveStats
+  on` adds your chances vs this enemy - a FIGHT / RISKY / FLEE line with
+  "~N% to win (p)" on the tooltip, plus the odds panel under your target
+  frame. Coarse model (level delta + classification + your current health);
+  wide honest bands; every number carries "(p)" in beta.
+- **Waypoints**: rare sightings auto-mark your position with the native
+  supertracked map arrow (TomTom supported). Toggle with `autoMark`.
 - **Death journal (local only)**: on death, the combat log names your killer
   (environmental deaths say "a fall", never a creature). `/ra deaths`.
   Nothing ever leaves your machine in this beta - RUN does not network, ever.
-- **Selftest**: `/ra selftest` (44 checks, same suite the ship gate runs).
+- **Selftest**: `/ra selftest` (61 checks, same suite the ship gate runs).
 
 Deferred (by design, per the spec): the RISK IT wager button, the crowd
 killcount + Deadliest Rares ladder, the rares DB bake, seasons.
@@ -35,20 +44,24 @@ killcount + Deadliest Rares ladder, the rares DB bake, seasons.
 
 1. Unzip so you have `Interface\AddOns\RUN\RUN.toc`.
 2. `/reload` or relog.
-3. Commands: `/runadvisor`, `/runa`, or `/ra`. (Plain `/run` is Blizzard's
-   built-in script command - an addon can never take it.)
+3. Options live under `/runadvisor`, `/runa`, or `/ra`. (Plain `/run` is
+   Blizzard's built-in script command - an addon can never take it.)
+   Keys: `flags`, `expansiveStats`, `autoMark`, `recordDeaths`.
 
 ### Five-minute test checklist
 
-1. `/ra selftest` - expect "44/44 green".
-2. Target a grey mob -> panel says FIGHT with high %. Target something
-   red/elite -> RISKY or FLEE. A skull-level mob -> FLEE, "~no chance".
-3. Mouse over a silver-dragon rare with no target -> panel flashes RARE
-   SPOTTED and a map pin lands at your feet (autoMark).
-4. `/ra odds` prints the same verdict to chat.
-5. Die to something (beta heroism) -> chat line "death recorded: ..." and
+1. `/ra selftest` - expect "61/61 green".
+2. Mouse over any hostile elite -> tooltip shows "RUN: Elite". Mouse over a
+   silver-dragon rare -> "RUN: Rare (silver dragon)" and a map pin lands at
+   your feet (autoMark).
+3. `/ra set expansiveStats on`, then target a grey mob -> tooltip + panel say
+   FIGHT with high %; a red elite -> RISKY/FLEE; a skull -> "~no chance".
+4. Die to something (beta heroism) -> chat line "death recorded: ..." and
    `/ra deaths` lists it; fall off something tall -> the killer is "a fall".
-6. `/ra set autoMark off` then re-check 3 - no pin.
+   Die to the same mob twice -> its tooltip now ranks it "Dangerous
+   (killed you 2x)".
+5. `/ra set flags off` -> tooltip lines gone; `/ra set autoMark off` -> no
+   more pins.
 
 ## Development
 

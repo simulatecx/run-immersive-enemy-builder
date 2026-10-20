@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.1.0"
+RUN.version = "0.2.0"
 
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;
@@ -66,7 +66,8 @@ end)
 
 RUN.on("PLAYER_LOGIN", function()
     RUN.initSavedVariables()
-    RUN.print("v" .. RUN.version .. " beta - /runadvisor (or /ra) for commands. Advice only; it never acts for you.")
+    RUN.print("v" .. RUN.version .. " beta - fully automatic: mouse over an enemy to see its flag and kill rank. "
+        .. "/ra is only for options (try /ra set expansiveStats on). Advice only; it never acts for you.")
 end)
 
 -- ---------------------------------------------------------------------------
@@ -105,10 +106,12 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
         end
     elseif cmd == "status" then
         local s = RUN.Settings and RUN.Settings.all() or {}
-        RUN.print("v" .. RUN.version .. " | panel=" .. tostring(s.panel) .. " autoMark=" .. tostring(s.autoMark)
-            .. " mouseoverPreview=" .. tostring(s.mouseoverPreview) .. " recordDeaths=" .. tostring(s.recordDeaths))
+        RUN.print("v" .. RUN.version .. " | flags=" .. tostring(s.flags)
+            .. " expansiveStats=" .. tostring(s.expansiveStats)
+            .. " autoMark=" .. tostring(s.autoMark) .. " recordDeaths=" .. tostring(s.recordDeaths))
         RUN.print("Foresight bridge: " .. ((RUN.Bridge and RUN.Bridge.foresight()) and "connected" or "not present (coarse model)"))
     else
-        RUN.print("commands: /ra (toggle panel) | odds | mark | clear | deaths | set <key> <on/off> | status | selftest")
+        RUN.print("RUN is automatic - these are just options: /ra set <flags|expansiveStats|autoMark|recordDeaths> <on/off>")
+        RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | odds | mark | clear | deaths | status | selftest")
     end
 end
