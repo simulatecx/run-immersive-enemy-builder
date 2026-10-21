@@ -247,6 +247,102 @@ function RUN.selftest()
     check("flagLine kills+heard", T.flagLine({ label = "Elite" }, { label = "Deadly" }, 2, 3)
         == "Elite - Deadly (killed you 2x + 3 heard)")
 
+    -- ---- notoriety (the Nemesis layer) ----
+    local N = RUN.Notoriety
+    check("tier 0 below first blood", N.tierFor(0) == 0)
+    check("tier thresholds", N.tierFor(1) == 1 and N.tierFor(2) == 2 and N.tierFor(5) == 3
+        and N.tierFor(10) == 4 and N.tierFor(25) == 6 and N.tierFor(99) == 9
+        and N.tierFor(100) == 10 and N.tierFor(5000) == 10)
+    check("title deterministic", N.titleFor(448, 4) == N.titleFor(448, 4))
+    check("title exists tiers 1-10", (function()
+        for t = 1, 10 do if type(N.titleFor(448, t)) ~= "string" then return false end end
+        return true
+    end)())
+    check("title nil below tier 1", N.titleFor(448, 0) == nil)
+    check("title varies by npc", (function()
+        for id = 1, 12 do
+            if N.titleFor(id, 4) ~= N.titleFor(id + 1, 4) then return true end
+        end
+        return false
+    end)())
+    check("soft elite: deadly normal", N.isSoftElite("normal", 3) == true)
+    check("soft elite: not below tier 3", N.isSoftElite("normal", 2) == false)
+    check("soft elite: never elites/rares", N.isSoftElite("elite", 9) == false
+        and N.isSoftElite("rare", 9) == false)
+    check("notoriety describe blends", (function()
+        local db = RUN.db()
+        local sd, sh = db.deaths, db.heard
+        db.deaths = { { when = 1, killer = "Hogger", npc = 448 } }
+        db.heard = { [448] = 4 }
+        local d = N.describe(448, "normal")
+        db.deaths, db.heard = sd, sh
+        return d.total == 5 and d.tier == 3 and d.softElite == true
+            and type(d.title) == "string"
+    end)())
+    check("tier colors returned", select("#", N.colorFor(5)) == 3)
+
+    -- ---- deathping companions: acks, last words, hello, heard log ----
+    check("ack roundtrip", DP.decodeAck(DP.encodeAck(12345)) == 12345)
+    check("ack garbage rejected", DP.decodeAck("RDA1:lol") == nil and DP.decodeAck(nil) == nil)
+    check("words sanitize strips", DP.sanitizeWords(" |cffRUN|r: hi ") == "cffRUNr, hi")
+    check("words sanitize caps 80", #DP.sanitizeWords(string.rep("a", 200)) == 80)
+    check("words sanitize empty -> nil", DP.sanitizeWords("  ") == nil and DP.sanitizeWords(nil) == nil)
+    check("words roundtrip", (function()
+        local d = DP.decodeWords(DP.encodeWords(777, "tell my guild i loved them"))
+        return d and d.sum == 777 and d.words == "tell my guild i loved them"
+    end)())
+    check("hello roundtrip", DP.decodeHello(DP.encodeHello("0.6.0")) == "0.6.0")
+    check("hello garbage rejected", DP.decodeHello("RVH1:evil") == nil and DP.encodeHello("x") == nil)
+    check("version newer", DP.newer("0.7.0", "0.6.9") and DP.newer("1.0.0", "0.9.9")
+        and not DP.newer("0.6.0", "0.6.0") and not DP.newer("0.5.9", "0.6.0"))
+    check("heard log fifo cap", (function()
+        local log = {}
+        for i = 1, 12 do DP.pushHeard(log, { sum = i }, 10) end
+        return #log == 10 and log[1].sum == 3 and log[10].sum == 12
+    end)())
+    check("corroborate distinct senders", (function()
+        local e = { acks = 0 }
+        local a = DP.corroborate(e, "Peer1")
+        DP.corroborate(e, "Peer1")              -- duplicate must not count
+        local b = DP.corroborate(e, "Peer2")
+        return a == false and b == true and e.acks == 2 and e.corro == true
+    end)())
+    check("ack rate override", (function()
+        local state = {}
+        for i = 1, 30 do
+            if not DP.allowSender(state, "me", i, 30) then return false end
+        end
+        return DP.allowSender(state, "me", 31, 30) == false
+    end)())
+    check("decode exposes sum", (function()
+        local d = DP.decode(DP.encode(3113, 1465, 10))
+        return type(d.sum) == "number"
+    end)())
+
+    -- ---- mode classification + flag line titles ----
+    check("mode hc wins", A.classifyMode(true, "Player-1096-ABC") == "hc")
+    check("mode pvp on player blow", A.classifyMode(false, "Player-1096-ABC") == "pvp")
+    check("mode pve default", A.classifyMode(false, "Creature-0-1-1-1-448-X") == "pve"
+        and A.classifyMode(false, nil) == "pve")
+    check("flagLine with title", T.flagLine({ label = "Elite" }, { label = "Deadly" }, 5, 0,
+        "the Widowmaker") == "Elite \"the Widowmaker\" - Deadly (killed you 5x)")
+    check("flagLine title only lead", T.flagLine(nil, { label = "Deadly" }, 5, 0,
+        "the Widowmaker") == "\"the Widowmaker\" - Deadly (killed you 5x)")
+
+    -- ---- most wanted board ----
+    check("most wanted merges + sorts", (function()
+        local deaths = {
+            { when = 1, killer = "Hogger", npc = 448 },
+            { when = 2, killer = "Hogger", npc = 448 },
+            { when = 3, killer = "Bruuz", npc = 3113 },
+        }
+        local heard = { [448] = 3, [9999] = 1 }
+        local top = RUN.Window.mostWanted(deaths, heard, 5)
+        return #top == 3 and top[1].npc == 448 and top[1].total == 5
+            and top[1].tier == 3 and type(top[1].title) == "string"
+            and top[3].name == "creature #9999"
+    end)())
+
     -- ---- settings: defaults + validation ----
     local S = RUN.Settings
     check("settings default flags on", S.get("flags") == true)
@@ -258,6 +354,17 @@ function RUN.selftest()
     check("settings default shareDeaths on", S.get("shareDeaths") == true)
     check("settings default minimapButton on", S.get("minimapButton") == true)
     check("settings default pingQuest on", S.get("pingQuest") == true)
+    check("settings default heardAlerts on", S.get("heardAlerts") == true)
+    check("settings default eulogy OFF", S.get("eulogy") == false)
+    check("settings default lastWords on", S.get("lastWords") == true)
+    check("settings defs cover all keys", (function()
+        local covered = {}
+        for _, def in ipairs(S.defs) do covered[def.key] = true end
+        for k in pairs(S.defaults) do
+            if not covered[k] then return false end
+        end
+        return true
+    end)())
     check("settings unknown key nil", S.get("nope") == nil)
     check("settings set/get", (function()
         local before = S.get("autoMark")

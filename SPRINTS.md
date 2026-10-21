@@ -58,7 +58,12 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 ## the enemy stats - categories, guilds, raid wipes - we will build it all")
 
 ### Wave 1 - Hardcore-addon parity (the social death layer)
-- ☐ RUN-I Social death layer: heard-death ENTRIES journal (not just per-npc
+- ☑ RUN-I Social death layer (v0.6.0): heard-death ENTRIES journal
+  (RUNDB.heardLog, FIFO 200), eulogy display toggle (OFF by default),
+  LAST WORDS capture + broadcast (RLW1, on by default - your own public
+  chat), heard-death BANNERS for known rares + notorious species.
+  Remaining polish: a scrollable heard-log browser page in the Ledger.
+  Original scope: heard-death ENTRIES journal (not just per-npc
   counts; capped FIFO like Hardcore's 1000), eulogy display toggle - show the
   fallen's character name on heard pings (DEFAULT OFF; honesty note: addon
   messages inherently expose the sender's char name at transport level, this
@@ -66,22 +71,33 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
   chat line rides the next death-ping), heard-death BANNER alerts for
   unique-tier creatures ("Snagglefang has claimed another victim"), all
   surfaced in the Account Ledger.
-- ☐ RUN-J Trust layer: k-of-n ack echoes over the RUNDP prefix (Hardcore's
-  proven k=3, Fletcher16): heard entries marked unverified -> corroborated;
-  only corroborated entries feed ranks shown as fact. Per-sender rate caps
-  already shipped (v0.3.0).
-- ☐ RUN-K Death discipline: resurrection tracking (PLAYER_ALIVE /
-  PLAYER_UNGHOST) -> first-death-only counting for hardcore mode (a
-  graveyard-zerg must not inflate a mob's count); MODE DETECTION probe
-  (C_GameRules.IsHardcoreActive / Forever equivalent, verified in-game) ->
-  every journal entry + ping + future crowd payload carries mode pve/pvp/hc.
-- ☐ RUN-L QoL parity: Blizzard ESC->Options Settings category (pcall-guarded;
-  the Ledger stays canonical), version handshake over the addon prefix
-  ("a newer RUN was seen - update" notice, key for waitlist zips), optional
-  LDB broker. (Ledger window + minimap button SHIPPED v0.5.0.)
+- ◐ RUN-J Trust layer (v0.6.0 core): ack echoes live (RDA1 checksum echo,
+  30/hr cap), per-entry DISTINCT-sender corroboration at 2+ echoes (origin +
+  2 peers = Hardcore's k=3); heardLog entries carry acks/corro. REMAINING:
+  strict mode - only corroborated entries feed publicly-shown counts (flip
+  at launch; beta population too small for k=3 to ever trigger).
+- ☑ RUN-K Death discipline (v0.6.0): rez stamps (PLAYER_ALIVE/UNGHOST ->
+  entry.rezzed), 5s double-fire guard, MODE stamped per death
+  (classifyMode: hc via C_GameRules.IsHardcoreActive probe > pvp on Player
+  killing blow > pve) - feeds the crowd schema's pve/pvp/hc segment.
+  First-death-only ENFORCEMENT activates with HC season logic.
+- ◐ RUN-L QoL parity (v0.6.0): ESC->Options Settings category registered
+  from the same Settings.defs list (whole registration pcall'd - Ledger
+  stays canonical; verify the panel appears on Forever), VERSION HANDSHAKE
+  live (RVH1 hello on join; "a newer RUN is out there" once). Skipped: LDB.
 
 ### Wave 2 - Growing enemy stats (the centerpiece)
-- ☐ RUN-M Notoriety system: creatures live in CATEGORIES (tier normal/elite/
+- ◐ RUN-M Notoriety system (v0.6.0 CORE SHIPPED): 10-tier ladder
+  (1/2/5/10/15/25/40/60/80/100 kills), DETERMINISTIC titles (data/titles.lua,
+  6 per tier, hashed by npcID - same name for everyone; math.random is
+  banned anyway), SOFT ELITES (normal mobs tier 3+ get NOTORIOUS ENEMY
+  NEARBY banners + tier-coloured tooltip lines + they ping even with
+  pingNormal off), Most Wanted board in the Ledger, heard-death banners
+  ("X has claimed another victim - N and counting"). REMAINING: zone/boss
+  categories with per-category thresholds once the rares/boss DB bakes;
+  the baked server-verified crowd count joining the blend (RUN-E).
+  Vision (owner): "RUN" Immersive Enemy Builder - enhancing the Azeroth we
+  know and love; the world grows with player interaction. Original scope: creatures live in CATEGORIES (tier normal/elite/
   unique + quest-named now; zone + dungeon/raid-boss classes once the rares/
   bosses DB bakes) with PER-CATEGORY thresholds - 100 kills on a normal mob
   means more than 100 on a raid boss. Extended ladder: Blooded 1 / Dangerous
@@ -121,6 +137,20 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.6.0 (2026-10-19, private beta): THE NEMESIS UPDATE - Hardcore parity +
+  growing enemies, built while the owner was afk (directive: "all of it").
+  NOTORIETY (RUN-M core): 10-tier ladder, deterministic earned titles
+  ("Sunscale Lashtail 'the Widowmaker'"), soft elites (normal mobs tier 3+
+  banner as NOTORIOUS ENEMY NEARBY + tier-coloured tooltips), Most Wanted
+  board. SOCIAL LAYER (RUN-I): heardLog journal (FIFO 200), eulogy toggle
+  (off), last words (RLW1, rides your death-ping), heard-death banners.
+  TRUST (RUN-J core): RDA1 ack echoes + distinct-sender corroboration (k=3
+  model). DISCIPLINE (RUN-K): rez stamps, double-fire guard, mode stamped
+  per death (hc/pvp/pve). QoL (RUN-L): ESC Settings panel from
+  Settings.defs (pcall'd), RVH1 version handshake. TOC now carries the
+  product line: "RUN" Immersive Enemy Builder - enhancing the Azeroth we
+  know and love. Nemesis research recorded in docs/NOTES.md §7.
+  Gate: compliance green across 22 files, selftest 150/150.
 - v0.5.0 (2026-10-19, private beta): the ACCOUNT LEDGER + minimap button.
   `ui/window.lua`: movable window - "What killed us" (account-wide top
   killers w/ counts + last victim), recent deaths (character-stamped),

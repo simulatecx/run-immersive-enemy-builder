@@ -1,103 +1,82 @@
-# RUN - fight it or run?
+# "RUN" - Immersive Enemy Builder
 
-Live combat odds for the enemy in front of you - and the sense to flee - on
-**WoW: Forever** (Interface 16001). Target a hostile and RUN shows a
-Civilization-style verdict under the target frame: **FIGHT / RISKY / FLEE**,
-with an honest "~N% to win (p)" and what we know about the creature. Rares get
-spotted, marked on your map, and - in a later phase - carry a crowd-sourced
-body count ("this rare has killed ~N players").
+**Enhancing the Azeroth we know and love.** Enemies grow with every player
+they fell: ranks, earned titles, banners - and your honest odds against them.
+RUN makes the world feel alive and gamified for everyone playing, on
+**WoW: Forever** (Interface 16001).
 
-Sibling to [Foresight](https://github.com/simulatecx/foresight-forever); fully
-standalone, sharper when Foresight is installed (future bridge).
+The mob that killed you is not "a Sunscale Lashtail" anymore. It is
+*Sunscale Lashtail "the Widowmaker" - Deadly, 11 kills and counting* - and
+when it prowls near the next player, they get the banner.
 
-**Distribution: waitlist-first.** RUN is in private beta and is deliberately
-NOT on CurseForge yet - access comes via the waitlist. Betas are handed out as
-direct zips.
+Sibling to [Foresight](https://github.com/simulatecx/foresight-forever);
+fully standalone, sharper when Foresight is installed (future bridge).
 
-## Beta 0.3.0 - what's in the file
+**Distribution: waitlist-first.** Private beta, deliberately NOT on
+CurseForge yet - access via the waitlist; betas ship as direct zips.
 
-**RUN is fully automatic - no commands needed to play with it.** The slash
-(`/ra`) exists only to change options.
+## Beta 0.6.0 - what's in the file
 
-- **Nearby ping, tiered (new)**: any enemy whose nameplate spawns in range
-  (camera view, up to the nameplate distance) can trigger a top-centre banner
-  - "ENEMY / ELITE / RARE / RARE ELITE / BOSS NEARBY" - with sound, the
-  kill-rank line, and (rares+) a map pin. THREE TIER OPTIONS: `pingNormal`
-  (normal mobs - OFF by default, turn on for total awareness or easy
-  testing), `pingElite` (elites - on), `pingUnique` (rares + rare elites +
-  bosses - on); `nearbyPing` is the master switch. Signals:
-  `NAME_PLATE_UNIT_ADDED` (needs enemy nameplates on; RUN nudges once if
-  they're off) + `C_VignetteInfo` wired defensively (TRUE coordinates where
-  Forever emits vignettes). Once per creature, 10-min cooldown.
-- **P2P death-ping (new, the Hardcore-addon pattern)**: when you die to a
-  creature, your addon automatically broadcasts a small ANONYMOUS ping (npcID,
-  map, level bracket, checksum - never a player name) over a shared addon
-  channel + guild. Every online RUN user hears it: tooltips gain "N player
-  deaths heard" and ranks grow LIVE. In-game chat transport only - nothing
-  leaves the game client. Spoof dampening: strict shape + Fletcher16 checksum,
-  per-sender rate limit (5/hour), dedupe; heard counts are session flavour,
-  kept separate from the future server-verified crowd count. Toggle:
-  `shareDeaths` (on by default, visible opt-out).
+**RUN is fully automatic - no commands needed.** The minimap button opens
+the Account Ledger (stats + options); `/ra` is just the power-user lever.
 
-- **Passive tooltip flags (always on)**: mouse over or target ANY enemy and
-  its tooltip gains a RUN line - Elite / Rare (silver dragon) / Rare Elite /
-  World Boss - plus a **danger rank earned from kills**: Blooded (1) ->
-  Dangerous (2+) -> Deadly (5+) -> Infamous (10+). Beta ranks count kills of
-  YOU from the local journal; the crowd body count feeds the same tiers in a
-  later phase.
-- **Expansive Enemy Stats (option, off by default)**: `/ra set expansiveStats
-  on` adds your chances vs this enemy - a FIGHT / RISKY / FLEE line with
-  "~N% to win (p)" on the tooltip, plus the odds panel under your target
-  frame. Coarse model (level delta + classification + your current health);
-  wide honest bands; every number carries "(p)" in beta.
-- **Waypoints**: rare sightings auto-mark your position with the native
-  supertracked map arrow (TomTom supported). Toggle with `autoMark`.
-- **Death journal (local only)**: on death, the combat log names your killer
-  (environmental deaths say "a fall", never a creature). `/ra deaths`.
-  Nothing ever leaves your machine in this beta - RUN does not network, ever.
-- **Selftest**: `/ra selftest` (77 checks, same suite the ship gate runs).
+- **The Nemesis layer (new)**: every player death GROWS the killer species.
+  A 10-tier notoriety ladder (1 kill -> 100+), with **deterministic earned
+  titles** - the same creature carries the same name for everyone, every
+  session. Tier 3+ "normals" become **soft elites**: banner treatment
+  ("NOTORIOUS ENEMY NEARBY"), tier-coloured tooltip lines, and they ping
+  even with normal-mob pings off. The game says trivial; the body count
+  says otherwise. Display-only, always - reputation, never mob power.
+- **Most Wanted board**: the Ledger opens with the account's deadliest
+  species, wearing their titles - your journal + deaths heard, blended.
+- **The social death layer (Hardcore parity)**: deaths heard nearby keep a
+  journal (last 200); notable deaths banner ("X has claimed another victim -
+  N and counting"); **last words** ride your death-ping (your final public
+  chat line, on by default, opt-out); **eulogy mode** (off by default) names
+  the fallen on heard deaths.
+- **Trust layer**: peer ack echoes corroborate heard deaths (the Hardcore
+  addon's proven k-of-n model); per-sender rate limits + strict decoding +
+  checksums throughout.
+- **Death discipline**: resurrection stamps, double-fire guard, and every
+  death records its mode (hardcore / pvp / pve).
+- **Version handshake**: your addon quietly learns when a newer RUN exists.
+- Plus everything since 0.1.0: tooltip flags + kill ranks, tiered nearby
+  pings (normal off / elite / unique / quest targets), Civ-style odds panel
+  behind `expansiveStats`, auto map-marks, the local death journal
+  (account-wide, character-stamped), ESC options panel, minimap button.
 
-Deferred (by design, per the spec): the RISK IT wager button, the crowd
-killcount + Deadliest Rares ladder, the rares DB bake, seasons.
+RUN never networks. Deaths travel ONLY as in-game addon messages (anonymous
+payload - no names inside; eulogy display reads the transport sender that
+addon messages already expose). The future global ladder is strictly
+share-link + server-verified.
 
 ## Install (beta testers)
 
 1. Unzip so you have `Interface\AddOns\RUN\RUN.toc`.
 2. `/reload` or relog.
-3. Options live under `/runadvisor`, `/runa`, or `/ra`. (Plain `/run` is
-   Blizzard's built-in script command - an addon can never take it.)
-   Keys: `flags`, `expansiveStats`, `autoMark`, `recordDeaths`, `nearbyPing`,
-   `pingNormal`, `pingElite`, `pingUnique`, `shareDeaths`.
+3. Everything is automatic. Options: minimap button, ESC -> Options ->
+   AddOns -> RUN, or `/ra set <key> <on/off>`.
 
-### Five-minute test checklist
+### Test checklist
 
-1. `/ra selftest` - expect "92/92 green".
-2. `/ra set pingNormal on`, then walk into any mob camp (enemy nameplates ON,
-   key V) -> "ENEMY NEARBY" banners prove the sensor works on anything. Turn
-   it back off, then walk near an elite or a silver-dragon rare -> "ELITE /
-   RARE NEARBY" + sound + (rares) a map pin, before you ever click it.
-3. Mouse over any hostile elite -> tooltip shows "RUN: Elite". Mouse over a
-   silver-dragon rare -> "RUN: Rare (silver dragon)" and a map pin lands at
-   your feet (autoMark).
-4. `/ra set expansiveStats on`, then target a grey mob -> tooltip + panel say
-   FIGHT with high %; a red elite -> RISKY/FLEE; a skull -> "~no chance".
-5. Die to something (beta heroism) -> chat line "death recorded: ..." and
-   `/ra deaths` lists it; fall off something tall -> the killer is "a fall".
-   Die to the same mob twice -> its tooltip now ranks it "Dangerous
-   (killed you 2x)".
-6. Two-client test (or a guildmate with RUN): die to a creature on one -> the
-   other hears the ping and that creature's tooltip gains "1 player deaths
-   heard".
-7. `/ra set flags off` -> tooltip lines gone; `/ra set autoMark off` -> no
-   more pins.
+1. `/ra selftest` - expect "150/150 green".
+2. Mouse over any enemy you have died to - it now wears a TITLE once kills
+   reach tier 1+ ("the Blooded" and up).
+3. Die repeatedly to one normal mob type (5+ total): its species turns
+   NOTORIOUS - banner on approach, tier-coloured tooltip, soft-elite status.
+4. Minimap button -> Most Wanted shows your deadliest species, titled.
+5. Say something in /say, then die: with a second RUN client in the channel,
+   they hear the ping; with eulogy on they see your name and last words.
+6. ESC -> Options -> AddOns -> RUN: the checkbox panel (report if missing -
+   the Ledger always has the full set).
 
 ## Development
 
-- `python pipeline/run_tests.py` - THE ship gate (compliance scan + 44-check
+- `python pipeline/run_tests.py` - THE ship gate (compliance scan + 150-check
   headless selftest via lupa). Green before any zip/deploy/commit.
 - `python pipeline/deploy.py` - gate-then-copy to the live Forever install.
-- House laws: display-and-advice only (never a protected action), Lua 5.1
-  dialect, every possibly-secret read through `core/guards.lua`, no PII ever,
-  generated data regenerates (edit `data/overrides.lua`, never `generated/`).
+- House laws: display-and-advice only, Lua 5.1, secrets through
+  `core/guards.lua`, no PII ever, generated data regenerates.
+- Design notes + Nemesis research: `docs/NOTES.md`.
 
 License: All Rights Reserved (source-available). Copyright 2026 SimulateCX.

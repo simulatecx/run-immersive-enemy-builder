@@ -20,6 +20,29 @@ Settings.defaults = {
     pingQuest = true,        -- nearby ping for named QUEST targets (Bruuz etc.), any classification
     shareDeaths = true,      -- in-game anonymous death-ping to other RUN users (no name; opt-out)
     minimapButton = true,    -- the minimap button (opens the Account Ledger / options)
+    heardAlerts = true,      -- banner when a notable creature claims another victim nearby
+    eulogy = false,          -- show the fallen's character name on heard deaths (display-only;
+                             -- the name already rides the addon-message transport regardless)
+    lastWords = true,        -- your final public chat line rides your death-ping (Hardcore classic)
+}
+
+-- One ordered list drives every options surface (Ledger checkboxes + the ESC
+-- settings panel). Labels are plain sentences; keys match defaults above.
+Settings.defs = {
+    { key = "flags",          label = "Tooltip flags + kill ranks" },
+    { key = "expansiveStats", label = "Expansive Enemy Stats" },
+    { key = "nearbyPing",     label = "Nearby pings (master)" },
+    { key = "pingQuest",      label = "Ping quest targets" },
+    { key = "pingUnique",     label = "Ping rares and bosses" },
+    { key = "pingElite",      label = "Ping elites" },
+    { key = "pingNormal",     label = "Ping normal enemies" },
+    { key = "autoMark",       label = "Auto map-mark rares" },
+    { key = "recordDeaths",   label = "Record my deaths" },
+    { key = "shareDeaths",    label = "Share anonymous death-pings" },
+    { key = "heardAlerts",    label = "Banner notable heard deaths" },
+    { key = "eulogy",         label = "Name the fallen (eulogy mode)" },
+    { key = "lastWords",      label = "Broadcast my last words" },
+    { key = "minimapButton",  label = "Minimap button" },
 }
 
 local function store()

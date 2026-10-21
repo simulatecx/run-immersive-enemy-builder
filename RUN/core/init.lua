@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.5.0"
+RUN.version = "0.6.0"
 
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;
@@ -19,6 +19,7 @@ function RUN.initSavedVariables()
     if type(db.deaths) ~= "table" then db.deaths = {} end
     if type(db.settings) ~= "table" then db.settings = {} end
     if type(db.ui) ~= "table" then db.ui = {} end
+    if type(db.heardLog) ~= "table" then db.heardLog = {} end
     -- deaths entries are re-validated at read time by model/attribution.lua
     return db
 end

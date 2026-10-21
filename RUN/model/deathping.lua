@@ -49,19 +49,110 @@ function Deathping.decode(msg)
     if tonumber(sum) ~= Deathping.fletcher16(body) then return nil end
     npc = tonumber(npc)
     if npc < 1 or npc > 10000000 then return nil end
-    return { npc = npc, mapID = tonumber(mapID), bracket = tonumber(bracket) }
+    return { npc = npc, mapID = tonumber(mapID), bracket = tonumber(bracket),
+             sum = tonumber(sum) }
+end
+
+-- ---------------------------------------------------------------------------
+-- Pure: the companion message types (all strict-decoded, fail-closed).
+-- ACK  "RDA1:<sum>"        - a peer echoes a ping's checksum (k-of-n trust)
+-- WORDS "RLW1:<sum>:<txt>" - the fallen's last words, tied to their ping
+-- HELLO "RVH1:<version>"   - version handshake, so beta zips learn of updates
+-- ---------------------------------------------------------------------------
+function Deathping.encodeAck(sum)
+    sum = tonumber(sum)
+    if not sum then return nil end
+    return "RDA1:" .. sum
+end
+
+function Deathping.decodeAck(msg)
+    if type(msg) ~= "string" then return nil end
+    local sum = msg:match("^RDA1:(%d+)$")
+    return tonumber(sum)
+end
+
+-- Last words travel through chat: strip escape pipes, swap the protocol
+-- delimiter, trim, cap at 80 chars. Returns nil when nothing survives.
+function Deathping.sanitizeWords(s)
+    if type(s) ~= "string" then return nil end
+    s = s:gsub("|", ""):gsub(":", ","):gsub("^%s+", ""):gsub("%s+$", "")
+    if s == "" then return nil end
+    if #s > 80 then s = s:sub(1, 80) end
+    return s
+end
+
+function Deathping.encodeWords(sum, words)
+    sum = tonumber(sum)
+    words = Deathping.sanitizeWords(words)
+    if not sum or not words then return nil end
+    return "RLW1:" .. sum .. ":" .. words
+end
+
+function Deathping.decodeWords(msg)
+    if type(msg) ~= "string" then return nil end
+    local sum, words = msg:match("^RLW1:(%d+):(.+)$")
+    if not sum then return nil end
+    words = Deathping.sanitizeWords(words)
+    if not words then return nil end
+    return { sum = tonumber(sum), words = words }
+end
+
+function Deathping.encodeHello(version)
+    if type(version) ~= "string" or not version:match("^%d+%.%d+%.%d+$") then return nil end
+    return "RVH1:" .. version
+end
+
+function Deathping.decodeHello(msg)
+    if type(msg) ~= "string" then return nil end
+    local v = msg:match("^RVH1:(%d+%.%d+%.%d+)$")
+    return v
+end
+
+-- Pure: is version a newer than version b? (semver triplets)
+function Deathping.newer(a, b)
+    local a1, a2, a3 = tostring(a):match("^(%d+)%.(%d+)%.(%d+)$")
+    local b1, b2, b3 = tostring(b):match("^(%d+)%.(%d+)%.(%d+)$")
+    if not a1 or not b1 then return false end
+    a1, a2, a3 = tonumber(a1), tonumber(a2), tonumber(a3)
+    b1, b2, b3 = tonumber(b1), tonumber(b2), tonumber(b3)
+    if a1 ~= b1 then return a1 > b1 end
+    if a2 ~= b2 then return a2 > b2 end
+    return a3 > b3
+end
+
+-- Pure: FIFO push for the heard-deaths journal (Hardcore keeps 1000; we 200).
+function Deathping.pushHeard(log, entry, cap)
+    if type(log) ~= "table" or type(entry) ~= "table" then return end
+    table.insert(log, entry)
+    cap = tonumber(cap) or 200
+    while #log > cap do table.remove(log, 1) end
+end
+
+-- Pure: register an ack from a DISTINCT sender; corroborated at 2+ echoes
+-- (origin + two peers = Hardcore's proven k=3 witnesses).
+function Deathping.corroborate(entry, sender)
+    if type(entry) ~= "table" or type(sender) ~= "string" then return false end
+    if type(entry.ackers) ~= "table" then entry.ackers = {} end
+    if not entry.ackers[sender] then
+        entry.ackers[sender] = true
+        entry.acks = (tonumber(entry.acks) or 0) + 1
+    end
+    entry.corro = (tonumber(entry.acks) or 0) >= 2
+    return entry.corro
 end
 
 -- Pure: per-sender rate limiter. state[sender] = list of send times; returns
--- allowed(bool). Injected clock for headless tests.
-function Deathping.allowSender(state, sender, now)
+-- allowed(bool). Injected clock for headless tests; optional max override
+-- (death pings 5/hr; ack echoes are chattier and get a higher cap).
+function Deathping.allowSender(state, sender, now, max)
     if type(state) ~= "table" or type(sender) ~= "string" then return false end
+    max = tonumber(max) or RATE_MAX
     local times = state[sender] or {}
     local fresh = {}
     for i = 1, #times do
         if (now - times[i]) < RATE_WINDOW then table.insert(fresh, times[i]) end
     end
-    if #fresh >= RATE_MAX then state[sender] = fresh; return false end
+    if #fresh >= max then state[sender] = fresh; return false end
     table.insert(fresh, now)
     state[sender] = fresh
     return true
@@ -125,6 +216,46 @@ function Deathping.channelJoined()
     return channelIndex() ~= nil
 end
 
+-- Send helper: channel first, guild as a bonus (dedupe handles double-receive).
+local function broadcast(msg)
+    if not msg or not (_G.C_ChatInfo and _G.C_ChatInfo.SendAddonMessage) then return end
+    local idx = channelIndex()
+    if idx then pcall(_G.C_ChatInfo.SendAddonMessage, PREFIX, msg, "CHANNEL", idx) end
+    if Guards.call(_G.IsInGuild) then
+        pcall(_G.C_ChatInfo.SendAddonMessage, PREFIX, msg, "GUILD")
+    end
+end
+
+-- Best display name we have for a species: rares DB, then the journal, then #id.
+function Deathping.npcName(npc)
+    local known = RUN.raresMerged()[npc]
+    if known and known.name then return known.name end
+    local deaths = RUN.db().deaths
+    for i = #deaths, 1, -1 do
+        local e = deaths[i]
+        if type(e) == "table" and e.npc == npc and type(e.killer) == "string" then
+            return e.killer
+        end
+    end
+    return "creature #" .. tostring(npc)
+end
+
+-- The last thing we said (for last words). Public chat only - it was already
+-- said out loud; we just let it ride your death-ping if the option is on.
+local lastSaid = nil
+local function trackSay(text, playerName)
+    local who = tostring(playerName or ""):match("^[^-]+")
+    if who ~= myName() then return end
+    local words = Deathping.sanitizeWords(text)
+    if words then lastSaid = { words = words, t = _G.GetTime and _G.GetTime() or 0 } end
+end
+RUN.on("CHAT_MSG_SAY", trackSay)
+RUN.on("CHAT_MSG_YELL", trackSay)
+RUN.on("CHAT_MSG_PARTY", trackSay)
+RUN.on("CHAT_MSG_PARTY_LEADER", trackSay)
+RUN.on("CHAT_MSG_GUILD", trackSay)
+
+local saidHello = false
 RUN.on("PLAYER_LOGIN", function()
     if _G.C_ChatInfo and _G.C_ChatInfo.RegisterAddonMessagePrefix then
         pcall(_G.C_ChatInfo.RegisterAddonMessagePrefix, PREFIX)
@@ -134,44 +265,125 @@ RUN.on("PLAYER_LOGIN", function()
         _G.C_Timer.After(8, function()
             if RUN.Settings.get("shareDeaths") then joinChannel() end
         end)
+        _G.C_Timer.After(14, function()
+            if not saidHello and RUN.Settings.get("shareDeaths") and channelIndex() then
+                saidHello = true
+                broadcast(Deathping.encodeHello(RUN.version))
+            end
+        end)
     end
 end)
 
--- Broadcast our own creature-death. Runs after attribution recorded it
--- (attribution loads first in the TOC, so its PLAYER_DEAD handler ran already).
+-- Broadcast our own creature-death (+ last words when fresh and opted in).
+-- Runs after attribution recorded it (attribution loads first in the TOC).
 RUN.on("PLAYER_DEAD", function()
     if not RUN.Settings.get("shareDeaths") then return end
     local last = RUN.Attribution.lastDeath
     if not last or not last.npc then return end   -- env/unknown deaths never ping
     local bracket = math.floor((tonumber(last.level) or 0) / 10) * 10
     local msg = Deathping.encode(last.npc, last.mapID or 0, bracket)
-    if not msg or not (_G.C_ChatInfo and _G.C_ChatInfo.SendAddonMessage) then return end
-    local idx = channelIndex()
-    if idx then pcall(_G.C_ChatInfo.SendAddonMessage, PREFIX, msg, "CHANNEL", idx) end
-    if Guards.call(_G.IsInGuild) then
-        pcall(_G.C_ChatInfo.SendAddonMessage, PREFIX, msg, "GUILD")
+    if not msg then return end
+    broadcast(msg)
+    if RUN.Settings.get("lastWords") and lastSaid then
+        local now = _G.GetTime and _G.GetTime() or 0
+        if (now - lastSaid.t) <= 120 then
+            broadcast(Deathping.encodeWords(Deathping.decode(msg).sum, lastSaid.words))
+        end
     end
 end)
 
--- Receive pings from others: strict shape, dedupe, per-sender rate limit.
+-- Receive: four message kinds, all strict-decoded, deduped, rate-limited.
+local ackRate = {}
+local versionNotified = false
+
+local function findRecentHeard(sum, sender, now)
+    local log = RUN.db().heardLog
+    if type(log) ~= "table" then return nil end
+    for i = #log, 1, -1 do
+        local e = log[i]
+        if type(e) == "table" and e.sum == sum and (now - (e.t or 0)) <= 180 then
+            if not sender or e.sender == sender then return e end
+        end
+        if type(e) == "table" and (now - (e.t or 0)) > 300 then break end
+    end
+    return nil
+end
+
+local function onPing(ping, who, now)
+    Deathping.recordHeard(ping.npc)
+    local db = RUN.db()
+    if type(db.heardLog) ~= "table" then db.heardLog = {} end
+    local entry = { npc = ping.npc, mapID = ping.mapID, bracket = ping.bracket,
+                    sum = ping.sum, t = now, sender = who,
+                    ackers = {}, acks = 0, corro = false }
+    Deathping.pushHeard(db.heardLog, entry, 200)
+
+    -- echo the checksum so the network corroborates (k-of-n, Hardcore-proven)
+    if Deathping.allowSender(ackRate, "me", now, 30) then
+        broadcast(Deathping.encodeAck(ping.sum))
+    end
+
+    -- display: only notable deaths speak up (known rares or notorious species)
+    local noto = RUN.Notoriety.describe(ping.npc, "normal")
+    local known = RUN.raresMerged()[ping.npc]
+    local notable = (known ~= nil) or noto.tier >= 3
+    if not notable then return end
+    local name = Deathping.npcName(ping.npc)
+    local titled = noto.title and (name .. " \"" .. noto.title .. "\"") or name
+    local line
+    if RUN.Settings.get("eulogy") then
+        line = who .. " has fallen to " .. titled .. " (" .. noto.total .. " kills)"
+    else
+        line = titled .. " has slain another player (" .. noto.total .. " kills)"
+    end
+    RUN.print("heard: " .. line)
+    if RUN.Settings.get("heardAlerts") and RUN.Alert then
+        RUN.Alert.show(titled, "has claimed another victim - " .. noto.total .. " and counting")
+    end
+end
+
 RUN.on("CHAT_MSG_ADDON", function(prefix, msg, _, sender)
     if prefix ~= PREFIX then return end
     if not RUN.Settings.get("shareDeaths") then return end
     local who = tostring(sender or ""):match("^[^-]+") or "?"
     if who == myName() then return end            -- our own echo; we have the journal
+    local now = _G.GetTime and _G.GetTime() or 0
+
+    local hello = Deathping.decodeHello(msg)
+    if hello then
+        if not versionNotified and Deathping.newer(hello, RUN.version) then
+            versionNotified = true
+            RUN.print("a newer RUN (v" .. hello .. ") is out there - update when you can.")
+        end
+        return
+    end
+
+    local ack = Deathping.decodeAck(msg)
+    if ack then
+        local entry = findRecentHeard(ack, nil, now)
+        if entry then Deathping.corroborate(entry, who) end
+        return
+    end
+
+    local lw = Deathping.decodeWords(msg)
+    if lw then
+        local entry = findRecentHeard(lw.sum, who, now)
+        if entry then
+            entry.words = lw.words
+            if RUN.Settings.get("eulogy") then
+                RUN.print(who .. "'s last words: \"" .. lw.words .. "\"")
+            end
+        end
+        return
+    end
+
     local ping = Deathping.decode(msg)
     if not ping then return end
-    local now = _G.GetTime and _G.GetTime() or 0
     if not Deathping.allowSender(rateState, who, now) then return end
     local key = msg .. "#" .. who
     if seenSums[key] and (now - seenSums[key]) < 30 then return end
     seenSums[key] = now
-    Deathping.recordHeard(ping.npc)
-    local known = RUN.raresMerged()[ping.npc]
-    if known and known.name then
-        RUN.print("heard: " .. known.name .. " has slain another player ("
-            .. Deathping.heardBy(ping.npc) .. " heard)")
-    end
+    onPing(ping, who, now)
 end)
 
 return Deathping

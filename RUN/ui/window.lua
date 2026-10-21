@@ -42,6 +42,49 @@ function Window.topKillers(deaths, maxN)
     return out
 end
 
+-- Pure: the MOST WANTED board - species ranked by total notoriety (your
+-- journal + deaths heard), wearing their earned titles. The Nemesis showpiece.
+function Window.mostWanted(deaths, heard, maxN)
+    maxN = tonumber(maxN) or 5
+    local byNpc, order = {}, {}
+    local function bucket(npc)
+        local b = byNpc[npc]
+        if not b then
+            b = { npc = npc, kills = 0, heard = 0 }
+            byNpc[npc] = b
+            table.insert(order, b)
+        end
+        return b
+    end
+    if type(deaths) == "table" then
+        for i = 1, #deaths do
+            local e = deaths[i]
+            if RUN.Attribution.validEntry(e) and e.npc then
+                local b = bucket(e.npc)
+                b.kills = b.kills + 1
+                b.name = e.killer or b.name
+            end
+        end
+    end
+    if type(heard) == "table" then
+        for npc, n in pairs(heard) do
+            if type(npc) == "number" and type(n) == "number" and n > 0 then
+                bucket(npc).heard = n
+            end
+        end
+    end
+    for _, b in ipairs(order) do
+        b.total = b.kills + b.heard
+        b.tier = RUN.Notoriety.tierFor(b.total)
+        b.title = RUN.Notoriety.titleFor(b.npc, b.tier)
+        b.name = b.name or ("creature #" .. tostring(b.npc))
+    end
+    table.sort(order, function(a, b) return a.total > b.total end)
+    local out = {}
+    for i = 1, math.min(#order, maxN) do out[i] = order[i] end
+    return out
+end
+
 -- Pure: newest-first valid entries.
 function Window.recent(deaths, maxN)
     maxN = tonumber(maxN) or 8
@@ -113,19 +156,7 @@ stats:SetSpacing(3)
 -- ---------------------------------------------------------------------------
 -- Options checkboxes.
 -- ---------------------------------------------------------------------------
-local OPTION_DEFS = {
-    { key = "flags",          label = "Tooltip flags + kill ranks" },
-    { key = "expansiveStats", label = "Expansive Enemy Stats" },
-    { key = "nearbyPing",     label = "Nearby pings (master)" },
-    { key = "pingQuest",      label = "Ping quest targets" },
-    { key = "pingUnique",     label = "Ping rares && bosses" },
-    { key = "pingElite",      label = "Ping elites" },
-    { key = "pingNormal",     label = "Ping normal enemies" },
-    { key = "autoMark",       label = "Auto map-mark rares" },
-    { key = "recordDeaths",   label = "Record my deaths" },
-    { key = "shareDeaths",    label = "Share anonymous death-pings" },
-    { key = "minimapButton",  label = "Minimap button" },
-}
+local OPTION_DEFS = RUN.Settings.defs   -- one list drives every options surface
 
 local optHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 optHeader:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 178)
@@ -160,7 +191,19 @@ end
 local function buildStats()
     local db = RUN.db()
     local lines = {}
-    local top = Window.topKillers(db.deaths, 6)
+    local wanted = Window.mostWanted(db.deaths, db.heard, 4)
+    table.insert(lines, GOLD .. "Most Wanted|r " .. DIM .. "(notoriety: yours + heard)|r")
+    if #wanted == 0 then
+        table.insert(lines, DIM .. "  no legends born yet.|r")
+    else
+        for i, b in ipairs(wanted) do
+            local titled = b.title and (b.name .. " |cffff5040\"" .. b.title .. "\"|r") or b.name
+            table.insert(lines, string.format("  %d. %s %s",
+                i, titled, DIM .. "tier " .. b.tier .. ", " .. b.total .. " kills|r"))
+        end
+    end
+    table.insert(lines, " ")
+    local top = Window.topKillers(db.deaths, 4)
     table.insert(lines, GOLD .. "What killed us" .. "|r " .. DIM .. "(all characters)|r")
     if #top == 0 then
         table.insert(lines, DIM .. "  nothing yet. Long may it stay that way.|r")
@@ -174,7 +217,7 @@ local function buildStats()
     end
     table.insert(lines, " ")
     table.insert(lines, GOLD .. "Recent deaths|r")
-    local rec = Window.recent(db.deaths, 6)
+    local rec = Window.recent(db.deaths, 4)
     if #rec == 0 then
         table.insert(lines, DIM .. "  none recorded.|r")
     else

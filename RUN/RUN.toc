@@ -1,8 +1,8 @@
 ## Interface: 16001
 ## Title: RUN
-## Notes: Fight it or run? Live combat odds for the enemy in front of you - and the sense to flee - on WoW: Forever.
+## Notes: "RUN" Immersive Enemy Builder - enhancing the Azeroth we know and love. Enemies grow with every player they fell: ranks, titles, banners, and your odds against them.
 ## Author: SimulateCX
-## Version: 0.5.0
+## Version: 0.6.0
 ## SavedVariables: RUNDB
 ## IconTexture: Interface\Icons\Ability_Rogue_Sprint
 ## X-License: All Rights Reserved
@@ -14,10 +14,12 @@ core\settings.lua
 core\bridge.lua
 data\generated\rares.lua
 data\overrides.lua
+data\titles.lua
 model\detect.lua
 model\odds.lua
 model\attribution.lua
 model\deathping.lua
+model\notoriety.lua
 model\quests.lua
 ui\waypoint.lua
 ui\alert.lua
@@ -25,5 +27,6 @@ ui\tooltip.lua
 ui\panel.lua
 ui\window.lua
 ui\minimap.lua
+ui\options.lua
 model\nearby.lua
 selftest.lua

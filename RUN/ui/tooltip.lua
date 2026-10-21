@@ -25,9 +25,10 @@ function Tooltip.flagFor(classification)
     return FLAGS[classification]
 end
 
--- Pure: compose the flag line text from a flag, a kill rank, your kill count
--- and the live "deaths heard" count (P2P pings from other RUN users).
-function Tooltip.flagLine(flag, rank, kills, heard)
+-- Pure: compose the flag line text from a flag, a kill rank, your kill count,
+-- the live "deaths heard" count, and (Nemesis layer) the creature's EARNED
+-- title - 'Rare Elite "the Widowmaker" - Deadly (killed you 2x + 3 heard)'.
+function Tooltip.flagLine(flag, rank, kills, heard, title)
     kills = tonumber(kills) or 0
     heard = tonumber(heard) or 0
     local tally
@@ -38,10 +39,16 @@ function Tooltip.flagLine(flag, rank, kills, heard)
     elseif heard > 0 then
         tally = heard .. " player deaths heard"
     end
-    if flag and rank and tally then
-        return flag.label .. " - " .. rank.label .. " (" .. tally .. ")"
-    elseif flag then
-        return flag.label
+    local quoted = title and ("\"" .. title .. "\"") or nil
+    local lead
+    if flag and quoted then lead = flag.label .. " " .. quoted
+    elseif flag then lead = flag.label
+    elseif quoted then lead = quoted end
+
+    if lead and rank and tally then
+        return lead .. " - " .. rank.label .. " (" .. tally .. ")"
+    elseif lead then
+        return lead
     elseif rank and tally then
         return rank.label .. " - " .. tally
     end
@@ -60,15 +67,20 @@ local function inject(tooltip)
     local info = RUN.Detect.unitInfo(unit)
     if not info or info.isPlayer or not info.hostile then return end
 
-    local kills = RUN.Attribution.killsBy(info.npcID)
-    local heard = RUN.Deathping.heardBy(info.npcID)
-    local rank = RUN.Attribution.rankForKills(kills + heard)
+    local noto = RUN.Notoriety.describe(info.npcID, info.classification)
+    local rank = RUN.Attribution.rankForKills(noto.total)
     local flag = Tooltip.flagFor(info.classification)
 
-    local line = Tooltip.flagLine(flag, rank, kills, heard)
+    local line = Tooltip.flagLine(flag, rank, noto.kills, noto.heard, noto.title)
     if line then
         local c = rank or flag
-        tooltip:AddLine("RUN: " .. line, c.r, c.g, c.b)
+        if noto.softElite then
+            -- a proven killer among "normals" wears its tier colour
+            local r, g, b = RUN.Notoriety.colorFor(noto.tier)
+            tooltip:AddLine("RUN: " .. line, r, g, b)
+        else
+            tooltip:AddLine("RUN: " .. line, c.r, c.g, c.b)
+        end
     end
 
     -- quest-named enemies flag regardless of classification (the Bruuz case)

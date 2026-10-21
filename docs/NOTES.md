@@ -124,7 +124,37 @@ it without re-deriving anything.
   blocks appended before the final deny; a new function file + require line)
   with canonical copies + parity checks here.
 
-## 7. Product + distribution decisions (current)
+## 7. Nemesis research (Shadow of Mordor / Shadow of War), applied
+
+What makes the Nemesis system work, distilled:
+- **Your death PROMOTES your killer.** The orc that fells you gains rank,
+  power, and a name - the player's failure becomes the world's content.
+- **Named, titled adversaries.** "Ratbag the Coward" is memorable where
+  "Uruk Soldier #4" is not; the title telegraphs the threat.
+- **Rank theater.** Promotions are ANNOUNCED - intro banners, callouts - so
+  growth is felt, not just stored.
+- **Remembrance.** The enemy that killed you remembers; the world keeps score.
+
+Our platform-honest mapping (RUN v0.6.0):
+- WoW cannot persist one SPAWN across sessions (GUIDs are per-spawn), so the
+  SPECIES (npcID) is the adversary: every player death grows "Sunscale
+  Lashtail" the species into a legend. With the crowd layers, that legend is
+  SHARED - the same monster is famous for everyone.
+- **Deterministic titles, never rolled**: `math.random` is compliance-banned
+  (shared-RNG taint), so titles hash from npcID within the tier pool - which
+  is better anyway: the same creature carries the same earned name for every
+  player, every session. 10 tiers x 6 titles in `data/titles.lua`; thresholds
+  1/2/5/10/15/25/40/60/80/100 kills (journal + heard now, baked crowd later).
+- **Soft elites**: a NORMAL mob at tier 3+ (5+ kills) gets the banner real
+  elites get - "NOTORIOUS ENEMY NEARBY" - plus tier-coloured tooltip lines.
+  The game says trivial; the body count says otherwise.
+- **Display-only, always**: notoriety changes presentation, never mob power -
+  the suggest-only law holds. The "growth" is reputation, exactly like
+  Mordor's orcs between deaths.
+- Product line (owner): "RUN" Immersive Enemy Builder - enhancing the
+  Azeroth we know and love. The world grows with player interaction.
+
+## 8. Product + distribution decisions (current)
 
 - RUN = standalone addon, separate repo, ARR source-available license (both
   addons switched MIT->ARR 2026-10-15; bundled libs would keep their own).

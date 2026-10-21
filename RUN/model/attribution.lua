@@ -68,6 +68,14 @@ function Attribution.rankForKills(n)
     return nil
 end
 
+-- Pure: which mode was this death? Hardcore flag wins; a Player killing blow
+-- is pvp; everything else pve. Feeds the journal now, the crowd schema later.
+function Attribution.classifyMode(hcActive, killerGuid)
+    if hcActive then return "hc" end
+    if type(killerGuid) == "string" and killerGuid:find("^Player%-") then return "pvp" end
+    return "pve"
+end
+
 -- Pure: choose the killer - CLEU buffer pick first, else the Hardcore-style
 -- wound-time target snapshot if fresh (10s), else unknown. Returns entry, how.
 function Attribution.choose(hit, fb, now)
@@ -152,9 +160,22 @@ RUN.on("UNIT_COMBAT", function(unit, action)
     end
 end)
 
+local lastDeathAt = -60   -- double-fire guard
+
+local function hcActive()
+    local GR = _G.C_GameRules
+    if GR and GR.IsHardcoreActive then
+        local ok, v = pcall(GR.IsHardcoreActive)
+        if ok then return v and true or false end
+    end
+    return false
+end
+
 RUN.on("PLAYER_DEAD", function()
     if not RUN.Settings.get("recordDeaths") then return end
     local now = _G.GetTime and _G.GetTime() or 0
+    if (now - lastDeathAt) < 5 then return end   -- one death, one record
+    lastDeathAt = now
     local hit, how = Attribution.choose(Attribution.pick(buffer, now), woundTarget, now)
     if how == "fallback" then
         Attribution.stats.fallbackUsed = Attribution.stats.fallbackUsed + 1
@@ -173,6 +194,7 @@ RUN.on("PLAYER_DEAD", function()
         killer = killer,            -- nil = unknown (honest)
         npc = npc,
         who = RUN.Guards.call(_G.UnitName, "player"),   -- RUNDB is account-wide; name the alt
+        mode = Attribution.classifyMode(hcActive(), hit and hit.guid),
         level = RUN.Guards.number(RUN.Guards.call(_G.UnitLevel, "player")),
         zone = RUN.Guards.call(_G.GetZoneText),
         mapID = RUN.Guards.call(_G.C_Map and _G.C_Map.GetBestMapForUnit, "player"),
@@ -184,6 +206,19 @@ RUN.on("PLAYER_DEAD", function()
     RUN.print("death recorded: " .. (killer or "unknown cause")
         .. (entry.zone and (" in " .. entry.zone) or "") .. " (stays on your machine)")
 end)
+
+-- Resurrection stamps: the "alive again" trigger Hardcore uses to separate
+-- real deaths from the died-and-walked-back loop. First-death-only logic for
+-- hardcore characters reads these.
+local function stampRez()
+    local deaths = RUN.db().deaths
+    local e = deaths[#deaths]
+    if type(e) == "table" and not e.rezzed then
+        e.rezzed = _G.time and _G.time() or 0
+    end
+end
+RUN.on("PLAYER_ALIVE", stampRez)
+RUN.on("PLAYER_UNGHOST", stampRez)
 
 -- "/ra deaths" - the local journal, newest first.
 function Attribution.printDeaths()

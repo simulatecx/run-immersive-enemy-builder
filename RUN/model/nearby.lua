@@ -42,15 +42,19 @@ function Nearby.settingFor(classification)
     return "pingNormal"
 end
 
--- Pure: gate + title for a full info table (quest targets outrank their
--- classification - a "normal" Bruuz pings as a quest target).
+-- Pure: gate + title for a full info table. Quest targets and NOTORIOUS
+-- species ("soft elites" - normals with a body count) outrank their
+-- classification: a plain mob that has killed enough players earns the
+-- banner real elites get.
 function Nearby.gateFor(info)
     if info and info.quest then return "pingQuest" end
+    if info and info.notorious then return "pingUnique" end
     return Nearby.settingFor(info and info.classification)
 end
 
 function Nearby.bannerTitle(info)
     if info and info.quest then return "QUEST TARGET NEARBY" end
+    if info and info.notorious then return "NOTORIOUS ENEMY NEARBY" end
     return Nearby.titleFor(info and info.classification)
 end
 
@@ -69,12 +73,15 @@ end
 
 function Nearby.ping(info, mapID, x, y)
     if not RUN.Settings.get("nearbyPing") then return end
+    local noto = RUN.Notoriety.describe(info.npcID, info.classification)
+    if noto.softElite then info.notorious = true end
     if not RUN.Settings.get(Nearby.gateFor(info)) then return end
     if alreadyPinged(info.guid or info.npcID) then return end
 
-    local kills = RUN.Attribution.killsBy(info.npcID)
-    local heard = RUN.Deathping.heardBy(info.npcID)
-    local line = Nearby.rankLine(kills, heard)
+    local line = Nearby.rankLine(noto.kills, noto.heard)
+    if noto.title then
+        line = "\"" .. noto.title .. "\" - " .. line
+    end
     if info.quest and info.quest ~= "" then
         line = "for " .. info.quest .. " - " .. line
     end
