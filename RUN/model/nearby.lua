@@ -25,6 +25,23 @@ function Nearby.rankLine(kills, heard)
     return rank.label .. " - " .. table.concat(bits, " + ")
 end
 
+-- Pure: banner title per classification (headless-tested).
+local TITLES = {
+    worldboss = "BOSS NEARBY", rareelite = "RARE ELITE NEARBY",
+    rare = "RARE NEARBY", elite = "ELITE NEARBY",
+}
+function Nearby.titleFor(classification)
+    return TITLES[classification] or "ENEMY NEARBY"
+end
+
+-- Pure: which settings key gates this classification's ping?
+function Nearby.settingFor(classification)
+    local tier = RUN.Detect.tierOf(classification)
+    if tier == "unique" then return "pingUnique" end
+    if tier == "elite" then return "pingElite" end
+    return "pingNormal"
+end
+
 if not _G.CreateFrame then return Nearby end
 
 local Guards = RUN.Guards
@@ -40,14 +57,16 @@ end
 
 function Nearby.ping(info, mapID, x, y)
     if not RUN.Settings.get("nearbyPing") then return end
+    if not RUN.Settings.get(Nearby.settingFor(info.classification)) then return end
     if alreadyPinged(info.guid or info.npcID) then return end
 
     local kills = RUN.Attribution.killsBy(info.npcID)
     local heard = RUN.Deathping.heardBy(info.npcID)
     local line = Nearby.rankLine(kills, heard)
+    local title = Nearby.titleFor(info.classification)
 
-    RUN.Alert.show("RARE NEARBY: " .. tostring(info.name or "Unknown"), line)
-    RUN.print("rare nearby: " .. tostring(info.name or "Unknown") .. " - " .. line)
+    RUN.Alert.show(title .. ": " .. tostring(info.name or "Unknown"), line)
+    RUN.print(title:lower() .. ": " .. tostring(info.name or "Unknown") .. " - " .. line)
 
     -- true coords from a vignette beat "at your feet"
     if mapID and x and y then
@@ -60,11 +79,12 @@ function Nearby.ping(info, mapID, x, y)
     end
 end
 
--- Signal 1: nameplates.
+-- Signal 1: nameplates. Any hostile qualifies; Nearby.ping applies the
+-- per-tier option gates (pingNormal / pingElite / pingUnique).
 RUN.on("NAME_PLATE_UNIT_ADDED", function(unit)
     if not RUN.Settings.get("nearbyPing") then return end
     local info = RUN.Detect.unitInfo(unit)
-    if info and info.hostile and info.notable and not info.dead then
+    if info and info.hostile and not info.dead and not info.isPlayer then
         Nearby.ping(info)
     end
 end)

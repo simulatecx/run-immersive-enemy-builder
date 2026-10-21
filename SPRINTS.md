@@ -56,6 +56,14 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 
 ## Shipped
 
+- v0.3.1 (2026-10-19, private beta): TIERED nearby pings (owner ask: all-enemy
+  sensing for testability + per-group options). `Detect.tierOf` groups
+  classifications - normal/trivial/minus = "normal", elite = "elite",
+  rare/rareelite/worldboss = "unique"; per-tier toggles `pingNormal` (OFF by
+  default), `pingElite` (on), `pingUnique` (on) under the `nearbyPing` master;
+  banner titles per classification (ENEMY/ELITE/RARE/RARE ELITE/BOSS NEARBY);
+  nameplate handler now senses ANY hostile and lets the tier gates decide.
+  Gate: compliance green, selftest 92/92.
 - v0.3.0 (2026-10-19, private beta): the "alive world" update - both pings.
   (1) RARE-NEARBY ping: NAME_PLATE_UNIT_ADDED (+ C_VignetteInfo wired
   defensively, true coords when it fires) -> banner + raid-warning sound +

@@ -19,12 +19,16 @@ direct zips.
 **RUN is fully automatic - no commands needed to play with it.** The slash
 (`/ra`) exists only to change options.
 
-- **Rare-nearby ping (new)**: a rare that comes within nameplate range (~60yd)
-  - even behind you - triggers a top-centre banner, a raid-warning sound, its
-  kill-rank line, and a map pin. Signals: `NAME_PLATE_UNIT_ADDED` (needs enemy
-  nameplates on; RUN nudges once if they're off) + `C_VignetteInfo` wired
-  defensively (gives TRUE coordinates where Forever emits vignettes). Once per
-  creature, 10-min cooldown. Toggle: `nearbyPing`.
+- **Nearby ping, tiered (new)**: any enemy whose nameplate spawns in range
+  (camera view, up to the nameplate distance) can trigger a top-centre banner
+  - "ENEMY / ELITE / RARE / RARE ELITE / BOSS NEARBY" - with sound, the
+  kill-rank line, and (rares+) a map pin. THREE TIER OPTIONS: `pingNormal`
+  (normal mobs - OFF by default, turn on for total awareness or easy
+  testing), `pingElite` (elites - on), `pingUnique` (rares + rare elites +
+  bosses - on); `nearbyPing` is the master switch. Signals:
+  `NAME_PLATE_UNIT_ADDED` (needs enemy nameplates on; RUN nudges once if
+  they're off) + `C_VignetteInfo` wired defensively (TRUE coordinates where
+  Forever emits vignettes). Once per creature, 10-min cooldown.
 - **P2P death-ping (new, the Hardcore-addon pattern)**: when you die to a
   creature, your addon automatically broadcasts a small ANONYMOUS ping (npcID,
   map, level bracket, checksum - never a player name) over a shared addon
@@ -63,13 +67,15 @@ killcount + Deadliest Rares ladder, the rares DB bake, seasons.
 3. Options live under `/runadvisor`, `/runa`, or `/ra`. (Plain `/run` is
    Blizzard's built-in script command - an addon can never take it.)
    Keys: `flags`, `expansiveStats`, `autoMark`, `recordDeaths`, `nearbyPing`,
-   `shareDeaths`.
+   `pingNormal`, `pingElite`, `pingUnique`, `shareDeaths`.
 
 ### Five-minute test checklist
 
-1. `/ra selftest` - expect "77/77 green".
-2. Walk near a silver-dragon rare (enemy nameplates ON, key V) -> "RARE
-   NEARBY" banner + sound + map pin, before you ever click it.
+1. `/ra selftest` - expect "92/92 green".
+2. `/ra set pingNormal on`, then walk into any mob camp (enemy nameplates ON,
+   key V) -> "ENEMY NEARBY" banners prove the sensor works on anything. Turn
+   it back off, then walk near an elite or a silver-dragon rare -> "ELITE /
+   RARE NEARBY" + sound + (rares) a map pin, before you ever click it.
 3. Mouse over any hostile elite -> tooltip shows "RUN: Elite". Mouse over a
    silver-dragon rare -> "RUN: Rare (silver dragon)" and a map pin lands at
    your feet (autoMark).

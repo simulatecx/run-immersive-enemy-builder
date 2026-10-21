@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.3.0"
+RUN.version = "0.3.1"
 
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;

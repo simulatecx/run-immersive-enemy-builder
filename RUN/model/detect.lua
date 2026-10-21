@@ -27,6 +27,17 @@ function Detect.isNotable(classification)
     return NOTABLE[classification] == true
 end
 
+-- Pure: ping tier groups (the options model). normal-kind mobs are one group,
+-- elites another, and rares + rare elites + bosses are all "unique".
+local TIERS = {
+    minus = "normal", trivial = "normal", normal = "normal",
+    elite = "elite",
+    rare = "unique", rareelite = "unique", worldboss = "unique",
+}
+function Detect.tierOf(classification)
+    return TIERS[classification] or "normal"
+end
+
 -- Everything below reads the client.
 if not _G.CreateFrame then return Detect end
 
