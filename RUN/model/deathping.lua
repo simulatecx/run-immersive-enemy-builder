@@ -187,6 +187,24 @@ function Deathping.heardTotal()
     return total
 end
 
+-- Best display name we have for a species: curated DB, then the sightings
+-- harvest (someone on this account SAW it), then the journal, then #id.
+-- Pure (db-backed): headless-tested.
+function Deathping.npcName(npc)
+    local known = RUN.raresMerged()[npc]
+    if known and known.name then return known.name end
+    local seen = RUN.Detect.sightingFor and RUN.Detect.sightingFor(npc)
+    if seen then return seen.name end
+    local deaths = RUN.db().deaths
+    for i = #deaths, 1, -1 do
+        local e = deaths[i]
+        if type(e) == "table" and e.npc == npc and type(e.killer) == "string" then
+            return e.killer
+        end
+    end
+    return "creature #" .. tostring(npc)
+end
+
 -- Everything below wires the client.
 if not _G.CreateFrame then return Deathping end
 
@@ -224,20 +242,6 @@ local function broadcast(msg)
     if Guards.call(_G.IsInGuild) then
         pcall(_G.C_ChatInfo.SendAddonMessage, PREFIX, msg, "GUILD")
     end
-end
-
--- Best display name we have for a species: rares DB, then the journal, then #id.
-function Deathping.npcName(npc)
-    local known = RUN.raresMerged()[npc]
-    if known and known.name then return known.name end
-    local deaths = RUN.db().deaths
-    for i = #deaths, 1, -1 do
-        local e = deaths[i]
-        if type(e) == "table" and e.npc == npc and type(e.killer) == "string" then
-            return e.killer
-        end
-    end
-    return "creature #" .. tostring(npc)
 end
 
 -- The last thing we said (for last words). Public chat only - it was already
@@ -323,9 +327,10 @@ local function onPing(ping, who, now)
         broadcast(Deathping.encodeAck(ping.sum))
     end
 
-    -- display: only notable deaths speak up (known rares or notorious species)
+    -- display: only notable deaths speak up (known/seen rares or notorious species)
     local noto = RUN.Notoriety.describe(ping.npc, "normal")
     local known = RUN.raresMerged()[ping.npc]
+        or (RUN.Detect.sightingFor and RUN.Detect.sightingFor(ping.npc))
     local notable = (known ~= nil) or noto.tier >= 3
     if not notable then return end
     local name = Deathping.npcName(ping.npc)

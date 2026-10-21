@@ -31,20 +31,21 @@ function Waypoint.setAt(mapID, x, y, label)
     return ok
 end
 
+-- The player's current map position (also feeds the sightings harvest).
+function Waypoint.playerPos()
+    local mapID = Guards.call(_G.C_Map and _G.C_Map.GetBestMapForUnit, "player")
+    if not mapID then return nil end
+    local pos = Guards.call(_G.C_Map.GetPlayerMapPosition, mapID, "player")
+    if not pos then return nil end
+    local okXY, x, y = pcall(pos.GetXY, pos)
+    if not okXY or not x then return nil end
+    return mapID, x, y
+end
+
 -- Mark the player's current position (see the honesty note above).
 function Waypoint.markHere(label)
-    local mapID = Guards.call(_G.C_Map and _G.C_Map.GetBestMapForUnit, "player")
+    local mapID, x, y = Waypoint.playerPos()
     if not mapID then
-        RUN.print("can't resolve your map position here.")
-        return false
-    end
-    local pos = Guards.call(_G.C_Map.GetPlayerMapPosition, mapID, "player")
-    if not pos then
-        RUN.print("no map coordinates available in this area.")
-        return false
-    end
-    local okXY, x, y = pcall(pos.GetXY, pos)
-    if not okXY or not x then
         RUN.print("no map coordinates available in this area.")
         return false
     end
@@ -55,11 +56,16 @@ function Waypoint.markHere(label)
     return false
 end
 
--- Mark a DB-known rare's true position (used once the rares table has coords).
+-- Mark a known rare's position: curated/generated coords first, then the
+-- sightings harvest (where a player of this account last SAW it).
 function Waypoint.markKnown(npcID)
     local known = RUN.raresMerged and RUN.raresMerged()[npcID]
     if known and known.zone and known.x and known.y then
         return Waypoint.setAt(known.zone, known.x, known.y, known.name or "RUN rare")
+    end
+    local seen = RUN.Detect.sightingFor(npcID)
+    if seen and seen.mapID and seen.x and seen.y then
+        return Waypoint.setAt(seen.mapID, seen.x, seen.y, seen.name or "RUN rare")
     end
     return false
 end

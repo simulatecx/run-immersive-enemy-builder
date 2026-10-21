@@ -87,7 +87,18 @@ function Nearby.ping(info, mapID, x, y)
     end
     local title = Nearby.bannerTitle(info)
 
-    RUN.Alert.show(title .. ": " .. tostring(info.name or "Unknown"), line)
+    -- the sightings harvest: a real rare+ seen = a named, located species
+    if RUN.Detect.isNotable(info.classification) then
+        if mapID and x and y then
+            RUN.Detect.recordSighting(info, mapID, x, y)
+        else
+            RUN.Detect.recordSighting(info, RUN.Waypoint.playerPos())
+        end
+    end
+
+    local r, g, b
+    if noto.tier >= 1 then r, g, b = RUN.Notoriety.colorFor(noto.tier) end
+    RUN.Alert.show(title .. ": " .. tostring(info.name or "Unknown"), line, r, g, b)
     RUN.print(title:lower() .. ": " .. tostring(info.name or "Unknown") .. " - " .. line)
 
     -- true coords from a vignette beat "at your feet"

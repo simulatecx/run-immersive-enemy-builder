@@ -33,8 +33,15 @@ killed, so I can fight or flee on good information.
 - ☑ RUN-A shell + detection (v0.1.0): TOC 16001, RUNDB type-validated, guard
   layer replicated, event hub, slash router, GUID->npcID, UnitClassification
   notability, gate green (compliance + 44-check selftest).
-- ◐ RUN-B rares DB: empty-safe `data/generated/rares.lua` + overrides merge
-  SHIPPED; `pipeline/gen_rares.py` (Forever DB2 -> npcID/name/zone/coords) ☐.
+- ◐ RUN-B rares DB - PIVOTED (2026-10-19): DB2 is a DEAD END (Creature.db2
+  verified hotfix-sparse on 1.60.1.70338 - zero world creatures; names are
+  server-side; `pipeline/gen_rares.py` kept as the fetch/verify tool). The
+  path is the SIGHTINGS HARVEST (v0.7.1, shipped): every rare+ seen is
+  recorded to RUNDB.sightings (name/classification/map/coords; vignette
+  coords when they fire, player pos otherwise), consumed by heard-ping
+  names, markKnown pins, and notable-death displays. REMAINING: crowd
+  aggregation of sightings into a shared bake (k-of-n on name+npcID) with
+  RUN-E; overrides stay the curated layer.
 - ◐ RUN-C odds panel + waypoint (v0.1.0): coarse logistic model (level delta +
   classification + health, bands over points, always "(p)"), panel anchored
   under TargetFrame (never parented - taint law), mouseover rare preview,
@@ -147,6 +154,15 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.7.1 (2026-10-19, private beta): THE SIGHTINGS HARVEST + the DB2 verdict.
+  Attempted RUN-B via wago.tools Creature.db2 -> PLATFORM FACT: the client
+  table is hotfix-sparse (11 KB, zero world creatures; names are server-
+  side) - recorded in NOTES §1. Pivot shipped: Detect.recordSighting /
+  sightingFor (RUNDB.sightings, account-wide) harvested on every rare+ ping
+  (vignette coords when available, else player pos); Deathping.npcName now
+  resolves curated -> sighting -> journal -> #id (pure, headless-tested);
+  Waypoint.markKnown falls back to sighting coords; heard-death notability
+  includes seen rares; nearby banners tier-tinted. Gate: selftest 172/172.
 - v0.7.0 (2026-10-19, private beta): TIER FRAMES + THE WAGER + WIPES CORE
   (owner field-confirmed hearing deaths + level-ups before logging off; asks
   shipped: tier unit frames, movable Ledger, working X). Panel rebuilt as the

@@ -29,6 +29,14 @@ it without re-deriving anything.
   1744126 tagged for 1.60.1; RareScanner and Alenya's Guides also target it).
 - `/run` is Blizzard's built-in script slash command - an addon can NEVER own
   it. RUN uses `/runadvisor`, `/runa`, `/ra`.
+- **Creature.db2 is hotfix-sparse on the client** (VERIFIED 2026-10-19 against
+  build 1.60.1.70338: the wago.tools dump is 11 KB of companion-pet hotfix
+  rows - zero world creatures). Creature names/classifications are
+  SERVER-side; a shipped rares DB cannot come from DB2. This is exactly why
+  RareScanner ships a community-built database. RUN's answer: the SIGHTINGS
+  HARVEST - every rare+ a player actually sees is recorded locally (name,
+  classification, map, coords) and the crowd phase aggregates sightings
+  into the shared bake. The world teaches the addon.
 
 ## 2. How RareScanner does it (mechanisms studied, not copied - ARR code)
 

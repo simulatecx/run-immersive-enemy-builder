@@ -27,6 +27,37 @@ function Detect.isNotable(classification)
     return NOTABLE[classification] == true
 end
 
+-- ---------------------------------------------------------------------------
+-- The sightings harvest: the client ships NO creature database (Creature.db2
+-- is hotfix-sparse - verified against build 1.60.1.70338), so the world
+-- teaches the addon. Every rare+ a player actually sees is recorded here -
+-- name, classification, map, coords - feeding heard-ping names, map pins,
+-- and (crowd phase) the shared bake. Account-wide, local-only.
+-- ---------------------------------------------------------------------------
+function Detect.recordSighting(info, mapID, x, y)
+    if type(info) ~= "table" or not info.npcID or not info.name then return false end
+    if not Detect.isNotable(info.classification) then return false end
+    local db = RUN.db()
+    if type(db.sightings) ~= "table" then db.sightings = {} end
+    local s = db.sightings[info.npcID]
+    if type(s) ~= "table" then s = {}; db.sightings[info.npcID] = s end
+    s.name = info.name
+    s.classification = info.classification
+    if tonumber(mapID) and tonumber(x) and tonumber(y) then
+        s.mapID, s.x, s.y = tonumber(mapID), tonumber(x), tonumber(y)
+    end
+    s.when = _G.time and _G.time() or 0
+    return true
+end
+
+function Detect.sightingFor(npcID)
+    local db = RUN.db()
+    if type(db.sightings) ~= "table" then return nil end
+    local s = db.sightings[tonumber(npcID)]
+    if type(s) == "table" and type(s.name) == "string" then return s end
+    return nil
+end
+
 -- Pure: ping tier groups (the options model). normal-kind mobs are one group,
 -- elites another, and rares + rare elites + bosses are all "unique".
 local TIERS = {

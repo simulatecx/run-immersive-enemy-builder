@@ -85,6 +85,38 @@ function RUN.selftest()
     check("attribution entry validation", A.validEntry({ when = 1, killer = "x" }) == true
         and A.validEntry({ when = "bad" }) == false and A.validEntry(nil) == false)
 
+    -- ---- the sightings harvest ----
+    check("sighting records notable", (function()
+        local db = RUN.db()
+        local saved = db.sightings
+        db.sightings = nil
+        local ok = D.recordSighting({ npcID = 5786, name = "Snagglefang",
+            classification = "rare" }, 1413, 0.44, 0.61)
+        local s = D.sightingFor(5786)
+        local result = ok and s and s.name == "Snagglefang" and s.mapID == 1413
+        db.sightings = saved
+        return result
+    end)())
+    check("sighting rejects normals", (function()
+        local db = RUN.db()
+        local saved = db.sightings
+        db.sightings = nil
+        local ok = D.recordSighting({ npcID = 3113, name = "Kolkar",
+            classification = "normal" })
+        db.sightings = saved
+        return ok == false
+    end)())
+    check("sighting lookup nil-safe", D.sightingFor(nil) == nil
+        and D.sightingFor(999991) == nil)
+    check("npcName prefers sighting over id", (function()
+        local db = RUN.db()
+        local saved = db.sightings
+        db.sightings = { [5786] = { name = "Snagglefang", classification = "rare" } }
+        local n = RUN.Deathping.npcName(5786)
+        db.sightings = saved
+        return n == "Snagglefang"
+    end)())
+
     -- ---- data: empty-safe rares + overrides merge ----
     check("rares table exists", type(RUN.gen) == "table" and type(RUN.gen.rares) == "table")
     check("rares merged empty-safe", type(RUN.raresMerged()) == "table")
