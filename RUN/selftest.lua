@@ -329,6 +329,55 @@ function RUN.selftest()
     check("flagLine title only lead", T.flagLine(nil, { label = "Deadly" }, 5, 0,
         "the Widowmaker") == "\"the Widowmaker\" - Deadly (killed you 5x)")
 
+    -- ---- the Devil wager (pure state machine) ----
+    local V = RUN.Devil
+    check("wager tier giant slayer", V.tierForOdds(0.18) == "giantslayer")
+    check("wager tier underdog", V.tierForOdds(0.40) == "underdog")
+    check("wager refused above 50", V.tierForOdds(0.55) == nil and V.tierForOdds(nil) == nil)
+    check("wager arm solo only", V.arm({ npc = 448, p = 0.2, solo = false }, 100) == nil)
+    check("wager arm shape", (function()
+        local a = V.arm({ npc = 448, name = "Hogger", p = 0.2, solo = true }, 100)
+        return a and a.tier == "giantslayer" and a.npc == 448 and a.t == 100
+    end)())
+    check("wager won on solo kill", (function()
+        local a = V.arm({ npc = 448, p = 0.2, solo = true }, 100)
+        return V.resolve(a, { type = "kill", npc = 448, solo = true }, 150) == "won"
+    end)())
+    check("wager not won grouped", (function()
+        local a = V.arm({ npc = 448, p = 0.2, solo = true }, 100)
+        return V.resolve(a, { type = "kill", npc = 448, solo = false }, 150) == nil
+    end)())
+    check("wager lost to the beast", (function()
+        local a = V.arm({ npc = 448, p = 0.2, solo = true }, 100)
+        return V.resolve(a, { type = "death", npc = 448 }, 150) == "lost"
+    end)())
+    check("wager abandoned on other death", (function()
+        local a = V.arm({ npc = 448, p = 0.2, solo = true }, 100)
+        return V.resolve(a, { type = "death", npc = 999 }, 150) == "abandoned"
+    end)())
+    check("wager expires", (function()
+        local a = V.arm({ npc = 448, p = 0.2, solo = true }, 100)
+        return V.resolve(a, { type = "kill", npc = 448, solo = true }, 500) == "abandoned"
+    end)())
+    check("slay entry validation", V.validSlay({ when = 1, npc = 448, p = 0.2 }) == true
+        and V.validSlay({ when = 1 }) == false and V.validSlay(nil) == false)
+
+    -- ---- wipes (pure core) ----
+    local WP = RUN.Wipes
+    check("wipe at 80 percent", WP.isWipe({ 100, 101, 102, 103 }, 5, 105) == true)
+    check("no wipe below 80", WP.isWipe({ 100, 101 }, 5, 105) == false)
+    check("no wipe solo", WP.isWipe({ 100 }, 1, 100) == false)
+    check("wipe window expires", WP.isWipe({ 10, 11, 12, 13 }, 5, 100) == false)
+    check("wipe counts record", (function()
+        local db = RUN.db()
+        local saved = db.wipes
+        db.wipes = nil
+        WP.record(448); WP.record(448); WP.record("enc:Hogger")
+        local a, b, t = WP.countFor(448), WP.countFor("enc:Hogger"), WP.total()
+        db.wipes = saved
+        return a == 2 and b == 1 and t == 3
+    end)())
+
     -- ---- most wanted board ----
     check("most wanted merges + sorts", (function()
         local deaths = {
@@ -355,6 +404,8 @@ function RUN.selftest()
     check("settings default minimapButton on", S.get("minimapButton") == true)
     check("settings default pingQuest on", S.get("pingQuest") == true)
     check("settings default heardAlerts on", S.get("heardAlerts") == true)
+    check("settings default tierFrames on", S.get("tierFrames") == true)
+    check("settings default riskButton on", S.get("riskButton") == true)
     check("settings default eulogy OFF", S.get("eulogy") == false)
     check("settings default lastWords on", S.get("lastWords") == true)
     check("settings defs cover all keys", (function()

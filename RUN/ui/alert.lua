@@ -39,9 +39,15 @@ f:SetScript("OnUpdate", function(self)
     if _G.GetTime and _G.GetTime() > hideAt then self:Hide() end
 end)
 
--- Show the banner for ~6s with a raid-warning sound.
-function Alert.show(titleText, subText)
+-- Show the banner for ~6s with a raid-warning sound. Optional colour (the
+-- notoriety tier tint): title + edges take it, so a tier-9 legend LOOKS like
+-- a tier-9 legend.
+function Alert.show(titleText, subText, r, g, b)
+    r, g, b = r or 0.94, g or 0.83, b or 0.53
     title:SetText(tostring(titleText or ""))
+    title:SetTextColor(r, g, b)
+    edgeTop:SetColorTexture(r, g, b, 0.9)
+    edgeBot:SetColorTexture(r, g, b, 0.9)
     sub:SetText(tostring(subText or ""))
     hideAt = (_G.GetTime and _G.GetTime() or 0) + 6
     f:Show()

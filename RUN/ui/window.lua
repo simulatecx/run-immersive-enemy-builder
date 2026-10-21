@@ -106,13 +106,21 @@ if not _G.CreateFrame then return Window end
 local GOLD, DIM = "|cffefd488", "|cffb7a988"
 
 local f = CreateFrame("Frame", "RUNLedgerWindow", UIParent)
-f:SetSize(400, 500)
+f:SetSize(400, 560)
 f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
 f:SetFrameStrata("DIALOG")
 f:SetMovable(true)
 f:EnableMouse(true)
 f:SetClampedToScreen(true)
 f:Hide()
+
+-- drag ANYWHERE on the window (field report: title-bar-only felt broken)
+f:RegisterForDrag("LeftButton")
+f:SetScript("OnDragStart", function(self) self:StartMoving() end)
+f:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+-- ESC closes it like any panel (UISpecialFrames is the standard plain table)
+table.insert(_G.UISpecialFrames, "RUNLedgerWindow")
 
 local bg = f:CreateTexture(nil, "BACKGROUND")
 bg:SetAllPoints()
@@ -136,12 +144,16 @@ local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 title:SetPoint("TOP", 0, -9)
 title:SetText(GOLD .. "RUN - Account Ledger|r")
 
+-- the X: lives ABOVE the drag layer so clicks reach it (field bug: the title
+-- bar was eating them), with a generous hit box
 local close = CreateFrame("Button", nil, f)
-close:SetSize(22, 22)
-close:SetPoint("TOPRIGHT", -5, -5)
-local closeText = close:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+close:SetSize(28, 28)
+close:SetPoint("TOPRIGHT", -3, -3)
+close:SetFrameLevel(titleBar:GetFrameLevel() + 5)
+local closeText = close:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 closeText:SetPoint("CENTER")
 closeText:SetText("X")
+closeText:SetTextColor(1, 0.82, 0)
 close:SetScript("OnClick", function() f:Hide() end)
 close:SetScript("OnEnter", function() closeText:SetTextColor(1, 0.3, 0.3) end)
 close:SetScript("OnLeave", function() closeText:SetTextColor(1, 0.82, 0) end)
@@ -159,7 +171,7 @@ stats:SetSpacing(3)
 local OPTION_DEFS = RUN.Settings.defs   -- one list drives every options surface
 
 local optHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-optHeader:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 178)
+optHeader:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 232)
 optHeader:SetText(GOLD .. "Options|r")
 
 local checks = {}
@@ -168,7 +180,7 @@ for i, def in ipairs(OPTION_DEFS) do
     cb:SetSize(24, 24)
     local col = (i - 1) % 2
     local row = math.floor((i - 1) / 2)
-    cb:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 14 + col * 192, 170 - row * 26)
+    cb:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 14 + col * 192, 224 - row * 26)
     local label = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     label:SetPoint("LEFT", cb, "RIGHT", 2, 1)
     label:SetText(def.label)
@@ -203,7 +215,7 @@ local function buildStats()
         end
     end
     table.insert(lines, " ")
-    local top = Window.topKillers(db.deaths, 4)
+    local top = Window.topKillers(db.deaths, 3)
     table.insert(lines, GOLD .. "What killed us" .. "|r " .. DIM .. "(all characters)|r")
     if #top == 0 then
         table.insert(lines, DIM .. "  nothing yet. Long may it stay that way.|r")
@@ -217,7 +229,7 @@ local function buildStats()
     end
     table.insert(lines, " ")
     table.insert(lines, GOLD .. "Recent deaths|r")
-    local rec = Window.recent(db.deaths, 4)
+    local rec = Window.recent(db.deaths, 3)
     if #rec == 0 then
         table.insert(lines, DIM .. "  none recorded.|r")
     else
@@ -229,12 +241,30 @@ local function buildStats()
         end
     end
     table.insert(lines, " ")
+    table.insert(lines, GOLD .. "Giant Slayers|r " .. DIM .. "(solo wagers won)|r")
+    local slays, shown = db.slays, 0
+    if type(slays) == "table" then
+        for i = #slays, 1, -1 do
+            local e = slays[i]
+            if RUN.Devil.validSlay(e) then
+                shown = shown + 1
+                table.insert(lines, string.format("  %s beat %s at ~%d%% %s",
+                    e.who or "?", e.name or ("creature #" .. e.npc),
+                    math.floor((e.p or 0) * 100 + 0.5),
+                    DIM .. "(" .. (RUN.Devil.tierLabel(e.tier) or "wager"):lower() .. ")|r"))
+                if shown >= 2 then break end
+            end
+        end
+    end
+    if shown == 0 then table.insert(lines, DIM .. "  none yet - find bad odds and RISK IT.|r") end
+    table.insert(lines, " ")
     local total = 0
     for _, e in ipairs(db.deaths) do
         if RUN.Attribution.validEntry(e) then total = total + 1 end
     end
-    table.insert(lines, string.format("%sTotals|r  deaths recorded: %d  ·  deaths heard nearby: %d",
-        GOLD, total, RUN.Deathping.heardTotal()))
+    table.insert(lines, string.format(
+        "%sTotals|r  deaths: %d  ·  heard nearby: %d  ·  group wipes: %d",
+        GOLD, total, RUN.Deathping.heardTotal(), RUN.Wipes.total()))
     table.insert(lines, DIM .. "Everything above lives in your SavedVariables only.|r")
     return table.concat(lines, "\n")
 end

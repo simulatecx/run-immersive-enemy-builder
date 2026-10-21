@@ -42,7 +42,12 @@ killed, so I can fight or flee on good information.
   journal (CLEU buffer + env codes) shipped ahead of E because it is
   local-only. REMAINING: standalone nearest-threat frame; Foresight bridge
   live test; in-game verify sweep on Forever beta.
-- ☐ RUN-D Devil button + Giant Slayers (solo + tier gates; display+record only).
+- ◐ RUN-D Devil button + Giant Slayers (v0.7.0 LOCAL CORE): RISK IT button on
+  the odds frame (solo + odds<50%; GIANT SLAYER <25% / UNDERDOG 25-50%);
+  pure arm/resolve state machine (won on solo PARTY_KILL of the armed npc,
+  lost to its kill, abandoned on other-death/5-min expiry); wins recorded to
+  RUNDB.slays + gold banner + Ledger "Giant Slayers" section. REMAINING:
+  the crowd post (server-recomputed odds tier, opt-in named) with RUN-E.
 - ☐ RUN-E killcount crowd: `rareKills` schema + one-link share + Cloud Function
   rollup -> `rareKillCounts` (additive on the wow-foresight project), bake-back.
 - ☐ RUN-F two-sided web ladder (Deadliest Creatures + Giant Slayers).
@@ -109,7 +114,12 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
   creatures account-wide).
 
 ### Wave 3 - Guilds & raids
-- ☐ RUN-N Raid-wipe layer: WIPE DETECTION - in a party/raid, if >=80% of the
+- ◐ RUN-N Raid-wipe layer (v0.7.0 LOCAL CORE): wipe detection live -
+  ENCOUNTER_END success=0 (bosses) + group-death correlation (>=80% of the
+  group dead inside 20s via CLEU UNIT_DIED on roster GUIDs); counts in
+  RUNDB.wipes keyed npcID / "enc:<name>"; chat callout + Ledger total.
+  REMAINING: guild attribution + in-guild P2P + crowd k-of-n (privacy gate
+  unchanged). Original scope: WIPE DETECTION - in a party/raid, if >=80% of the
   group dies to the same encounter npc inside a T-second window, or
   ENCOUNTER_END fires with success=0 while the group is dead -> a WIPE event
   attributed to that creature. "X has killed Y raids" counter beside the
@@ -137,6 +147,18 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.7.0 (2026-10-19, private beta): TIER FRAMES + THE WAGER + WIPES CORE
+  (owner field-confirmed hearing deaths + level-ups before logging off; asks
+  shipped: tier unit frames, movable Ledger, working X). Panel rebuilt as the
+  NOTORIETY UNIT FRAME: tier-coloured border + TIER badge + earned-title
+  line for any titled target (new `tierFrames` toggle, independent of
+  expansiveStats); banners now tier-tinted. Ledger fixed: drag anywhere,
+  X above the drag layer w/ bigger hitbox, ESC closes (UISpecialFrames).
+  RUN-D local core: RISK IT wager (solo, <50%; pure state machine; wins to
+  RUNDB.slays + Ledger section + gold banner). RUN-N local core: wipe
+  detection (ENCOUNTER_END + 80%-in-20s correlation) -> RUNDB.wipes +
+  Ledger total. RUN-B still blocked on a wago.tools DB2 fetch (no creature
+  CSV in the Foresight cache). Gate: selftest 168/168 across 24 files.
 - v0.6.0 (2026-10-19, private beta): THE NEMESIS UPDATE - Hardcore parity +
   growing enemies, built while the owner was afk (directive: "all of it").
   NOTORIETY (RUN-M core): 10-tier ladder, deterministic earned titles
