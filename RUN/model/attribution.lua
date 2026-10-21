@@ -68,6 +68,16 @@ function Attribution.rankForKills(n)
     return nil
 end
 
+-- Pure: choose the killer - CLEU buffer pick first, else the Hardcore-style
+-- wound-time target snapshot if fresh (10s), else unknown. Returns entry, how.
+function Attribution.choose(hit, fb, now)
+    if hit then return hit, "cleu" end
+    if type(fb) == "table" and type(fb.t) == "number" and (now - fb.t) <= 10 then
+        return fb, "fallback"
+    end
+    return nil, "unknown"
+end
+
 -- How many times has npcID killed you (valid journal entries only)?
 function Attribution.killsBy(npcID)
     if not npcID then return 0 end
@@ -82,6 +92,10 @@ end
 if not _G.CreateFrame then return Attribution end
 
 local buffer = {}
+local woundTarget = nil   -- Hardcore-pattern fallback: target snapshot at wound time
+
+-- Diagnostics surfaced by /ra status: when attribution misses, these say why.
+Attribution.stats = { cleu = 0, mine = 0, secret = 0, fallbackUsed = 0, lastErr = nil }
 
 local function pushDamage(entry)
     entry.t = _G.GetTime and _G.GetTime() or 0
@@ -90,13 +104,22 @@ local function pushDamage(entry)
 end
 
 -- Rolling damage buffer from the combat log. Only damage TO the player matters.
-RUN.on("COMBAT_LOG_EVENT_UNFILTERED", function()
-    if not RUN.Settings.get("recordDeaths") then return end
+-- Secret-value law: on Forever, combat-log fields can be secret in restricted
+-- contexts - comparing a secret value ERRORS, so check before touching.
+local function onCleu()
+    local stats = Attribution.stats
+    stats.cleu = stats.cleu + 1
     local info = { _G.CombatLogGetCurrentEventInfo() }
     local subevent, sourceGUID, sourceName, destGUID = info[2], info[4], info[5], info[8]
+    local G = RUN.Guards
+    if G.isSecret(subevent) or G.isSecret(destGUID) or G.isSecret(sourceGUID) then
+        stats.secret = stats.secret + 1
+        return
+    end
     if type(subevent) ~= "string" or not subevent:find("_DAMAGE", 1, true) then return end
-    local myGUID = RUN.Guards.call(_G.UnitGUID, "player")
-    if destGUID ~= myGUID then return end
+    local myGUID = G.call(_G.UnitGUID, "player")
+    if not myGUID or destGUID ~= myGUID then return end
+    stats.mine = stats.mine + 1
     if subevent == "ENVIRONMENTAL_DAMAGE" then
         pushDamage({ env = info[12] })
     else
@@ -106,12 +129,36 @@ RUN.on("COMBAT_LOG_EVENT_UNFILTERED", function()
             npc = RUN.Detect.npcIdFromGUID(sourceGUID),
         })
     end
+end
+
+RUN.on("COMBAT_LOG_EVENT_UNFILTERED", function()
+    if not RUN.Settings.get("recordDeaths") then return end
+    local ok, err = pcall(onCleu)
+    if not ok then Attribution.stats.lastErr = tostring(err) end
+end)
+
+-- The fallback signal (proven by the Hardcore addon): when you take a hit,
+-- snapshot whatever you have targeted. If the combat-log path comes up empty
+-- at death, a fresh wound-time target claims the kill.
+RUN.on("UNIT_COMBAT", function(unit, action)
+    if unit ~= "player" or action ~= "WOUND" then return end
+    if not RUN.Settings.get("recordDeaths") then return end
+    local info = RUN.Detect.unitInfo("target")
+    if info and info.hostile and not info.isPlayer and not info.dead then
+        woundTarget = {
+            name = info.name, guid = info.guid, npc = info.npcID,
+            t = _G.GetTime and _G.GetTime() or 0,
+        }
+    end
 end)
 
 RUN.on("PLAYER_DEAD", function()
     if not RUN.Settings.get("recordDeaths") then return end
     local now = _G.GetTime and _G.GetTime() or 0
-    local hit = Attribution.pick(buffer, now)
+    local hit, how = Attribution.choose(Attribution.pick(buffer, now), woundTarget, now)
+    if how == "fallback" then
+        Attribution.stats.fallbackUsed = Attribution.stats.fallbackUsed + 1
+    end
     local db = RUN.db()
 
     local killer, npc

@@ -12,6 +12,11 @@ RUN.Guards = Guards
 
 local issecret = _G.issecretvalue or function() return false end
 
+-- Is this value secret in the current context? (Plain false headless.)
+function Guards.isSecret(v)
+    return issecret(v) and true or false
+end
+
 -- Returns the value if it is a plain readable number, else nil + "secret"/"missing".
 function Guards.number(v)
     if v == nil then return nil, "missing" end

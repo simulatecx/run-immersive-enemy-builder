@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.3.1"
+RUN.version = "0.3.2"
 
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;
@@ -110,6 +110,13 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
             .. " expansiveStats=" .. tostring(s.expansiveStats)
             .. " autoMark=" .. tostring(s.autoMark) .. " recordDeaths=" .. tostring(s.recordDeaths))
         RUN.print("Foresight bridge: " .. ((RUN.Bridge and RUN.Bridge.foresight()) and "connected" or "not present (coarse model)"))
+        local st = RUN.Attribution and RUN.Attribution.stats
+        if st then
+            RUN.print(string.format(
+                "attribution: %d combat-log events (%d damage to you, %d secret), fallback used %dx%s",
+                st.cleu, st.mine, st.secret, st.fallbackUsed,
+                st.lastErr and (" | last error: " .. st.lastErr) or ""))
+        end
     else
         RUN.print("RUN is automatic - these are just options: /ra set <flags|expansiveStats|autoMark|recordDeaths> <on/off>")
         RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | odds | mark | clear | deaths | status | selftest")
