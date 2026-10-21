@@ -172,6 +172,7 @@ RUN.on("PLAYER_DEAD", function()
         when = _G.time and _G.time() or 0,
         killer = killer,            -- nil = unknown (honest)
         npc = npc,
+        who = RUN.Guards.call(_G.UnitName, "player"),   -- RUNDB is account-wide; name the alt
         level = RUN.Guards.number(RUN.Guards.call(_G.UnitLevel, "player")),
         zone = RUN.Guards.call(_G.GetZoneText),
         mapID = RUN.Guards.call(_G.C_Map and _G.C_Map.GetBestMapForUnit, "player"),
@@ -194,7 +195,8 @@ function Attribution.printDeaths()
             shown = shown + 1
             local when = (_G.date and _G.date("%m/%d %H:%M", e.when)) or tostring(e.when)
             RUN.print(when .. " - " .. (e.killer or "unknown cause")
-                .. (e.level and (" (you were L" .. e.level .. ")") or "")
+                .. (e.who and (" [" .. e.who .. (e.level and (" L" .. e.level) or "") .. "]")
+                    or (e.level and (" (you were L" .. e.level .. ")") or ""))
                 .. (e.zone and (" - " .. e.zone) or ""))
             if shown >= 10 then break end
         end

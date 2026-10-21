@@ -56,6 +56,20 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 
 ## Shipped
 
+- v0.4.0 (2026-10-19, private beta): QUEST TARGETS + diagnostics + account-wide
+  polish. (1) `model/quests.lua`: reads the player's own quest-log monster
+  objectives (debounced on QUEST_LOG_UPDATE), extracts EXACT mob names from
+  the "X slain: n/m" shape (boundary-prefix fallback for other formats);
+  quest-named enemies (the Bruuz case) get a gold "Quest target - <quest>"
+  tooltip line and ping as QUEST TARGET NEARBY regardless of classification
+  (`pingQuest`, default on; quest gate outranks tier gates). (2) Panel
+  diagnostics after the field report that expansiveStats "did nothing":
+  showFor errors now captured to Panel.lastErr (surfaced in status), and
+  `/ra panel` force-shows a dummy card to split frame-render vs data-path
+  failures. (3) Account-wide confirmed: RUNDB is account-level SavedVariables
+  by construction - deaths/ranks already stack across alts; journal entries
+  now stamp the character name. Field confirms this session: attribution
+  fallback worked (Sunscale Screecher named). Gate: selftest 108/108.
 - v0.3.1 (2026-10-19, private beta): TIERED nearby pings (owner ask: all-enemy
   sensing for testability + per-group options). `Detect.tierOf` groups
   classifications - normal/trivial/minus = "normal", elite = "elite",

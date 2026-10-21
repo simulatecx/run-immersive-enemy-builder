@@ -182,6 +182,27 @@ function RUN.selftest()
     check("gate elite -> pingElite", RUN.Nearby.settingFor("elite") == "pingElite")
     check("gate rare -> pingUnique", RUN.Nearby.settingFor("rare") == "pingUnique"
         and RUN.Nearby.settingFor("worldboss") == "pingUnique")
+    check("gate quest overrides tier", RUN.Nearby.gateFor({ quest = "Bruuz Must Die",
+        classification = "normal" }) == "pingQuest")
+    check("gate no quest falls through", RUN.Nearby.gateFor({ classification = "elite" })
+        == "pingElite")
+    check("title quest target", RUN.Nearby.bannerTitle({ quest = "x",
+        classification = "normal" }) == "QUEST TARGET NEARBY")
+
+    -- ---- quest targets (pure matcher) ----
+    local Q = RUN.Quests
+    Q.setTargets({ { text = "Bruuz slain: 0/1", title = "Bruuz Must Die" },
+                   { text = "Sunscale Screecher slain: 3/8", title = "Screechers" } })
+    check("quest target prefix match", Q.isTarget("Bruuz") == "Bruuz Must Die")
+    check("quest target case-insensitive", Q.isTarget("bruuz") == "Bruuz Must Die")
+    check("quest target multiword", Q.isTarget("Sunscale Screecher") == "Screechers")
+    check("quest non-target nil", Q.isTarget("Plainstrider") == nil)
+    check("quest partial word no match", Q.isTarget("Sunscale") == nil
+        and Q.isTarget("Sun") == nil and Q.isTarget("Bru") == nil)
+    check("quest nil-safe", Q.isTarget(nil) == nil and Q.isTarget("") == nil)
+    check("quest count", Q.targetCount() == 2)
+    Q.setTargets({})
+    check("quest cleared", Q.isTarget("Bruuz") == nil and Q.targetCount() == 0)
     check("nearby rankline none", RUN.Nearby.rankLine(0, 0) == "no recorded kills yet")
     check("nearby rankline kills+heard", RUN.Nearby.rankLine(2, 3)
         == "Deadly - killed you 2x + 3 deaths heard")

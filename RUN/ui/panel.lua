@@ -81,7 +81,7 @@ local function crowdLine(c)
     return "crowd killcount arrives with the crowd wave"
 end
 
-function Panel.showFor(unit)
+local function renderFor(unit)
     local v = Odds.forUnit(unit)
     if not v then Panel.hide() return end
     local c = v.creature
@@ -105,6 +105,35 @@ function Panel.showFor(unit)
     f:Show()
 
     RUN.Waypoint.autoMarkFor(c)
+end
+
+-- Public wrapper: a silent error here cost us a field bug once - never again.
+-- Failures are captured to Panel.lastErr and surfaced by /ra status + /ra panel.
+function Panel.showFor(unit)
+    local ok, err = pcall(renderFor, unit)
+    if not ok then
+        Panel.lastErr = tostring(err)
+        f:Hide()
+    end
+end
+
+-- Force-show with dummy data: splits "frame doesn't render" from "odds path
+-- returned nothing" in one look.
+function Panel.test()
+    title:SetText("RUN panel self-check")
+    sub:SetText("Level 13 rare")
+    band:SetText("RISKY")
+    band:SetTextColor(Odds.bandColor("RISKY"))
+    pct:SetText("~52% to win (p)")
+    foot:SetText("frame renders fine - if live odds never show, it is the data path")
+    anchor()
+    f:Show()
+    if _G.C_Timer and _G.C_Timer.After then
+        _G.C_Timer.After(6, function() Panel.update() end)
+    end
+    RUN.print("panel self-check shown (6s). "
+        .. (Panel.lastErr and ("last panel error: " .. Panel.lastErr) or "no recorded panel errors.")
+        .. " Reminder: the live panel needs expansiveStats on AND a hostile target.")
 end
 
 function Panel.hide() f:Hide() end

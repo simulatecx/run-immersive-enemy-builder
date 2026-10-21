@@ -71,6 +71,13 @@ local function inject(tooltip)
         tooltip:AddLine("RUN: " .. line, c.r, c.g, c.b)
     end
 
+    -- quest-named enemies flag regardless of classification (the Bruuz case)
+    local questTitle = RUN.Quests and RUN.Quests.isTarget(info.name)
+    if questTitle then
+        local label = questTitle ~= "" and ("Quest target - " .. questTitle) or "Quest target"
+        tooltip:AddLine("RUN: " .. label, 1.0, 0.82, 0.0)
+    end
+
     -- Expansive Enemy Stats: your chances vs this enemy, right on the tooltip.
     if RUN.Settings.get("expansiveStats") and not info.dead then
         local v = RUN.Odds.forUnit(unit)

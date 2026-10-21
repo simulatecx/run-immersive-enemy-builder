@@ -42,6 +42,18 @@ function Nearby.settingFor(classification)
     return "pingNormal"
 end
 
+-- Pure: gate + title for a full info table (quest targets outrank their
+-- classification - a "normal" Bruuz pings as a quest target).
+function Nearby.gateFor(info)
+    if info and info.quest then return "pingQuest" end
+    return Nearby.settingFor(info and info.classification)
+end
+
+function Nearby.bannerTitle(info)
+    if info and info.quest then return "QUEST TARGET NEARBY" end
+    return Nearby.titleFor(info and info.classification)
+end
+
 if not _G.CreateFrame then return Nearby end
 
 local Guards = RUN.Guards
@@ -57,13 +69,16 @@ end
 
 function Nearby.ping(info, mapID, x, y)
     if not RUN.Settings.get("nearbyPing") then return end
-    if not RUN.Settings.get(Nearby.settingFor(info.classification)) then return end
+    if not RUN.Settings.get(Nearby.gateFor(info)) then return end
     if alreadyPinged(info.guid or info.npcID) then return end
 
     local kills = RUN.Attribution.killsBy(info.npcID)
     local heard = RUN.Deathping.heardBy(info.npcID)
     local line = Nearby.rankLine(kills, heard)
-    local title = Nearby.titleFor(info.classification)
+    if info.quest and info.quest ~= "" then
+        line = "for " .. info.quest .. " - " .. line
+    end
+    local title = Nearby.bannerTitle(info)
 
     RUN.Alert.show(title .. ": " .. tostring(info.name or "Unknown"), line)
     RUN.print(title:lower() .. ": " .. tostring(info.name or "Unknown") .. " - " .. line)
@@ -85,6 +100,7 @@ RUN.on("NAME_PLATE_UNIT_ADDED", function(unit)
     if not RUN.Settings.get("nearbyPing") then return end
     local info = RUN.Detect.unitInfo(unit)
     if info and info.hostile and not info.dead and not info.isPlayer then
+        info.quest = RUN.Quests.isTarget(info.name)
         Nearby.ping(info)
     end
 end)

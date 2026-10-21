@@ -2,7 +2,7 @@
 ## Title: RUN
 ## Notes: Fight it or run? Live combat odds for the enemy in front of you - and the sense to flee - on WoW: Forever.
 ## Author: SimulateCX
-## Version: 0.3.2
+## Version: 0.4.0
 ## SavedVariables: RUNDB
 ## IconTexture: Interface\Icons\Ability_Rogue_Sprint
 ## X-License: All Rights Reserved
@@ -18,6 +18,7 @@ model\detect.lua
 model\odds.lua
 model\attribution.lua
 model\deathping.lua
+model\quests.lua
 ui\waypoint.lua
 ui\alert.lua
 ui\tooltip.lua

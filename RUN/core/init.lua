@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.3.2"
+RUN.version = "0.4.0"
 
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;
@@ -84,8 +84,10 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
     local cmd, rest = input:match("^%s*(%S*)%s*(.-)%s*$")
     cmd = (cmd or ""):lower()
 
-    if cmd == "" or cmd == "panel" then
+    if cmd == "" then
         if RUN.Panel then RUN.Panel.toggle() end
+    elseif cmd == "panel" then
+        if RUN.Panel then RUN.Panel.test() end
     elseif cmd == "odds" then
         if RUN.Panel then RUN.Panel.printOdds() end
     elseif cmd == "mark" then
@@ -116,6 +118,12 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
                 "attribution: %d combat-log events (%d damage to you, %d secret), fallback used %dx%s",
                 st.cleu, st.mine, st.secret, st.fallbackUsed,
                 st.lastErr and (" | last error: " .. st.lastErr) or ""))
+        end
+        if RUN.Panel and RUN.Panel.lastErr then
+            RUN.print("panel last error: " .. RUN.Panel.lastErr)
+        end
+        if RUN.Quests then
+            RUN.print("quest targets tracked: " .. RUN.Quests.targetCount())
         end
     else
         RUN.print("RUN is automatic - these are just options: /ra set <flags|expansiveStats|autoMark|recordDeaths> <on/off>")
