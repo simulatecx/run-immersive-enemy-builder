@@ -19,6 +19,7 @@ Settings.defaults = {
     pingUnique = true,       -- nearby ping for rares, rare elites and bosses
     pingQuest = true,        -- nearby ping for named QUEST targets (Bruuz etc.), any classification
     shareDeaths = true,      -- in-game anonymous death-ping to other RUN users (no name; opt-out)
+    minimapButton = true,    -- the minimap button (opens the Account Ledger / options)
 }
 
 local function store()

@@ -54,8 +54,81 @@ killed, so I can fight or flee on good information.
 LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 2026-11-04; Hardcore kickoff ~2026-12-04 triggers the RUN-G seasonal reset.
 
+## The expansion plan (owner directive 2026-10-19: "match Hardcore, then grow
+## the enemy stats - categories, guilds, raid wipes - we will build it all")
+
+### Wave 1 - Hardcore-addon parity (the social death layer)
+- ☐ RUN-I Social death layer: heard-death ENTRIES journal (not just per-npc
+  counts; capped FIFO like Hardcore's 1000), eulogy display toggle - show the
+  fallen's character name on heard pings (DEFAULT OFF; honesty note: addon
+  messages inherently expose the sender's char name at transport level, this
+  is display-only), LAST WORDS capture + broadcast (opt-in; the player's final
+  chat line rides the next death-ping), heard-death BANNER alerts for
+  unique-tier creatures ("Snagglefang has claimed another victim"), all
+  surfaced in the Account Ledger.
+- ☐ RUN-J Trust layer: k-of-n ack echoes over the RUNDP prefix (Hardcore's
+  proven k=3, Fletcher16): heard entries marked unverified -> corroborated;
+  only corroborated entries feed ranks shown as fact. Per-sender rate caps
+  already shipped (v0.3.0).
+- ☐ RUN-K Death discipline: resurrection tracking (PLAYER_ALIVE /
+  PLAYER_UNGHOST) -> first-death-only counting for hardcore mode (a
+  graveyard-zerg must not inflate a mob's count); MODE DETECTION probe
+  (C_GameRules.IsHardcoreActive / Forever equivalent, verified in-game) ->
+  every journal entry + ping + future crowd payload carries mode pve/pvp/hc.
+- ☐ RUN-L QoL parity: Blizzard ESC->Options Settings category (pcall-guarded;
+  the Ledger stays canonical), version handshake over the addon prefix
+  ("a newer RUN was seen - update" notice, key for waitlist zips), optional
+  LDB broker. (Ledger window + minimap button SHIPPED v0.5.0.)
+
+### Wave 2 - Growing enemy stats (the centerpiece)
+- ☐ RUN-M Notoriety system: creatures live in CATEGORIES (tier normal/elite/
+  unique + quest-named now; zone + dungeon/raid-boss classes once the rares/
+  bosses DB bakes) with PER-CATEGORY thresholds - 100 kills on a normal mob
+  means more than 100 on a raid boss. Extended ladder: Blooded 1 / Dangerous
+  2+ / Deadly 5+ / Infamous 10+ / **Notorious 25+ / Legendary 100+** ->
+  displayed as "X has killed ~100 players". Counts blend three sources with
+  honest labels: your journal (fact) + corroborated heard (live) + the baked
+  server-verified crowd count (durable, RUN-E). Surfaces: tooltip rank line,
+  nearby banner, and a "Most Wanted" board in the Ledger (top notoriety
+  creatures account-wide).
+
+### Wave 3 - Guilds & raids
+- ☐ RUN-N Raid-wipe layer: WIPE DETECTION - in a party/raid, if >=80% of the
+  group dies to the same encounter npc inside a T-second window, or
+  ENCOUNTER_END fires with success=0 while the group is dead -> a WIPE event
+  attributed to that creature. "X has killed Y raids" counter beside the
+  player killcount; guild attribution (raid-majority guild) -> a local/
+  in-guild "Guild G has wiped N times to X" ledger. RAID-WIPE CHECKS
+  (anti-spoof): ENCOUNTER_START/END cross-check, boss-npc plausibility vs the
+  DB, and server-side k-of-n - multiple distinct clientIds reporting the same
+  wipe window - before a wipe counts publicly. PRIVACY GATE: `guild` is on
+  the crowd FORBIDDEN list today; public guild ladders require a NEW opt-in
+  identifying tier (chosen guild tag, consent-gated - ideally raid-lead
+  opt-in) added via the generated allow-list ONLY. Until then guild wipe
+  stats stay local + in-guild P2P.
+
+### Wave 4 - the Hardcore Classic fork
+- ☐ RUN-O Platform adapter + fork: `core/platform.lua` shimming the classic
+  quest-log API, vignettes absent (already optional), TOC multi-flavor
+  packaging (`_classic_era_` interface), era HC-realm detection; then the
+  fork ships the SAME social layer where it matters most. Explicitly NOT
+  ported: Hardcore's rules enforcement / achievements / appeals - different
+  product, theirs.
+
+Build order: I -> J -> K -> M -> L -> N -> O, with the crowd phases (RUN-E
+killcount backend, RUN-F ladder) interleaving once the waitlist/Firebase work
+starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
+
 ## Shipped
 
+- v0.5.0 (2026-10-19, private beta): the ACCOUNT LEDGER + minimap button.
+  `ui/window.lua`: movable window - "What killed us" (account-wide top
+  killers w/ counts + last victim), recent deaths (character-stamped),
+  totals (recorded + heard), and the OPTIONS menu: every toggle as a
+  checkbox (11 keys incl. new `minimapButton`). `ui/minimap.lua`: standard
+  ring button (drag-to-move, angle persisted in RUNDB.ui), click opens the
+  Ledger. `/ra log|stats|options` aliases; status now shows the death-ping
+  channel state (joined/not). Gate: selftest 116/116.
 - v0.4.0 (2026-10-19, private beta): QUEST TARGETS + diagnostics + account-wide
   polish. (1) `model/quests.lua`: reads the player's own quest-log monster
   objectives (debounced on QUEST_LOG_UPDATE), extracts EXACT mob names from

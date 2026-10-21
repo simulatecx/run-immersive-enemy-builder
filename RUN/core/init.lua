@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.4.0"
+RUN.version = "0.5.0"
 
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;
@@ -18,6 +18,7 @@ function RUN.initSavedVariables()
     db.version = RUN.version
     if type(db.deaths) ~= "table" then db.deaths = {} end
     if type(db.settings) ~= "table" then db.settings = {} end
+    if type(db.ui) ~= "table" then db.ui = {} end
     -- deaths entries are re-validated at read time by model/attribution.lua
     return db
 end
@@ -96,6 +97,8 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
         if RUN.Waypoint then RUN.Waypoint.clear() end
     elseif cmd == "deaths" then
         if RUN.Attribution then RUN.Attribution.printDeaths() end
+    elseif cmd == "log" or cmd == "stats" or cmd == "options" then
+        if RUN.Window then RUN.Window.toggle() end
     elseif cmd == "set" then
         if RUN.Settings then RUN.Settings.slashSet(rest) end
     elseif cmd == "selftest" then
@@ -125,8 +128,12 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
         if RUN.Quests then
             RUN.print("quest targets tracked: " .. RUN.Quests.targetCount())
         end
+        if RUN.Deathping and RUN.Deathping.channelJoined then
+            RUN.print("death-ping channel: "
+                .. (RUN.Deathping.channelJoined() and "joined (rundeathping)" or "not joined yet"))
+        end
     else
-        RUN.print("RUN is automatic - these are just options: /ra set <flags|expansiveStats|autoMark|recordDeaths> <on/off>")
-        RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | odds | mark | clear | deaths | status | selftest")
+        RUN.print("RUN is automatic - the minimap button (or /ra log) opens the Account Ledger & options.")
+        RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | log | panel | odds | mark | clear | deaths | set <key> <on/off> | status | selftest")
     end
 end

@@ -166,6 +166,42 @@ function RUN.selftest()
         return n == 2
     end)())
     check("heard nil npc -> 0", DP.heardBy(nil) == 0)
+    check("heard total sums", (function()
+        local db = RUN.db()
+        local saved = db.heard
+        db.heard = { [448] = 2, [3113] = 3, bad = "junk" }
+        local t = DP.heardTotal()
+        db.heard = saved
+        return t == 5
+    end)())
+
+    -- ---- the Account Ledger (pure aggregation) ----
+    local W = RUN.Window
+    local journal = {
+        { when = 1, killer = "Hogger", npc = 448, who = "Alta", zone = "Elwynn" },
+        { when = 2, killer = "Hogger", npc = 448, who = "Beta", zone = "Elwynn" },
+        { when = 3, killer = "a fall" },
+        { when = 4, killer = "Bruuz", npc = 3113, who = "Alta", zone = "Barrens" },
+        { when = "tampered" },
+        { when = 5 },  -- unknown cause: valid entry, no killer - excluded from top list
+    }
+    check("ledger top killers sorted", (function()
+        local top = W.topKillers(journal, 5)
+        return #top == 3 and top[1].name == "Hogger" and top[1].count == 2
+            and top[1].lastWho == "Beta"
+    end)())
+    check("ledger top respects cap", #W.topKillers(journal, 1) == 1)
+    check("ledger top empty-safe", #W.topKillers(nil, 5) == 0)
+    check("ledger recent newest first", (function()
+        local rec = W.recent(journal, 3)
+        return #rec == 3 and rec[1].when == 5 and rec[2].when == 4
+    end)())
+    check("ledger recent skips invalid", (function()
+        for _, e in ipairs(W.recent(journal, 10)) do
+            if e.when == "tampered" then return false end
+        end
+        return true
+    end)())
 
     -- ---- nearby ping: tiers, titles, gates, rank line ----
     check("tier normal", D.tierOf("normal") == "normal" and D.tierOf("trivial") == "normal")
@@ -220,6 +256,8 @@ function RUN.selftest()
     check("settings default pingElite on", S.get("pingElite") == true)
     check("settings default pingUnique on", S.get("pingUnique") == true)
     check("settings default shareDeaths on", S.get("shareDeaths") == true)
+    check("settings default minimapButton on", S.get("minimapButton") == true)
+    check("settings default pingQuest on", S.get("pingQuest") == true)
     check("settings unknown key nil", S.get("nope") == nil)
     check("settings set/get", (function()
         local before = S.get("autoMark")

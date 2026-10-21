@@ -85,6 +85,17 @@ function Deathping.recordHeard(npc)
     db.heard[npc] = Deathping.heardBy(npc) + 1
 end
 
+-- Total deaths heard across all creatures (the Ledger's tally).
+function Deathping.heardTotal()
+    local db = RUN.db()
+    if type(db.heard) ~= "table" then return 0 end
+    local total = 0
+    for _, n in pairs(db.heard) do
+        if type(n) == "number" and n > 0 then total = total + n end
+    end
+    return total
+end
+
 -- Everything below wires the client.
 if not _G.CreateFrame then return Deathping end
 
@@ -107,6 +118,11 @@ local function joinChannel()
     if _G.JoinTemporaryChannel then
         pcall(_G.JoinTemporaryChannel, CHANNEL, CHANNEL_PW)
     end
+end
+
+-- Surfaced by /ra status and the Ledger.
+function Deathping.channelJoined()
+    return channelIndex() ~= nil
 end
 
 RUN.on("PLAYER_LOGIN", function()
