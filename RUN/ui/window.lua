@@ -130,9 +130,59 @@ function Window.heardPage(log, page, per)
     return out, page, pages, #valid
 end
 
+-- Pure: the guild wipe record for ONE guild (RUNDB.guildWipes shape - user-
+-- editable SavedVariables, every layer validated). Returns { total, worstKey,
+-- worstCount } or nil when there is nothing to show (graceful-empty). Keys
+-- match RUNDB.wipes: npcID (number) or "enc:<name>"; ties on worst break
+-- deterministically by key string.
+function Window.guildSummary(guildWipes, guildName)
+    if type(guildWipes) ~= "table" then return nil end
+    if type(guildName) ~= "string" or guildName == "" then return nil end
+    local tally = guildWipes[guildName]
+    if type(tally) ~= "table" then return nil end
+    local total, worstKey, worstCount = 0, nil, 0
+    for key, n in pairs(tally) do
+        local validKey = (type(key) == "number" and key >= 1)
+            or (type(key) == "string" and key:match("^enc:.") ~= nil)
+        if validKey and type(n) == "number" and n > 0 then
+            total = total + n
+            if n > worstCount
+                or (n == worstCount and tostring(key) < tostring(worstKey)) then
+                worstKey, worstCount = key, n
+            end
+        end
+    end
+    if total == 0 then return nil end
+    return { total = total, worstKey = worstKey, worstCount = worstCount }
+end
+
 -- ---------------------------------------------------------------------------
 -- Package-registered selftests (pure; run headless AND in-game).
 -- ---------------------------------------------------------------------------
+table.insert(RUN.selftestChecks, function(check)
+    local store = {
+        Alpha = { [448] = 3, ["enc:Hogger"] = 5, [3113] = 1,
+                  bad = 9, [99] = "junk", ["enc:"] = 7 },
+        Beta = "tampered",
+        Empty = {},
+    }
+    check("guild summary totals + worst", (function()
+        local s = Window.guildSummary(store, "Alpha")
+        return s and s.total == 9 and s.worstKey == "enc:Hogger" and s.worstCount == 5
+    end)())
+    check("guild summary graceful-empty",
+        Window.guildSummary(store, "Nobody") == nil
+        and Window.guildSummary(store, "Beta") == nil
+        and Window.guildSummary(store, "Empty") == nil
+        and Window.guildSummary(nil, "Alpha") == nil
+        and Window.guildSummary(store, nil) == nil
+        and Window.guildSummary(store, "") == nil)
+    check("guild summary worst tie deterministic", (function()
+        local s = Window.guildSummary({ G = { [500] = 2, [200] = 2 } }, "G")
+        return s and s.total == 4 and s.worstKey == 200 and s.worstCount == 2
+    end)())
+end)
+
 table.insert(RUN.selftestChecks, function(check)
     local log = {}
     for i = 1, 30 do
@@ -448,6 +498,17 @@ local function buildStats()
     table.insert(lines, string.format(
         "%sTotals|r  deaths: %d  ·  heard nearby: %d  ·  group wipes: %d",
         GOLD, total, RUN.Deathping.heardTotal(), RUN.Wipes.total()))
+    -- the guild record (LOCAL + in-guild P2P only; graceful-empty)
+    local myGuild = RUN.Guards.call(_G.GetGuildInfo, "player")
+    local gsum = (type(myGuild) == "string")
+        and Window.guildSummary(db.guildWipes, myGuild) or nil
+    if gsum then
+        table.insert(lines, string.format(
+            "%sGuild record:|r %s wiped %d time%s %s",
+            GOLD, myGuild:gsub("|", ""), gsum.total, gsum.total == 1 and "" or "s",
+            DIM .. "(worst: " .. RUN.Deathping.wipeKeyName(gsum.worstKey):gsub("|", "")
+                .. " x" .. gsum.worstCount .. ")|r"))
+    end
     table.insert(lines, DIM .. "Everything above lives in your SavedVariables only.|r")
     return table.concat(lines, "\n")
 end

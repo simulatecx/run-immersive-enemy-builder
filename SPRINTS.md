@@ -159,6 +159,28 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.0 (2026-10-21, private beta): THE FLEET BUILD - six agents, two waves,
+  everything on the board (owner: "build everything"). WAVE 1: [WP-A] Classic
+  Era fork - era-aware quest log (presence-detected), RUN_Vanilla.toc 11508,
+  dual-TOC gate, era deploy target, docs/ERA.md. [WP-B] crowd backend -
+  data/rare-kills-schema.json single-source -> generated addon/rules/web
+  mirrors (drift gate in run_tests), /ra share one-link, functions-run
+  rareKillsOnWrite (slay tier recompute, k-of-n sighting names, MIN_BUCKET,
+  rate limits; EMULATOR 40/40), fetch_counts bake -> notoriety crowd blend;
+  marketing repo additive: functions/rareKills.js + rules blocks (rareKills/
+  rareKillCounts/giantSlayers/runWaitlist). [WP-C] web - armory "The
+  Deadliest" boards (ported title hash), web/run.html waitlist+contribute
+  receiver, marketing-site/run.html teaser, privacy RUN section. [WP-E]
+  Ledger heard-log browser page, strictTrust, nameplate one-click prompt,
+  /ra diag. WAVE 2: [WP-F] guild layer - majorityGuild attribution,
+  RUNDB.guildWipes, RWP1 in-guild wipe ping (GUILD-only, frozen format),
+  Ledger guild record line. [WP-G] seasons - RUN.season constant through
+  every share stamp, pipeline/season_archive.py (non-destructive, dry-run/
+  backup/read-back), docs/SEASONS.md doctrine. INTEGRATION: Vanilla TOC sync
+  law, devil slays carry snap+mode (server-recomputable), BOM-tolerant TOCs,
+  guildWipes init. Gate: compliance green, BOTH flavors selftest 239/239.
+  OWNER-GATED to go live: firebase deploy (rules then function), waitlist
+  open, season archive execution, era + Forever field verification.
 - v0.7.1 (2026-10-19, private beta): THE SIGHTINGS HARVEST + the DB2 verdict.
   Attempted RUN-B via wago.tools Creature.db2 -> PLATFORM FACT: the client
   table is hotfix-sparse (11 KB, zero world creatures; names are server-

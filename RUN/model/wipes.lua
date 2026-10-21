@@ -49,6 +49,99 @@ function Wipes.total()
     return t
 end
 
+-- ---------------------------------------------------------------------------
+-- Guild attribution (PRIVACY LAW: guild data stays LOCAL + in-guild P2P only;
+-- `guild` is FORBIDDEN in any crowd/Firebase payload).
+-- ---------------------------------------------------------------------------
+
+-- Pure: the raid-majority guild. names = dense list, one entry per group
+-- member: guild-name string, or false/anything-else for the unguilded.
+-- A guild is THE majority when it covers >=50% of the whole group; an exact
+-- two-guild tie is ambiguous and attributes to nobody.
+function Wipes.majorityGuild(names)
+    if type(names) ~= "table" then return nil end
+    local total = #names
+    if total < 2 then return nil end
+    local counts, best, bestN, tied = {}, nil, 0, false
+    for i = 1, total do
+        local g = names[i]
+        if type(g) == "string" and g ~= "" then
+            counts[g] = (counts[g] or 0) + 1
+            if counts[g] > bestN then
+                best, bestN, tied = g, counts[g], false
+            elseif counts[g] == bestN and g ~= best then
+                tied = true
+            end
+        end
+    end
+    if not best or tied or bestN * 2 < total then return nil end
+    return best
+end
+
+-- Pure: bump store[guild][key] (store = RUNDB.guildWipes shape - user-editable
+-- SavedVariables, so every layer is validated/rebuilt). key matches RUNDB.wipes
+-- keys: npcID (number >= 1) or "enc:<name>". Returns the new count, or nil
+-- when the inputs are unusable.
+function Wipes.recordGuildWipe(store, guild, key)
+    if type(store) ~= "table" then return nil end
+    if type(guild) ~= "string" or guild == "" then return nil end
+    local validKey = (type(key) == "number" and key >= 1)
+        or (type(key) == "string" and key:match("^enc:.") ~= nil)
+    if not validKey then return nil end
+    if type(store[guild]) ~= "table" then store[guild] = {} end
+    local n = store[guild][key]
+    n = (type(n) == "number" and n >= 0) and n or 0
+    store[guild][key] = n + 1
+    return n + 1
+end
+
+-- ---------------------------------------------------------------------------
+-- Package-registered selftests (pure; run headless AND in-game).
+-- ---------------------------------------------------------------------------
+table.insert(RUN.selftestChecks, function(check)
+    local MG = Wipes.majorityGuild
+    check("majority guild clear winner",
+        MG({ "Alpha", "Alpha", "Alpha", "Beta", false }) == "Alpha")
+    check("majority guild at exactly half",
+        MG({ "Alpha", "Alpha", false, false }) == "Alpha")
+    check("majority guild below half -> nil",
+        MG({ "Alpha", "Alpha", false, false, false }) == nil)
+    check("majority guild two-way tie -> nil",
+        MG({ "Alpha", "Alpha", "Beta", "Beta" }) == nil)
+    check("majority guild tie broken by count",
+        MG({ "Alpha", "Beta", "Alpha" }) == "Alpha")
+    check("majority guild all unguilded -> nil", MG({ false, false, false }) == nil)
+    check("majority guild garbage tolerated",
+        MG(nil) == nil and MG("junk") == nil and MG({}) == nil and MG({ "Solo" }) == nil
+        and MG({ 7, true, "Alpha", "Alpha" }) == "Alpha")
+
+    local store = {}
+    check("guild wipe record counts", (function()
+        local a = Wipes.recordGuildWipe(store, "Alpha", 448)
+        local b = Wipes.recordGuildWipe(store, "Alpha", 448)
+        local c = Wipes.recordGuildWipe(store, "Alpha", "enc:Hogger")
+        local d = Wipes.recordGuildWipe(store, "Beta", 448)
+        return a == 1 and b == 2 and c == 1 and d == 1
+            and store.Alpha[448] == 2 and store.Alpha["enc:Hogger"] == 1
+            and store.Beta[448] == 1
+    end)())
+    check("guild wipe record validates inputs",
+        Wipes.recordGuildWipe(nil, "Alpha", 448) == nil
+        and Wipes.recordGuildWipe(store, nil, 448) == nil
+        and Wipes.recordGuildWipe(store, "", 448) == nil
+        and Wipes.recordGuildWipe(store, "Alpha", 0) == nil
+        and Wipes.recordGuildWipe(store, "Alpha", "enc:") == nil
+        and Wipes.recordGuildWipe(store, "Alpha", "notakey") == nil
+        and Wipes.recordGuildWipe(store, "Alpha", nil) == nil)
+    check("guild wipe record heals tampered store", (function()
+        local s = { Alpha = "junk" }
+        local a = Wipes.recordGuildWipe(s, "Alpha", 448)
+        local s2 = { Alpha = { [448] = "junk" } }
+        local b = Wipes.recordGuildWipe(s2, "Alpha", 448)
+        return a == 1 and b == 1 and s.Alpha[448] == 1 and s2.Alpha[448] == 1
+    end)())
+end)
+
 -- Everything below wires the client.
 if not _G.CreateFrame then return Wipes end
 
@@ -72,10 +165,49 @@ local function inMyGroup(guid)
     return false
 end
 
+-- Roster guild names, one dense entry per member (false = unguilded). In a
+-- raid, raid1..N includes the player; in a party, party1..4 does not.
+local function rosterGuilds()
+    local names = {}
+    local count = rosterSize()
+    local function push(unit)
+        if Guards.call(_G.UnitExists, unit) then
+            local g = Guards.call(_G.GetGuildInfo, unit)
+            table.insert(names, (type(g) == "string" and g ~= "") and g or false)
+        end
+    end
+    if Guards.call(_G.IsInRaid) then
+        for i = 1, math.min(count, 40) do push("raid" .. i) end
+    else
+        push("player")
+        for i = 1, math.min(count - 1, 4) do push("party" .. i) end
+    end
+    return names
+end
+
+-- Every wipe lands here: the account tally always; when the group is a
+-- majority-guild group, the LOCAL guild tally too, and - only when that
+-- majority guild is OUR OWN - the in-guild RWP1 ping (receivers resolve
+-- their own guild, so pinging about another guild's group would lie).
+local function recordGroupWipe(key, size)
+    local n = Wipes.record(key)
+    local guild = Wipes.majorityGuild(rosterGuilds())
+    if guild then
+        local db = RUN.db()
+        if type(db.guildWipes) ~= "table" then db.guildWipes = {} end
+        Wipes.recordGuildWipe(db.guildWipes, guild, key)
+        local mine = Guards.call(_G.GetGuildInfo, "player")
+        if mine == guild and RUN.Deathping and RUN.Deathping.sendWipePing then
+            RUN.Deathping.sendWipePing(key, size)
+        end
+    end
+    return n
+end
+
 -- Boss encounters say it plainly.
 RUN.on("ENCOUNTER_END", function(_, encounterName, _, groupSize, success)
     if success == 0 and (tonumber(groupSize) or 0) >= 2 then
-        local n = Wipes.record("enc:" .. tostring(encounterName))
+        local n = recordGroupWipe("enc:" .. tostring(encounterName), tonumber(groupSize))
         RUN.print(tostring(encounterName) .. " has wiped your group - "
             .. n .. " wipe" .. (n == 1 and "" or "s") .. " on the account record.")
     end
@@ -98,7 +230,7 @@ RUN.on("COMBAT_LOG_EVENT_UNFILTERED", function()
             local last = RUN.Attribution.lastDeath
             local key = (last and last.npc) or nil
             if key then
-                local n = Wipes.record(key)
+                local n = recordGroupWipe(key, rosterSize())
                 RUN.print(RUN.Deathping.npcName(key) .. " has wiped your group - "
                     .. n .. " on the account record.")
             end

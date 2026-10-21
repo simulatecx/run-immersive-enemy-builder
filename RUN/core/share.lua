@@ -15,9 +15,16 @@ if not RUN then RUN = _G.RunAdvisor or {}; _G.RunAdvisor = RUN end
 local Share = {}
 RUN.Share = Share
 
--- Season tag rides every event; the season model (WP-G) replaces this constant
--- at the Hardcore-kickoff reset.
-Share.SEASON = "s0"
+-- Season tag rides every event. The ONE constant lives in core/init.lua
+-- (RUN.season - flipped at the Hardcore-kickoff reset per docs/SEASONS.md);
+-- share.lua only READS it, through this clamp: a valid tag passes verbatim,
+-- anything off-shape (tampered SavedVariables cannot reach it, but a bad edit
+-- could) falls back to "s0" rather than erroring or stamping junk.
+function Share.season()
+    local s = RUN.season
+    if type(s) == "string" and #s <= 8 and s:match("^[a-z0-9]+$") then return s end
+    return "s0"
+end
 
 -- Per-kind caps keep one link honest and the URL short; slays are rarest and
 -- most valuable, deaths next. The global cap comes from the generated schema.
@@ -102,7 +109,7 @@ function Share.eventFromDeath(e)
     if type(e) ~= "table" or type(e.when) ~= "number" then return nil end
     local npc = cleanNpc(e.npc)
     if not npc then return nil end   -- env/unknown deaths never leave the machine
-    local ev = { k = "death", npc = npc, mode = cleanMode(e.mode), season = Share.SEASON }
+    local ev = { k = "death", npc = npc, mode = cleanMode(e.mode), season = Share.season() }
     if type(e.level) == "number" and e.level >= 1 and e.level <= 200 then
         ev.bracket = math.floor(e.level / 10) * 10
     end
@@ -115,7 +122,7 @@ function Share.eventFromSlay(e)
     local npc = cleanNpc(e.npc)
     local p = tonumber(e.p)
     if not npc or not p or p < 0 or p > 1 then return nil end
-    local ev = { k = "slay", npc = npc, p = p, mode = cleanMode(e.mode), season = Share.SEASON }
+    local ev = { k = "slay", npc = npc, p = p, mode = cleanMode(e.mode), season = Share.season() }
     local s = e.snap
     if type(s) == "table" and type(s.pLevel) == "number" and type(s.cLevel) == "number"
             and type(s.cls) == "string" then
@@ -133,13 +140,13 @@ function Share.eventFromSighting(npcID, s)
     local nm = Share.cleanName(s.name, 48)
     if not nm or not SIGHTING_CLS[s.classification] then return nil end
     local ev = { k = "sighting", npc = npc, nm = nm, cls = s.classification,
-                 season = Share.SEASON }
+                 season = Share.season() }
     if type(s.mapID) == "number" then ev.zone = math.floor(s.mapID) end
     return ev
 end
 
 function Share.eventFromWipe(key)
-    local ev = { k = "wipe", mode = "pve", season = Share.SEASON }
+    local ev = { k = "wipe", mode = "pve", season = Share.season() }
     if type(key) == "number" then
         ev.npc = cleanNpc(key)
         if not ev.npc then return nil end
@@ -280,7 +287,7 @@ function Share.buildPayload(db, now, opts)
     if #events == 0 then return nil end
 
     local payload = {
-        v = 1, kinds = kinds, events = events, season = Share.SEASON,
+        v = 1, kinds = kinds, events = events, season = Share.season(),
         clientId = Share.ensureClientId(db),
     }
     local handle = opts and Share.clampHandle(opts.handle)
@@ -497,7 +504,7 @@ if type(RUN.selftestChecks) == "table" then
             for _, e in ipairs(payload.events) do
                 if e.k == "death" then
                     return e.npc == 448 and e.mode == "hc" and e.bracket == 20
-                        and e.zone == 1429 and e.season == S.SEASON
+                        and e.zone == 1429 and e.season == S.season()
                         and e.killer == nil and e.who == nil and e.level == nil
                 end
             end
@@ -583,6 +590,36 @@ if type(RUN.selftestChecks) == "table" then
         end)())
         check("share json arrays", S.toJSON({ 1, 2, 3 }) == "[1,2,3]"
             and S.toJSON({ k = "v" }) == '{"k":"v"}')
+        check("share season stamps RUN.season verbatim", (function()
+            -- the ONE constant (core/init.lua) rides the envelope AND every event
+            if type(RUN.season) ~= "string" or not payload then return false end
+            if payload.season ~= RUN.season then return false end
+            for _, e in ipairs(payload.events) do
+                if e.season ~= RUN.season then return false end
+            end
+            return true
+        end)())
+        check("share season flip changes the stamp", (function()
+            local old = RUN.season
+            RUN.season = "s1"
+            local p = S.buildPayload(fixtureDb(), 100)
+            RUN.season = old
+            if not p or p.season ~= "s1" then return false end
+            for _, e in ipairs(p.events) do
+                if e.season ~= "s1" then return false end
+            end
+            -- the flipped tag still validates and the checksum follows the canon
+            return S.validate(p) == true and p.sum == S.fletcher16(S.canon(p))
+        end)())
+        check("share season clamp fail-safe", (function()
+            local old = RUN.season
+            RUN.season = "NOT A TAG!"           -- off-shape: never stamped
+            local bad = S.season()
+            RUN.season = nil                    -- missing: never errors
+            local missing = S.season()
+            RUN.season = old
+            return bad == "s0" and missing == "s0" and S.season() == old
+        end)())
     end)
 end
 

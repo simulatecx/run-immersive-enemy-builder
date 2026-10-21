@@ -108,6 +108,56 @@ function Deathping.decodeHello(msg)
     return v
 end
 
+-- ---------------------------------------------------------------------------
+-- Pure: the in-guild wipe ping "RWP1:<npcOrEnc>:<size>:<sum>" (frozen format).
+-- npcOrEnc is the RUNDB.wipes key with ":" swapped for "~" in enc keys (decode
+-- restores); size = group size (2..40); sum = fletcher16 over the body.
+-- PRIVACY LAW: this message is sent to the GUILD channel ONLY - the game
+-- itself scopes it, and guild data never reaches the public channel or any
+-- crowd/Firebase payload.
+-- ---------------------------------------------------------------------------
+function Deathping.encodeWipe(key, size)
+    size = tonumber(size)
+    if not size or size < 2 or size > 40 or size % 1 ~= 0 then return nil end
+    local wire
+    if type(key) == "number" then
+        if key < 1 or key > 10000000 or key % 1 ~= 0 then return nil end
+        wire = tostring(key)
+    elseif type(key) == "string" then
+        local name = key:match("^enc:(.+)$")
+        if not name then return nil end
+        name = name:gsub("|", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if name == "" then return nil end
+        if #name > 60 then name = name:sub(1, 60) end
+        wire = ("enc:" .. name):gsub(":", "~")
+    else
+        return nil
+    end
+    local body = wire .. ":" .. size
+    return "RWP1:" .. body .. ":" .. Deathping.fletcher16(body)
+end
+
+-- Pure: strict decode; malformed, tampered, or out-of-range returns nil.
+-- Returns { key = npcID-number or "enc:<name>", size, sum }.
+function Deathping.decodeWipe(msg)
+    if type(msg) ~= "string" or #msg > 120 then return nil end
+    local wire, size, sum = msg:match("^RWP1:([^:|]+):(%d+):(%d+)$")
+    if not wire then return nil end
+    if tonumber(sum) ~= Deathping.fletcher16(wire .. ":" .. size) then return nil end
+    size = tonumber(size)
+    if size < 2 or size > 40 then return nil end
+    local key
+    if wire:match("^%d+$") then
+        key = tonumber(wire)
+        if key < 1 or key > 10000000 then return nil end
+    else
+        local name = wire:gsub("~", ":"):match("^enc:(.+)$")
+        if not name or #name > 60 then return nil end
+        key = "enc:" .. name
+    end
+    return { key = key, size = size, sum = tonumber(sum) }
+end
+
 -- Pure: is version a newer than version b? (semver triplets)
 function Deathping.newer(a, b)
     local a1, a2, a3 = tostring(a):match("^(%d+)%.(%d+)%.(%d+)$")
@@ -232,6 +282,15 @@ function Deathping.npcName(npc)
     return "creature #" .. tostring(npc)
 end
 
+-- Best display name for a WIPE key (RUNDB.wipes/guildWipes shape): numeric
+-- keys resolve like any species; "enc:<name>" keys carry their own name.
+-- Pure (db-backed): headless-tested.
+function Deathping.wipeKeyName(key)
+    if type(key) == "number" then return Deathping.npcName(key) end
+    local name = tostring(key):match("^enc:(.+)$")
+    return name or tostring(key)
+end
+
 -- ---------------------------------------------------------------------------
 -- Package-registered selftests (pure; run headless AND in-game).
 -- ---------------------------------------------------------------------------
@@ -267,6 +326,50 @@ table.insert(RUN.selftestChecks, function(check)
     db.heard, db.heardStrict = savedHeard, savedStrict
     check("heardBy honors strictTrust", allN == 5 and strictN == 1 and strictMiss == 0)
     check("strictTrust default off", RUN.Settings.get("strictTrust") == false)
+end)
+
+-- RWP1 guild wipe ping: frozen wire format, strict fail-closed decode.
+table.insert(RUN.selftestChecks, function(check)
+    local enc, dec = Deathping.encodeWipe, Deathping.decodeWipe
+    check("wipe ping npc roundtrip", (function()
+        local d = dec(enc(448, 5))
+        return d and d.key == 448 and d.size == 5 and type(d.sum) == "number"
+    end)())
+    check("wipe ping enc roundtrip", (function()
+        local d = dec(enc("enc:Hogger", 40))
+        return d and d.key == "enc:Hogger" and d.size == 40
+    end)())
+    check("wipe ping enc colon survives the swap", (function()
+        local d = dec(enc("enc:Edge: of Doom", 10))
+        return d and d.key == "enc:Edge: of Doom"
+    end)())
+    check("wipe ping wire has no raw colon in enc key",
+        enc("enc:Hogger", 5):match("^RWP1:enc~Hogger:5:%d+$") ~= nil)
+    check("wipe ping strips escape pipes", (function()
+        local d = dec(enc("enc:|cffBad|rName", 3))
+        return d and d.key == "enc:cffBadrName"
+    end)())
+    check("wipe ping caps enc name at 60", (function()
+        local d = dec(enc("enc:" .. string.rep("a", 200), 3))
+        return d and #d.key == 64
+    end)())
+    check("wipe ping bad key rejected", enc(0, 5) == nil and enc(1.5, 5) == nil
+        and enc(10000001, 5) == nil and enc("Hogger", 5) == nil
+        and enc("enc:", 5) == nil and enc("enc:   ", 5) == nil and enc(nil, 5) == nil)
+    check("wipe ping bad size rejected", enc(448, 1) == nil and enc(448, 41) == nil
+        and enc(448, 2.5) == nil and enc(448, nil) == nil)
+    check("wipe ping tamper rejected", (function()
+        local msg = enc(448, 5)
+        return dec(msg:gsub("448", "449", 1)) == nil
+            and dec(msg:gsub(":5:", ":6:", 1)) == nil
+    end)())
+    check("wipe ping garbage rejected", dec(nil) == nil and dec("RWP1:::") == nil
+        and dec("RWP1:448:5") == nil and dec("RWP1:448:99:" ..
+            Deathping.fletcher16("448:99")) == nil
+        and dec("RDP1:448:1:10:" .. Deathping.fletcher16("448:1:10")) == nil
+        and dec("RWP1:enc~:3:" .. Deathping.fletcher16("enc~:3")) == nil)
+    check("wipe key display name", Deathping.wipeKeyName("enc:Hogger") == "Hogger"
+        and Deathping.wipeKeyName(999998) == "creature #999998")
 end)
 
 -- Everything below wires the client.
@@ -360,7 +463,27 @@ RUN.on("PLAYER_DEAD", function()
     end
 end)
 
--- Receive: four message kinds, all strict-decoded, deduped, rate-limited.
+-- ---------------------------------------------------------------------------
+-- The in-guild wipe ping (RWP1). GUILD channel ONLY - never broadcast(): the
+-- game itself scopes GUILD addon messages, so guild wipe data stays in-guild
+-- (privacy law: guild is forbidden in any crowd/Firebase payload). Called by
+-- model/wipes.lua when a majority-guild wipe is recorded for OUR OWN guild.
+-- ---------------------------------------------------------------------------
+local wipeSendRate, wipeRecvRate = {}, {}
+
+function Deathping.sendWipePing(key, size)
+    if not RUN.Settings.get("shareDeaths") then return end
+    if not Guards.call(_G.IsInGuild) then return end
+    local msg = Deathping.encodeWipe(key, size)
+    if not msg then return end
+    local now = _G.GetTime and _G.GetTime() or 0
+    if not Deathping.allowSender(wipeSendRate, "me", now) then return end   -- 5/hr
+    if _G.C_ChatInfo and _G.C_ChatInfo.SendAddonMessage then
+        pcall(_G.C_ChatInfo.SendAddonMessage, PREFIX, msg, "GUILD")
+    end
+end
+
+-- Receive: five message kinds, all strict-decoded, deduped, rate-limited.
 local ackRate = {}
 local versionNotified = false
 
@@ -411,7 +534,7 @@ local function onPing(ping, who, now)
     end
 end
 
-RUN.on("CHAT_MSG_ADDON", function(prefix, msg, _, sender)
+RUN.on("CHAT_MSG_ADDON", function(prefix, msg, channel, sender)
     if prefix ~= PREFIX then return end
     if not RUN.Settings.get("shareDeaths") then return end
     local who = tostring(sender or ""):match("^[^-]+") or "?"
@@ -450,6 +573,28 @@ RUN.on("CHAT_MSG_ADDON", function(prefix, msg, _, sender)
                 RUN.print(who .. "'s last words: \"" .. lw.words .. "\"")
             end
         end
+        return
+    end
+
+    local wipe = Deathping.decodeWipe(msg)
+    if wipe then
+        -- in-guild only: the GUILD distribution is guild-scoped by the game;
+        -- an RWP1 arriving any other way is forged and dropped.
+        if channel ~= "GUILD" then return end
+        if not Deathping.allowSender(wipeRecvRate, who, now) then return end
+        local dkey = msg .. "#" .. who
+        if seenSums[dkey] and (now - seenSums[dkey]) < 30 then return end
+        seenSums[dkey] = now
+        -- the receiver resolves their OWN guild - sender and receiver share
+        -- the GUILD channel, so the tally lands on the right record.
+        local myGuild = Guards.call(_G.GetGuildInfo, "player")
+        if type(myGuild) ~= "string" or myGuild == "" then return end
+        local db = RUN.db()
+        if type(db.guildWipes) ~= "table" then db.guildWipes = {} end
+        local n = RUN.Wipes.recordGuildWipe(db.guildWipes, myGuild, wipe.key)
+        if not n then return end
+        RUN.print(Deathping.wipeKeyName(wipe.key) .. " has wiped a "
+            .. myGuild:gsub("|", "") .. " group (" .. n .. " on the guild record)")
         return
     end
 

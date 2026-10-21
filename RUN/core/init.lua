@@ -8,6 +8,18 @@ _G.RunAdvisor = RUN
 
 RUN.version = "0.8.0"
 
+-- THE one season constant (WP-G / RUN-G). Every crowd payload stamps this tag;
+-- rollups and ladders key by it, so flipping it is the whole in-addon "reset" -
+-- old-season data is never touched. Tag shape is schema-locked: lowercase
+-- [a-z0-9], max 8 ("s0", "s1", ...; a Classic-fork season would take its own
+-- prefix, e.g. "c1"). FLIP PROCEDURE (owner-gated; full runbook docs/SEASONS.md):
+--   1) python pipeline/season_archive.py --dry-run           (count what moves)
+--   2) python pipeline/season_archive.py --archive --season s0 --next s1 --yes
+--      (backup -> copy to seasonArchive/ -> read-back; deletes NOTHING)
+--   3) bump THIS constant to the new tag
+--   4) redeploy the web ladders' default-season to match
+RUN.season = "s0"
+
 -- Parallel-build law: packages integrate through registries, never by editing
 -- another package's files. New slash subcommands register in RUN.commands;
 -- new selftest checks register in RUN.selftestChecks (run by selftest.lua).
@@ -30,6 +42,7 @@ function RUN.initSavedVariables()
     if type(db.slays) ~= "table" then db.slays = {} end
     if type(db.wipes) ~= "table" then db.wipes = {} end
     if type(db.sightings) ~= "table" then db.sightings = {} end
+    if type(db.guildWipes) ~= "table" then db.guildWipes = {} end
     -- deaths entries are re-validated at read time by model/attribution.lua
     return db
 end
