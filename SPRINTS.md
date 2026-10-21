@@ -66,6 +66,11 @@ killed, so I can fight or flee on good information.
 LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 2026-11-04; Hardcore kickoff ~2026-12-04 triggers the RUN-G seasonal reset.
 
+> 2026-10-21: everything below that remains open is re-planned as parallel
+> agent work packages in `docs/AGENT-PLAN.md` (WP-A fork / WP-B backend /
+> WP-C web+waitlist / WP-E social polish, then WP-F guilds / WP-G seasons).
+> The Hardcore Classic fork is elevated: that population is live TODAY.
+
 ## The expansion plan (owner directive 2026-10-19: "match Hardcore, then grow
 ## the enemy stats - categories, guilds, raid wipes - we will build it all")
 
