@@ -120,10 +120,60 @@ function RUN.selftest()
         == "Blooded - killed you 1x")
     check("flagLine nothing -> nil", T.flagLine(nil, nil, 0) == nil)
 
+    -- ---- death-ping: checksum, wire format, rate limit, heard counts ----
+    local DP = RUN.Deathping
+    check("fletcher16 deterministic", DP.fletcher16("abc") == DP.fletcher16("abc"))
+    check("fletcher16 differs", DP.fletcher16("abc") ~= DP.fletcher16("abd"))
+    check("fletcher16 range", (function()
+        local v = DP.fletcher16("Snagglefang")
+        return type(v) == "number" and v >= 0 and v <= 65535
+    end)())
+    check("deathping roundtrip", (function()
+        local msg = DP.encode(3113, 1465, 10)
+        local d = DP.decode(msg)
+        return d and d.npc == 3113 and d.mapID == 1465 and d.bracket == 10
+    end)())
+    check("deathping tamper rejected", (function()
+        local msg = DP.encode(3113, 1465, 10)
+        return DP.decode(msg:gsub("3113", "9999", 1)) == nil
+    end)())
+    check("deathping garbage rejected", DP.decode("RDP1:lol:1:2:3") == nil
+        and DP.decode(nil) == nil and DP.decode("hello") == nil)
+    check("deathping bad npc rejected", DP.encode(0, 1, 1) == nil)
+    check("deathping rate limit", (function()
+        local state = {}
+        for i = 1, 5 do
+            if not DP.allowSender(state, "Spoofy", i) then return false end
+        end
+        return DP.allowSender(state, "Spoofy", 6) == false
+            and DP.allowSender(state, "Honest", 6) == true
+    end)())
+    check("heard counts", (function()
+        local db = RUN.db()
+        local saved = db.heard
+        db.heard = nil
+        DP.recordHeard(448); DP.recordHeard(448)
+        local n = DP.heardBy(448)
+        db.heard = saved
+        return n == 2
+    end)())
+    check("heard nil npc -> 0", DP.heardBy(nil) == 0)
+
+    -- ---- nearby ping rank line + heard-aware flag lines ----
+    check("nearby rankline none", RUN.Nearby.rankLine(0, 0) == "no recorded kills yet")
+    check("nearby rankline kills+heard", RUN.Nearby.rankLine(2, 3)
+        == "Deadly - killed you 2x + 3 deaths heard")
+    check("flagLine heard only", T.flagLine(nil, { label = "Dangerous" }, 0, 2)
+        == "Dangerous - 2 player deaths heard")
+    check("flagLine kills+heard", T.flagLine({ label = "Elite" }, { label = "Deadly" }, 2, 3)
+        == "Elite - Deadly (killed you 2x + 3 heard)")
+
     -- ---- settings: defaults + validation ----
     local S = RUN.Settings
     check("settings default flags on", S.get("flags") == true)
     check("settings default expansiveStats off", S.get("expansiveStats") == false)
+    check("settings default nearbyPing on", S.get("nearbyPing") == true)
+    check("settings default shareDeaths on", S.get("shareDeaths") == true)
     check("settings unknown key nil", S.get("nope") == nil)
     check("settings set/get", (function()
         local before = S.get("autoMark")

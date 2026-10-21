@@ -131,6 +131,7 @@ RUN.on("PLAYER_DEAD", function()
     }
     table.insert(db.deaths, entry)
     while #db.deaths > DEATHS_MAX do table.remove(db.deaths, 1) end
+    Attribution.lastDeath = entry   -- read by the death-ping broadcaster
 
     RUN.print("death recorded: " .. (killer or "unknown cause")
         .. (entry.zone and (" in " .. entry.zone) or "") .. " (stays on your machine)")

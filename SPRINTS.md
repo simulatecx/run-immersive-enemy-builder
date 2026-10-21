@@ -56,6 +56,20 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
 
 ## Shipped
 
+- v0.3.0 (2026-10-19, private beta): the "alive world" update - both pings.
+  (1) RARE-NEARBY ping: NAME_PLATE_UNIT_ADDED (+ C_VignetteInfo wired
+  defensively, true coords when it fires) -> banner + raid-warning sound +
+  kill-rank line + auto-mark; once per creature, 10-min cooldown; nameplates-
+  off nudge at login. (2) P2P DEATH-PING (Hardcore pattern, creature-centric,
+  NO player names): auto-broadcast on creature death over temp channel
+  "rundeathping" + GUILD via C_ChatInfo addon messages; strict decode +
+  Fletcher16 (arithmetic - 5.1 law) + per-sender rate limit (5/hr) + dedupe;
+  heard counts persist in RUNDB.heard and feed the SAME rank tiers as your
+  own journal ("Elite - Deadly (killed you 2x + 3 heard)"). TRUST MODEL
+  (recorded): live "heard" counts are session flavour, deliberately separate
+  from the future server-verified crowd count; full k-of-n deferred to the
+  Firebase phase. New settings: nearbyPing (on), shareDeaths (on, opt-out).
+  Gate: compliance green across 16 files, selftest 77/77.
 - v0.2.0 (2026-10-19, private beta): passive-first redesign. Always-on
   tooltip flags (classification + kill-earned danger rank via
   `ui/tooltip.lua`, TooltipDataProcessor w/ classic HookScript fallback);

@@ -14,10 +14,26 @@ standalone, sharper when Foresight is installed (future bridge).
 NOT on CurseForge yet - access comes via the waitlist. Betas are handed out as
 direct zips.
 
-## Beta 0.2.0 - what's in the file
+## Beta 0.3.0 - what's in the file
 
 **RUN is fully automatic - no commands needed to play with it.** The slash
 (`/ra`) exists only to change options.
+
+- **Rare-nearby ping (new)**: a rare that comes within nameplate range (~60yd)
+  - even behind you - triggers a top-centre banner, a raid-warning sound, its
+  kill-rank line, and a map pin. Signals: `NAME_PLATE_UNIT_ADDED` (needs enemy
+  nameplates on; RUN nudges once if they're off) + `C_VignetteInfo` wired
+  defensively (gives TRUE coordinates where Forever emits vignettes). Once per
+  creature, 10-min cooldown. Toggle: `nearbyPing`.
+- **P2P death-ping (new, the Hardcore-addon pattern)**: when you die to a
+  creature, your addon automatically broadcasts a small ANONYMOUS ping (npcID,
+  map, level bracket, checksum - never a player name) over a shared addon
+  channel + guild. Every online RUN user hears it: tooltips gain "N player
+  deaths heard" and ranks grow LIVE. In-game chat transport only - nothing
+  leaves the game client. Spoof dampening: strict shape + Fletcher16 checksum,
+  per-sender rate limit (5/hour), dedupe; heard counts are session flavour,
+  kept separate from the future server-verified crowd count. Toggle:
+  `shareDeaths` (on by default, visible opt-out).
 
 - **Passive tooltip flags (always on)**: mouse over or target ANY enemy and
   its tooltip gains a RUN line - Elite / Rare (silver dragon) / Rare Elite /
@@ -35,7 +51,7 @@ direct zips.
 - **Death journal (local only)**: on death, the combat log names your killer
   (environmental deaths say "a fall", never a creature). `/ra deaths`.
   Nothing ever leaves your machine in this beta - RUN does not network, ever.
-- **Selftest**: `/ra selftest` (61 checks, same suite the ship gate runs).
+- **Selftest**: `/ra selftest` (77 checks, same suite the ship gate runs).
 
 Deferred (by design, per the spec): the RISK IT wager button, the crowd
 killcount + Deadliest Rares ladder, the rares DB bake, seasons.
@@ -46,21 +62,27 @@ killcount + Deadliest Rares ladder, the rares DB bake, seasons.
 2. `/reload` or relog.
 3. Options live under `/runadvisor`, `/runa`, or `/ra`. (Plain `/run` is
    Blizzard's built-in script command - an addon can never take it.)
-   Keys: `flags`, `expansiveStats`, `autoMark`, `recordDeaths`.
+   Keys: `flags`, `expansiveStats`, `autoMark`, `recordDeaths`, `nearbyPing`,
+   `shareDeaths`.
 
 ### Five-minute test checklist
 
-1. `/ra selftest` - expect "61/61 green".
-2. Mouse over any hostile elite -> tooltip shows "RUN: Elite". Mouse over a
+1. `/ra selftest` - expect "77/77 green".
+2. Walk near a silver-dragon rare (enemy nameplates ON, key V) -> "RARE
+   NEARBY" banner + sound + map pin, before you ever click it.
+3. Mouse over any hostile elite -> tooltip shows "RUN: Elite". Mouse over a
    silver-dragon rare -> "RUN: Rare (silver dragon)" and a map pin lands at
    your feet (autoMark).
-3. `/ra set expansiveStats on`, then target a grey mob -> tooltip + panel say
+4. `/ra set expansiveStats on`, then target a grey mob -> tooltip + panel say
    FIGHT with high %; a red elite -> RISKY/FLEE; a skull -> "~no chance".
-4. Die to something (beta heroism) -> chat line "death recorded: ..." and
+5. Die to something (beta heroism) -> chat line "death recorded: ..." and
    `/ra deaths` lists it; fall off something tall -> the killer is "a fall".
    Die to the same mob twice -> its tooltip now ranks it "Dangerous
    (killed you 2x)".
-5. `/ra set flags off` -> tooltip lines gone; `/ra set autoMark off` -> no
+6. Two-client test (or a guildmate with RUN): die to a creature on one -> the
+   other hears the ping and that creature's tooltip gains "1 player deaths
+   heard".
+7. `/ra set flags off` -> tooltip lines gone; `/ra set autoMark off` -> no
    more pins.
 
 ## Development

@@ -13,6 +13,8 @@ Settings.defaults = {
     expansiveStats = false,  -- Expansive Enemy Stats: your win-chance on the tooltip + the odds panel
     autoMark = true,         -- drop a map waypoint at your feet when a rare appears
     recordDeaths = true,     -- local journal of what killed you (never leaves your machine)
+    nearbyPing = true,       -- banner + sound when a rare is sensed near you
+    shareDeaths = true,      -- in-game anonymous death-ping to other RUN users (no name; opt-out)
 }
 
 local function store()

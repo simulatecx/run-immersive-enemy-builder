@@ -25,14 +25,25 @@ function Tooltip.flagFor(classification)
     return FLAGS[classification]
 end
 
--- Pure: compose the flag line text from a flag, a kill rank and a kill count.
-function Tooltip.flagLine(flag, rank, kills)
-    if flag and rank then
-        return flag.label .. " - " .. rank.label .. " (killed you " .. kills .. "x)"
+-- Pure: compose the flag line text from a flag, a kill rank, your kill count
+-- and the live "deaths heard" count (P2P pings from other RUN users).
+function Tooltip.flagLine(flag, rank, kills, heard)
+    kills = tonumber(kills) or 0
+    heard = tonumber(heard) or 0
+    local tally
+    if kills > 0 and heard > 0 then
+        tally = "killed you " .. kills .. "x + " .. heard .. " heard"
+    elseif kills > 0 then
+        tally = "killed you " .. kills .. "x"
+    elseif heard > 0 then
+        tally = heard .. " player deaths heard"
+    end
+    if flag and rank and tally then
+        return flag.label .. " - " .. rank.label .. " (" .. tally .. ")"
     elseif flag then
         return flag.label
-    elseif rank then
-        return rank.label .. " - killed you " .. kills .. "x"
+    elseif rank and tally then
+        return rank.label .. " - " .. tally
     end
     return nil
 end
@@ -50,10 +61,11 @@ local function inject(tooltip)
     if not info or info.isPlayer or not info.hostile then return end
 
     local kills = RUN.Attribution.killsBy(info.npcID)
-    local rank = RUN.Attribution.rankForKills(kills)
+    local heard = RUN.Deathping.heardBy(info.npcID)
+    local rank = RUN.Attribution.rankForKills(kills + heard)
     local flag = Tooltip.flagFor(info.classification)
 
-    local line = Tooltip.flagLine(flag, rank, kills)
+    local line = Tooltip.flagLine(flag, rank, kills, heard)
     if line then
         local c = rank or flag
         tooltip:AddLine("RUN: " .. line, c.r, c.g, c.b)
