@@ -465,6 +465,17 @@ function RUN.selftest()
     -- ---- version sync ----
     check("version set", type(RUN.version) == "string" and RUN.version:match("^%d+%.%d+%.%d+$") ~= nil)
 
+    -- ---- package-registered checks (parallel-build law: packages add their
+    -- own checks from their OWN files via RUN.selftestChecks) ----
+    if type(RUN.selftestChecks) == "table" then
+        for i = 1, #RUN.selftestChecks do
+            local ok, err = pcall(RUN.selftestChecks[i], check)
+            if not ok then
+                table.insert(failures, "registered-check error: " .. tostring(err))
+            end
+        end
+    end
+
     return pass, failures
 end
 

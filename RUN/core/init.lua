@@ -8,6 +8,12 @@ _G.RunAdvisor = RUN
 
 RUN.version = "0.7.1"
 
+-- Parallel-build law: packages integrate through registries, never by editing
+-- another package's files. New slash subcommands register in RUN.commands;
+-- new selftest checks register in RUN.selftestChecks (run by selftest.lua).
+RUN.commands = RUN.commands or {}
+RUN.selftestChecks = RUN.selftestChecks or {}
+
 -- ---------------------------------------------------------------------------
 -- SavedVariables: RUNDB. User-editable data - type-validate everything on load;
 -- anything tampered or missing falls back to defaults (untrusted-input law).
@@ -136,6 +142,9 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
             RUN.print("death-ping channel: "
                 .. (RUN.Deathping.channelJoined() and "joined (rundeathping)" or "not joined yet"))
         end
+    elseif RUN.commands and type(RUN.commands[cmd]) == "function" then
+        local ok, err = pcall(RUN.commands[cmd], rest)
+        if not ok then RUN.print("command error: " .. tostring(err)) end
     else
         RUN.print("RUN is automatic - the minimap button (or /ra log) opens the Account Ledger & options.")
         RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | log | panel | odds | mark | clear | deaths | set <key> <on/off> | status | selftest")
