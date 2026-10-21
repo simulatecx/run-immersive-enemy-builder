@@ -1,0 +1,16 @@
+{
+  "$doc": "EMULATOR-ONLY config for testing RUN's crowd backend (WP-B). firestore.test.rules is a test-time COPY of the Foresight repo's single ruleset (../marketing/web/firestore.rules - firebase-tools cannot reference rules outside the project dir); refresh it with `cp ../../marketing/web/firestore.rules firebase/firestore.test.rules` before an emulator run. Functions point at the canonical functions-run source. Never used for a deploy: live deploys run from the Foresight repo with scoped --only flags (owner-gated).",
+  "firestore": {
+    "rules": "firestore.test.rules"
+  },
+  "functions": {
+    "source": "../functions-run"
+  },
+  "emulators": {
+    "firestore": { "port": 8785 },
+    "functions": { "port": 5795 },
+    "auth": { "port": 9795 },
+    "ui": { "enabled": false },
+    "singleProjectMode": true
+  }
+}

@@ -1,8 +1,13 @@
-"""Deploy RUN to the local WoW Forever install - gate first, then copy.
+"""Deploy RUN to the local WoW installs - gate first, then copy.
+
+Default targets cover BOTH flavors: the Forever beta install and the Classic
+Era install (the Hardcore fork). One folder copy serves both - the client
+picks its TOC by flavor suffix (RUN.toc on Forever/mainline, RUN_Vanilla.toc
+on Classic Era), so the copy always includes every TOC.
 
 Usage: python deploy.py [--target <AddOns\\RUN path>] [--skip-gate]
-The gate (compliance + selftest) must be green before any copy; a red gate
-blocks the deploy outright.
+The gate (compliance + selftest, both TOCs) must be green before any copy;
+a red gate blocks the deploy outright.
 """
 
 from __future__ import annotations
@@ -16,6 +21,8 @@ from pathlib import Path
 ADDON_SRC = Path(__file__).parent.parent / "RUN"
 DEFAULT_TARGETS = [
     Path(r"D:\Games\World of Warcraft\_classic_beta_\Interface\AddOns\RUN"),
+    # Classic Era (Hardcore fork): same folder, client loads RUN_Vanilla.toc.
+    Path(r"D:\Games\World of Warcraft\_classic_era_\Interface\AddOns\RUN"),
 ]
 
 

@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.7.1"
+RUN.version = "0.8.0"
 
 -- Parallel-build law: packages integrate through registries, never by editing
 -- another package's files. New slash subcommands register in RUN.commands;
@@ -26,6 +26,7 @@ function RUN.initSavedVariables()
     if type(db.settings) ~= "table" then db.settings = {} end
     if type(db.ui) ~= "table" then db.ui = {} end
     if type(db.heardLog) ~= "table" then db.heardLog = {} end
+    if type(db.heardStrict) ~= "table" then db.heardStrict = {} end
     if type(db.slays) ~= "table" then db.slays = {} end
     if type(db.wipes) ~= "table" then db.wipes = {} end
     if type(db.sightings) ~= "table" then db.sightings = {} end
@@ -147,6 +148,49 @@ _G.SlashCmdList["RUNADVISOR"] = function(input)
         if not ok then RUN.print("command error: " .. tostring(err)) end
     else
         RUN.print("RUN is automatic - the minimap button (or /ra log) opens the Account Ledger & options.")
-        RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | log | panel | odds | mark | clear | deaths | set <key> <on/off> | status | selftest")
+        RUN.print("utilities: /ra (toggle Expansive Enemy Stats) | log | panel | odds | mark | clear | deaths | set <key> <on/off> | status | diag | selftest")
     end
+end
+
+-- ---------------------------------------------------------------------------
+-- /ra diag: the one-shot field readout - every verification hook in one go.
+-- ---------------------------------------------------------------------------
+RUN.commands["diag"] = function()
+    local nCommands = 0
+    for _ in pairs(RUN.commands or {}) do nCommands = nCommands + 1 end
+    local nChecks = type(RUN.selftestChecks) == "table" and #RUN.selftestChecks or 0
+    RUN.print("diag: v" .. RUN.version .. " | registries: " .. nCommands
+        .. " commands, " .. nChecks .. " package selftest checks")
+
+    local hookMode = "none (flags cannot inject)"
+    if _G.TooltipDataProcessor and _G.Enum and _G.Enum.TooltipDataType then
+        hookMode = "TooltipDataProcessor"
+    elseif _G.GameTooltip and _G.GameTooltip.HookScript then
+        hookMode = "HookScript fallback"
+    end
+    local S = _G.Settings
+    local escPanel = (S and S.RegisterVerticalLayoutCategory and S.RegisterProxySetting
+        and S.CreateCheckbox and S.RegisterAddOnCategory)
+        and "API present (registered at login)"
+        or "API absent (the Ledger is the options surface)"
+    RUN.print("panel last error: "
+        .. ((RUN.Panel and RUN.Panel.lastErr) and RUN.Panel.lastErr or "none")
+        .. " | tooltip hook: " .. hookMode)
+    RUN.print("ESC options: " .. escPanel)
+
+    local joined = RUN.Deathping and RUN.Deathping.channelJoined
+        and RUN.Deathping.channelJoined() or false
+    local log, size, corro = RUN.db().heardLog, 0, 0
+    if type(log) == "table" then
+        size = #log
+        for i = 1, #log do
+            local e = log[i]
+            if type(e) == "table" and e.corro then corro = corro + 1 end
+        end
+    end
+    local np = RUN.Guards.call(_G.GetCVar, "nameplateShowEnemies")
+    RUN.print("death-ping channel: " .. (joined and "joined (rundeathping)" or "not joined")
+        .. " | heard log: " .. size .. " entries (" .. corro .. " corroborated)")
+    RUN.print("enemy nameplates CVar: " .. tostring(np)
+        .. ((np == "0") and " - RUN senses enemies through nameplates; enable them (key V)" or ""))
 end

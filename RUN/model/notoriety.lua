@@ -62,17 +62,66 @@ function Notoriety.isSoftElite(classification, tier)
     return RUN.Detect.tierOf(classification) == "normal" and (tonumber(tier) or 0) >= 3
 end
 
+-- The third source (WP-B): server-verified baked counts from
+-- data/generated/crowd_counts.lua (pipeline/fetch_counts.py). The bake is
+-- pre-suppressed server-side (MIN_BUCKET), so anything here is already public,
+-- verified data. 0-safe when the bake is empty, absent, or user-tampered.
+function Notoriety.crowdFor(npcID)
+    local cc = RUN.gen and RUN.gen.crowdCounts
+    if type(cc) ~= "table" then return 0 end
+    local e = cc[tonumber(npcID)]
+    if type(e) == "table" and type(e.total) == "number" and e.total > 0 then
+        return math.floor(e.total)
+    end
+    return 0
+end
+
 -- The one-stop readout for a creature: total kills, tier, title, soft-elite.
+-- Blends three sources: your journal (fact) + deaths heard (live crowd) +
+-- the baked server-verified count. The breakdown always rides along.
 function Notoriety.describe(npcID, classification)
     local kills = RUN.Attribution.killsBy(npcID)
     local heard = RUN.Deathping.heardBy(npcID)
-    local total = kills + heard
+    local crowd = Notoriety.crowdFor(npcID)
+    local total = kills + heard + crowd
     local tier = Notoriety.tierFor(total)
     return {
-        kills = kills, heard = heard, total = total, tier = tier,
+        kills = kills, heard = heard, crowd = crowd, total = total, tier = tier,
         title = Notoriety.titleFor(npcID, tier),
         softElite = Notoriety.isSoftElite(classification, tier),
     }
+end
+
+-- Selftests (registered; the crowd blend must be monotonic and empty-safe).
+if type(RUN.selftestChecks) == "table" then
+    table.insert(RUN.selftestChecks, function(check)
+        RUN.gen = RUN.gen or {}
+        local saved = RUN.gen.crowdCounts
+        RUN.gen.crowdCounts = nil
+        check("notoriety crowd absent bake -> 0", Notoriety.crowdFor(448) == 0)
+        RUN.gen.crowdCounts = {
+            [448] = { total = 7, wipes = 2 },
+            [999] = { total = "junk" },
+            [777] = { total = -3 },
+        }
+        check("notoriety crowd reads bake", Notoriety.crowdFor(448) == 7)
+        check("notoriety crowd junk tolerated", Notoriety.crowdFor(999) == 0
+            and Notoriety.crowdFor(777) == 0 and Notoriety.crowdFor(nil) == 0)
+        local db = RUN.db()
+        local sd, sh = db.deaths, db.heard
+        db.deaths = { { when = 1, killer = "Hogger", npc = 448 } }
+        db.heard = { [448] = 4 }
+        local with = Notoriety.describe(448, "normal")
+        RUN.gen.crowdCounts = {}
+        local without = Notoriety.describe(448, "normal")
+        db.deaths, db.heard = sd, sh
+        RUN.gen.crowdCounts = saved
+        check("notoriety crowd blend monotonic", with ~= nil and without ~= nil
+            and with.total == 12 and without.total == 5
+            and with.total > without.total and with.tier >= without.tier)
+        check("notoriety breakdown fields", with.kills == 1 and with.heard == 4
+            and with.crowd == 7 and without.crowd == 0)
+    end)
 end
 
 return Notoriety

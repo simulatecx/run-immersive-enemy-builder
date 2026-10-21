@@ -1,0 +1,187 @@
+rules_version = '2';
+
+// Foresight crowd backend (S13) - Firestore security rules.
+// THE server-side gate. The client API key is public (expected for web apps);
+// security is THESE rules + App Check, never the key. Default-deny everything;
+// the only writable path is shape-validated contributions, and the only readable
+// path is pre-suppressed aggregates. Raw contributions are NEVER client-readable.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----------------------------------------------------------
+    function signedIn()  { return request.auth != null; }            // anonymous is fine
+    // appChecked() is TEMPORARILY NOT CALLED on the write rules (2026-10-14). The reCAPTCHA
+    // Enterprise App Check token validates client-side (getToken returns a valid 956-char
+    // token) but the backend does not set request.app on writes - every create got
+    // permission-denied even with a good token + valid shape (browser-reproduced). To
+    // unblock contribute + feedback we rely on anonymous-auth + the hasOnly shape-lock (no
+    // PII can be written) + small-bucket suppression on reads. RESTORE `&& appChecked()` on
+    // both create rules once the Firebase App Check / reCAPTCHA Enterprise backend is fixed.
+    function appChecked(){ return request.app != null; }
+
+    // The exact, allow-listed payload shape. GENERATED from data/crowd-schema.json by
+    // pipeline/gen_crowd_schema.py - the addon payload builder, the web sanitize, and
+    // this server gate all derive from that ONE source, so a new field can never drift
+    // into one consumer and leak past another. hasOnly() rejects ANY key not in the set,
+    // so name/realm/notes/timestamps can never be written even by a modified client.
+    // 'is number' (not 'is int'): the web SDK can encode integers as doubles, so the
+    // range clamp is what matters, not the numeric subtype. Edit the JSON + regenerate;
+    // never hand-edit between the markers (the ship gate fails on drift).
+    // BEGIN generated validContribution
+    function validContribution(d) {
+      return d.keys().hasOnly(['v', 'build', 'class', 'spec', 'level', 'lenses', 'metrics', 'talents', 'items', 'observed', 'clientId', 'named', 'name', 'armory', 'buffs'])
+          && d.v == 1
+          && (!('build' in d) || (d.build is string && d.build.size() <= 32))
+          && d.class is string && d.class.size() <= 16 && d.class.matches('[A-Z]+')
+          && (!('spec' in d) || (d.spec is number))
+          && d.level is number && d.level >= 1 && d.level <= 200
+          && d.lenses is map
+          && (!('metrics' in d) || (d.metrics is map))
+          && d.talents is map
+          && d.items is map && d.items.size() <= 500
+          && d.observed is map && d.observed.size() <= 150
+          && (!('clientId' in d) || (d.clientId is string && d.clientId.size() <= 40))
+          && (!('named' in d) || (d.named is bool))
+          && (!('name' in d) || (('named' in d) && d.named == true && d.name is string && d.name.size() <= 32))
+          && (!('armory' in d) || (('named' in d) && d.named == true && d.armory is string && d.armory.size() <= 200 && d.armory.matches('https://[A-Za-z0-9._~:/?#@!$&*+,;=%()-]+')))
+          && (!('buffs' in d) || (d.buffs is map && d.buffs.size() <= 40));
+    }
+    // END generated validContribution
+
+    // The feedback shape: a kind, the message, an OPTIONAL contact + context. Free text,
+    // so it is capped and write-only - never client-readable, never shown publicly.
+    function validFeedback(d) {
+      return d.keys().hasOnly(['type','message','contact','context'])
+          && d.type is string && d.type.size() <= 16
+          && d.message is string && d.message.size() > 0 && d.message.size() <= 2000
+          && (!('contact' in d)  || (d.contact is string && d.contact.size() <= 120))
+          && (!('context' in d)  || (d.context is string && d.context.size() <= 300));
+    }
+
+    // The RUN (sibling addon) crowd-share envelope. GENERATED from the run-forever
+    // repo's data/rare-kills-schema.json by its pipeline/gen_crowd_schema.py - the RUN
+    // payload builder, the run.html sanitize (web/run-crowd-schema.js) and this gate
+    // all derive from that ONE source; RUN's ship gate fails on drift. Envelope only:
+    // rules cannot iterate lists, so events[] internals are deep-validated by the
+    // rareKillsOnWrite function (functions/rareKills.js). Never hand-edit between the
+    // markers; regenerate in run-forever and re-apply.
+    // BEGIN generated validRareKill
+    function validRareKill(d) {
+      return d.keys().hasOnly(['v', 'kinds', 'events', 'season', 'clientId', 'sum', 'named', 'handle', 'armory'])
+          && d.v == 1
+          && d.kinds is list && d.kinds.size() >= 1 && d.kinds.size() <= 4 && d.kinds.hasOnly(['death', 'slay', 'sighting', 'wipe'])
+          && d.events is list && d.events.size() >= 1 && d.events.size() <= 100
+          && d.season is string && d.season.size() <= 8 && d.season.matches('[a-z0-9]+')
+          && (!('clientId' in d) || (d.clientId is string && d.clientId.size() <= 40))
+          && (!('sum' in d) || (d.sum is number))
+          && (!('named' in d) || (d.named is bool))
+          && (!('handle' in d) || (('named' in d) && d.named == true && d.handle is string && d.handle.size() <= 24 && d.handle.matches('[A-Za-z0-9_ -]+')))
+          && (!('armory' in d) || (('named' in d) && d.named == true && d.armory is string && d.armory.size() <= 200 && d.armory.matches('https://[A-Za-z0-9._~:/?#@!$&*+,;=%()-]+')));
+    }
+    // END generated validRareKill
+
+    // The RUN waitlist shape: an email (PII - explicit consent REQUIRED, purpose-bound
+    // to the RUN launch waitlist, named in web/privacy.html), consent must be literally
+    // true, and a short source tag. Write-only and capped; never client-readable.
+    function validRunWaitlist(d) {
+      return d.keys().hasOnly(['email','consent','source'])
+          && d.email is string && d.email.size() <= 120 && d.email.matches('[^@ ]+@[^@ ]+\\.[^@ ]+')
+          && d.consent is bool && d.consent == true
+          && d.source is string && d.source.size() <= 24;
+    }
+
+    // ---- feedback: write-only, shape-validated, never readable ---------------
+    match /feedback/{docId} {
+      allow create: if signedIn() && validFeedback(request.resource.data);  // restore && appChecked() when fixed
+      allow read, update, delete: if false;  // the team reads it in the console, not the client
+    }
+
+    // ---- contributions: write-only, shape-validated, never readable ----------
+    match /contributions/{docId} {
+      allow create: if signedIn()  // restore && appChecked() when the backend is fixed
+                    && validContribution(request.resource.data);
+      allow read, update, delete: if false;  // raw crowd rows are not client-readable
+    }
+
+    // ---- aggregates: read-only; written ONLY by Cloud Functions (admin SDK) --
+    // The function enforces small-bucket suppression (groups < MIN_BUCKET expose a
+    // count only, never percentiles) BEFORE writing these docs.
+    match /aggregates/{bucket} {
+      allow read: if true;        // public, pre-suppressed per-spec/level percentiles
+      allow write: if false;      // admin SDK bypasses rules; clients may never write
+    }
+
+    // ---- leaderboards: read-only; written ONLY by Cloud Functions (admin SDK) --
+    // Named "champions" per metric (S34c show-off tier). Built by the aggregator from ONLY
+    // opt-in named submissions; each entry carries a CHOSEN handle (not a real name),
+    // class/level, value, optional armory link + buff provenance - never a clientId, never
+    // PII. Public-readable so the web ladders can show them; clients may never write.
+    match /leaderboards/{metricKey} {
+      allow read: if true;
+      allow write: if false;      // admin SDK bypasses rules; clients may never write
+    }
+
+    // ---- crowdInsights: read-only; written ONLY by Cloud Functions (admin SDK) --
+    // Item popularity + observed-buff candidate values (S34f), aggregated from the raw
+    // items/observed journals. Non-identifying (item ids + counts; buff spellId + stat
+    // values). Observed candidates feed overrides ONLY via the reviewed harvest (k-of-n +
+    // human PR), never auto-shipped. Kept out of `aggregates` so the peer bake stays clean.
+    match /crowdInsights/{doc} {
+      allow read: if true;
+      allow write: if false;      // admin SDK bypasses rules; clients may never write
+    }
+
+    // ---- verifiedRules: read-only; written ONLY by the owner's gcloud-authed tool --
+    // Owner/crowd-verified per-talent rank rules (doc id = talentId), baked into the addon
+    // by pipeline/fetch_verified.py so fresh characters get them without scanning. A client
+    // may NEVER write here: pipeline/push_verified.py authenticates as the project owner via
+    // a gcloud OAuth token (server-to-server bypasses these rules, like the Cloud Functions
+    // admin SDK). Crowd votes still reach rank rules only through the reviewed overrides
+    // path, never straight to this table. Non-identifying game data (no PII).
+    match /verifiedRules/{talentId} {
+      allow read: if true;        // public, non-identifying rank-rule strings
+      allow write: if false;      // owner gcloud/admin only; clients may never write
+    }
+
+    // ---- RUN rareKills: write-only, envelope shape-locked, never readable -----
+    // Raw crowd submissions from the RUN share link (run.html). The Cloud Function
+    // (rareKillsOnWrite) deep-validates events, recomputes slay tiers from snap,
+    // rate-limits per clientId and builds the public rollups; clients never read raw.
+    match /rareKills/{docId} {
+      allow create: if signedIn() && validRareKill(request.resource.data);  // restore && appChecked() when fixed
+      allow read, update, delete: if false;  // raw crowd rows are not client-readable
+    }
+
+    // ---- RUN rareKillCounts: read-only; written ONLY by Cloud Functions -------
+    // Per-creature rollups (counts by mode, total, wipes, k-of-n-published name).
+    // The function enforces MIN_BUCKET small-bucket suppression BEFORE writing:
+    // below it the doc carries { low: true } and no totals. Baked into the addon
+    // by run-forever pipeline/fetch_counts.py; also read by the run.html ladder.
+    match /rareKillCounts/{docId} {
+      allow read: if true;         // public, pre-suppressed crowd counts
+      allow write: if false;       // admin SDK bypasses rules; clients may never write
+    }
+
+    // ---- RUN giantSlayers: read-only; written ONLY by Cloud Functions ---------
+    // The opt-in named ladder: entries exist ONLY for named==true submissions with a
+    // CHOSEN handle (charset/length-clamped, never a real name) and a server-RECOMPUTED
+    // odds tier - the client's claimed odds are advisory and never published.
+    match /giantSlayers/{docId} {
+      allow read: if true;
+      allow write: if false;       // admin SDK bypasses rules; clients may never write
+    }
+
+    // ---- RUN waitlist: write-only, shape-locked, never readable ---------------
+    // Email capture for the RUN launch waitlist (marketing-site/run.html). PII:
+    // consent==true is required by shape; the team reads it in the console only.
+    match /runWaitlist/{docId} {
+      allow create: if signedIn() && validRunWaitlist(request.resource.data);  // restore && appChecked() when fixed
+      allow read, update, delete: if false;  // emails are never client-readable
+    }
+
+    // ---- everything else: denied -------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

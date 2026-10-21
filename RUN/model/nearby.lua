@@ -147,12 +147,7 @@ RUN.on("VIGNETTE_MINIMAP_UPDATED", function(vignetteGUID)
     Nearby.ping(info, mapID, x, y)
 end)
 
--- One-time nudge: the nameplate signal needs enemy nameplates on.
-RUN.on("PLAYER_LOGIN", function()
-    local v = Guards.call(_G.GetCVar, "nameplateShowEnemies")
-    if v == "0" then
-        RUN.print("tip: enable enemy nameplates (default key V) so RUN can sense rares near you before you see them.")
-    end
-end)
+-- (The nameplates-off login nudge moved to the one-click Enable prompt in
+-- ui/window.lua - one surface, consensual CVar set on the user's own click.)
 
 return Nearby

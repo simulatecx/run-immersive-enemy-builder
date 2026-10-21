@@ -159,13 +159,30 @@ function Deathping.allowSender(state, sender, now, max)
 end
 
 -- Heard counts live in RUNDB (type-validated; user-editable like everything).
+-- Two parallel ledgers: db.heard counts EVERY valid ping; db.heardStrict counts
+-- only pings that flipped to corroborated (2+ distinct ack witnesses). The
+-- strictTrust setting decides which one feeds publicly-shown counts.
+local function rawCount(map, npc)
+    if type(map) ~= "table" then return 0 end
+    local n = map[npc]
+    return (type(n) == "number" and n >= 0) and n or 0
+end
+
+function Deathping.strictHeardBy(npc)
+    npc = tonumber(npc)
+    if not npc then return 0 end
+    return rawCount(RUN.db().heardStrict, npc)
+end
+
 function Deathping.heardBy(npc)
     npc = tonumber(npc)
     if not npc then return 0 end
+    if RUN.Settings and RUN.Settings.get("strictTrust") then
+        return Deathping.strictHeardBy(npc)
+    end
     local db = RUN.db()
     if type(db.heard) ~= "table" then db.heard = {} end
-    local n = db.heard[npc]
-    return (type(n) == "number" and n >= 0) and n or 0
+    return rawCount(db.heard, npc)
 end
 
 function Deathping.recordHeard(npc)
@@ -173,7 +190,17 @@ function Deathping.recordHeard(npc)
     if not npc then return end
     local db = RUN.db()
     if type(db.heard) ~= "table" then db.heard = {} end
-    db.heard[npc] = Deathping.heardBy(npc) + 1
+    db.heard[npc] = rawCount(db.heard, npc) + 1
+end
+
+-- Bumped by the ack receive path when an entry FLIPS to corroborated - never
+-- more than once per heard entry (the flip happens exactly once).
+function Deathping.recordHeardStrict(npc)
+    npc = tonumber(npc)
+    if not npc then return end
+    local db = RUN.db()
+    if type(db.heardStrict) ~= "table" then db.heardStrict = {} end
+    db.heardStrict[npc] = rawCount(db.heardStrict, npc) + 1
 end
 
 -- Total deaths heard across all creatures (the Ledger's tally).
@@ -204,6 +231,43 @@ function Deathping.npcName(npc)
     end
     return "creature #" .. tostring(npc)
 end
+
+-- ---------------------------------------------------------------------------
+-- Package-registered selftests (pure; run headless AND in-game).
+-- ---------------------------------------------------------------------------
+table.insert(RUN.selftestChecks, function(check)
+    local db = RUN.db()
+    local savedHeard, savedStrict = db.heard, db.heardStrict
+
+    -- strict counts only grow on the corroboration FLIP (the ack call-site
+    -- pattern: bump recordHeardStrict only when corroborate turns false->true)
+    db.heardStrict = nil
+    local entry, flips = { npc = 448, acks = 0 }, 0
+    local function ackFrom(sender)
+        local was = entry.corro and true or false
+        if Deathping.corroborate(entry, sender) and not was then
+            flips = flips + 1
+            Deathping.recordHeardStrict(entry.npc)
+        end
+    end
+    ackFrom("Peer1"); ackFrom("Peer1"); ackFrom("Peer2"); ackFrom("Peer3")
+    check("strict count grows on flip only",
+        flips == 1 and rawCount(db.heardStrict, 448) == 1)
+
+    -- heardBy honors the strictTrust toggle
+    db.heard = { [448] = 5 }
+    db.heardStrict = { [448] = 1 }
+    local before = RUN.Settings.get("strictTrust")
+    RUN.Settings.set("strictTrust", false)
+    local allN = Deathping.heardBy(448)
+    RUN.Settings.set("strictTrust", true)
+    local strictN = Deathping.heardBy(448)
+    local strictMiss = Deathping.heardBy(777)
+    RUN.Settings.set("strictTrust", before)
+    db.heard, db.heardStrict = savedHeard, savedStrict
+    check("heardBy honors strictTrust", allN == 5 and strictN == 1 and strictMiss == 0)
+    check("strictTrust default off", RUN.Settings.get("strictTrust") == false)
+end)
 
 -- Everything below wires the client.
 if not _G.CreateFrame then return Deathping end
@@ -366,7 +430,14 @@ RUN.on("CHAT_MSG_ADDON", function(prefix, msg, _, sender)
     local ack = Deathping.decodeAck(msg)
     if ack then
         local entry = findRecentHeard(ack, nil, now)
-        if entry then Deathping.corroborate(entry, who) end
+        if entry then
+            local was = entry.corro and true or false
+            if Deathping.corroborate(entry, who) and not was then
+                -- the flip to corroborated happens exactly once per entry:
+                -- this is the only place the strict ledger grows
+                Deathping.recordHeardStrict(entry.npc)
+            end
+        end
         return
     end
 

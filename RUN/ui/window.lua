@@ -100,13 +100,72 @@ function Window.recent(deaths, maxN)
     return out
 end
 
+-- Pure: is this heard-log entry shaped right? (SavedVariables = untrusted.)
+function Window.validHeard(e)
+    return type(e) == "table"
+        and type(e.npc) == "number" and e.npc >= 1
+        and type(e.t) == "number"
+end
+
+-- Pure: one page of the heard-log FIFO, newest-first, invalid entries skipped.
+-- Returns slice, clampedPage, pageCount, validTotal (page 1 = most recent).
+function Window.heardPage(log, page, per)
+    per = tonumber(per) or 14
+    if per < 1 then per = 1 end
+    page = tonumber(page) or 1
+    local valid = {}
+    if type(log) == "table" then
+        for i = #log, 1, -1 do
+            local e = log[i]
+            if Window.validHeard(e) then table.insert(valid, e) end
+        end
+    end
+    local pages = math.max(1, math.ceil(#valid / per))
+    if page < 1 then page = 1 end
+    if page > pages then page = pages end
+    local out, start = {}, (page - 1) * per
+    for i = start + 1, math.min(start + per, #valid) do
+        table.insert(out, valid[i])
+    end
+    return out, page, pages, #valid
+end
+
+-- ---------------------------------------------------------------------------
+-- Package-registered selftests (pure; run headless AND in-game).
+-- ---------------------------------------------------------------------------
+table.insert(RUN.selftestChecks, function(check)
+    local log = {}
+    for i = 1, 30 do
+        table.insert(log, { npc = 100 + i, t = i, bracket = 10, sum = i })
+    end
+    table.insert(log, { npc = "tampered", t = 99 })   -- invalid: must be skipped
+    table.insert(log, "junk")
+    local p1, page1, pages, total = Window.heardPage(log, 1, 14)
+    check("heard page newest first", #p1 == 14 and p1[1].npc == 130 and p1[14].npc == 117)
+    check("heard page skips invalid", page1 == 1 and pages == 3 and total == 30)
+    local p3 = Window.heardPage(log, 3, 14)
+    check("heard page tail slice", #p3 == 2 and p3[1].npc == 102 and p3[2].npc == 101)
+    local _, clamped = Window.heardPage(log, 99, 14)
+    check("heard page clamps past end", clamped == 3)
+    local _, floored = Window.heardPage(log, -5, 14)
+    check("heard page clamps below 1", floored == 1)
+    check("heard page empty-safe", (function()
+        local slice, pg, pgs, n = Window.heardPage(nil, 1, 14)
+        return #slice == 0 and pg == 1 and pgs == 1 and n == 0
+    end)())
+    check("heard valid entry gate", Window.validHeard({ npc = 1, t = 0 }) == true
+        and Window.validHeard({ npc = 0, t = 0 }) == false
+        and Window.validHeard({ npc = 1 }) == false
+        and Window.validHeard(nil) == false)
+end)
+
 -- Everything below builds the client UI.
 if not _G.CreateFrame then return Window end
 
 local GOLD, DIM = "|cffefd488", "|cffb7a988"
 
 local f = CreateFrame("Frame", "RUNLedgerWindow", UIParent)
-f:SetSize(400, 560)
+f:SetSize(400, 588)
 f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
 f:SetFrameStrata("DIALOG")
 f:SetMovable(true)
@@ -144,6 +203,28 @@ local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 title:SetPoint("TOP", 0, -9)
 title:SetText(GOLD .. "RUN - Account Ledger|r")
 
+-- shared button style: a plain Button + gold fontstring, the house look
+local function makeTextButton(parent, text)
+    local b = CreateFrame("Button", nil, parent)
+    local fs = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    fs:SetPoint("CENTER")
+    fs:SetText(text)
+    b.label = fs
+    b:SetSize(math.max(fs:GetStringWidth() + 16, 44), 20)
+    b:SetScript("OnEnter", function() if b:IsEnabled() then fs:SetTextColor(1, 0.95, 0.6) end end)
+    b:SetScript("OnLeave", function() if b:IsEnabled() then fs:SetTextColor(1, 0.82, 0) end end)
+    b.setEnabled = function(on)
+        if on then b:Enable(); fs:SetTextColor(1, 0.82, 0)
+        else b:Disable(); fs:SetTextColor(0.45, 0.4, 0.33) end
+    end
+    return b
+end
+
+-- the Heard tab button: lives next to the title, above the drag layer like the X
+local tabBtn = makeTextButton(f, "Heard >")
+tabBtn:SetPoint("TOPLEFT", 8, -5)
+tabBtn:SetFrameLevel(titleBar:GetFrameLevel() + 5)
+
 -- the X: lives ABOVE the drag layer so clicks reach it (field bug: the title
 -- bar was eating them), with a generous hit box
 local close = CreateFrame("Button", nil, f)
@@ -170,9 +251,12 @@ stats:SetSpacing(3)
 -- ---------------------------------------------------------------------------
 local OPTION_DEFS = RUN.Settings.defs   -- one list drives every options surface
 
+local homeWidgets = { stats }           -- everything the Heard page hides
+
 local optHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-optHeader:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 232)
+optHeader:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 258)
 optHeader:SetText(GOLD .. "Options|r")
+table.insert(homeWidgets, optHeader)
 
 local checks = {}
 for i, def in ipairs(OPTION_DEFS) do
@@ -180,7 +264,7 @@ for i, def in ipairs(OPTION_DEFS) do
     cb:SetSize(24, 24)
     local col = (i - 1) % 2
     local row = math.floor((i - 1) / 2)
-    cb:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 14 + col * 192, 224 - row * 26)
+    cb:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 14 + col * 192, 250 - row * 26)
     local label = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     label:SetPoint("LEFT", cb, "RIGHT", 2, 1)
     label:SetText(def.label)
@@ -190,7 +274,106 @@ for i, def in ipairs(OPTION_DEFS) do
         if def.key == "minimapButton" and RUN.MinimapButton then RUN.MinimapButton.refresh() end
     end)
     checks[def.key] = cb
+    table.insert(homeWidgets, cb)
+    table.insert(homeWidgets, label)
 end
+
+-- ---------------------------------------------------------------------------
+-- The Heard page: the death-ping network, browsable. Newest-first pages over
+-- RUNDB.heardLog (FIFO 200) via Prev/Next - no scroll templates needed.
+-- ---------------------------------------------------------------------------
+local HEARD_PER_PAGE = 14
+
+local heardText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+heardText:SetPoint("TOPLEFT", 14, -36)
+heardText:SetPoint("RIGHT", f, "RIGHT", -14, 0)
+heardText:SetPoint("BOTTOM", f, "BOTTOM", 0, 44)
+heardText:SetJustifyH("LEFT")
+heardText:SetJustifyV("TOP")
+heardText:SetSpacing(3)
+heardText:Hide()
+
+local prevBtn = makeTextButton(f, "< Prev")
+prevBtn:SetPoint("BOTTOMLEFT", 14, 12)
+prevBtn:Hide()
+local nextBtn = makeTextButton(f, "Next >")
+nextBtn:SetPoint("BOTTOMRIGHT", -14, 12)
+nextBtn:Hide()
+local pageLabel = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+pageLabel:SetPoint("BOTTOM", 0, 17)
+pageLabel:Hide()
+
+local heardWidgets = { heardText, prevBtn, nextBtn, pageLabel }
+local mode, heardPageNum = "home", 1
+
+-- e.t is GetTime() (uptime); convert its age to wall clock for HH:MM.
+local function fmtHeardWhen(t)
+    local up = _G.GetTime and _G.GetTime() or 0
+    local now = _G.time and _G.time() or 0
+    if _G.date and now > 0 then
+        local age = up - t
+        if age < 0 then age = 0 end
+        return _G.date("%H:%M", now - age)
+    end
+    return "?"
+end
+
+local function heardLine(e)
+    local name = RUN.Deathping.npcName(e.npc)
+    local noto = RUN.Notoriety.describe(e.npc, "normal")
+    local titled = noto.title and (name .. " |cffff5040\"" .. noto.title .. "\"|r") or name
+    local bracket = (type(e.bracket) == "number" and e.bracket > 0)
+        and (" " .. DIM .. "~L" .. e.bracket .. "|r") or ""
+    local mark = e.corro and "|cff6fcf7a[2+]|r" or "|cff857868[?]|r"
+    local sender = ""
+    if RUN.Settings.get("eulogy") and type(e.sender) == "string" then
+        sender = " " .. DIM .. "- " .. e.sender:gsub("|", "") .. "|r"
+    end
+    local line = DIM .. fmtHeardWhen(e.t) .. "|r  " .. mark .. " " .. titled .. bracket .. sender
+    if type(e.words) == "string" and e.words ~= "" then
+        -- last words (quoted + dimmed; WoW fontstrings have no inline italics)
+        line = line .. "\n        |cffcbbfa3\"" .. e.words:gsub("|", ""):sub(1, 80) .. "\"|r"
+    end
+    return line
+end
+
+local function renderHeard()
+    local entries, page, pages, total =
+        Window.heardPage(RUN.db().heardLog, heardPageNum, HEARD_PER_PAGE)
+    heardPageNum = page
+    local lines = { GOLD .. "Deaths heard nearby|r " .. DIM .. "(the RUN network, newest first)|r", " " }
+    if total == 0 then
+        table.insert(lines, DIM .. "  nothing heard yet - when a RUN player falls")
+        table.insert(lines, DIM .. "  near you, the creature's legend grows here.|r")
+    else
+        for _, e in ipairs(entries) do table.insert(lines, heardLine(e)) end
+    end
+    heardText:SetText(table.concat(lines, "\n"))
+    pageLabel:SetText(DIM .. "page " .. page .. "/" .. pages .. " - " .. total .. " heard|r")
+    prevBtn.setEnabled(page > 1)
+    nextBtn.setEnabled(page < pages)
+end
+
+local function setMode(m)
+    mode = m
+    local home = (m == "home")
+    for _, w in ipairs(homeWidgets) do if home then w:Show() else w:Hide() end end
+    for _, w in ipairs(heardWidgets) do if home then w:Hide() else w:Show() end end
+    title:SetText(GOLD .. (home and "RUN - Account Ledger" or "RUN - Deaths Heard") .. "|r")
+    tabBtn.label:SetText(home and "Heard >" or "< Home")
+    tabBtn:SetSize(math.max(tabBtn.label:GetStringWidth() + 16, 44), 20)
+    if not home then heardPageNum = 1; renderHeard() end
+end
+
+tabBtn:SetScript("OnClick", function()
+    setMode(mode == "home" and "heard" or "home")
+end)
+prevBtn:SetScript("OnClick", function()
+    heardPageNum = heardPageNum - 1; renderHeard()
+end)
+nextBtn:SetScript("OnClick", function()
+    heardPageNum = heardPageNum + 1; renderHeard()
+end)
 
 -- ---------------------------------------------------------------------------
 -- Rendering.
@@ -274,6 +457,7 @@ function Window.refresh()
     for key, cb in pairs(checks) do
         cb:SetChecked(RUN.Settings.get(key) and true or false)
     end
+    if mode == "heard" then renderHeard() end
 end
 
 function Window.toggle()
@@ -281,5 +465,62 @@ function Window.toggle()
 end
 
 function Window.isShown() return f:IsShown() end
+
+-- ---------------------------------------------------------------------------
+-- Nameplate one-click prompt: RUN senses enemies through nameplates, so when
+-- they are off at login we offer ONE click to turn them on. The CVar write is
+-- unprotected and happens inside the user's hardware click - display-and-
+-- advice law intact (the user acts; we only ask). Once per session, max.
+-- ---------------------------------------------------------------------------
+local promptOffered = false
+
+local function buildPrompt()
+    local p = CreateFrame("Frame", "RUNNameplatePrompt", UIParent)
+    p:SetSize(340, 104)
+    p:SetPoint("TOP", UIParent, "TOP", 0, -180)
+    p:SetFrameStrata("DIALOG")
+    p:EnableMouse(true)
+    p:SetClampedToScreen(true)
+
+    local pbg = p:CreateTexture(nil, "BACKGROUND")
+    pbg:SetAllPoints()
+    pbg:SetColorTexture(0.05, 0.04, 0.03, 0.94)
+    local pedge = p:CreateTexture(nil, "BORDER")
+    pedge:SetPoint("TOPLEFT", -1, 1); pedge:SetPoint("BOTTOMRIGHT", 1, -1)
+    pedge:SetColorTexture(0.78, 0.64, 0.3, 0.6)
+    local pinner = p:CreateTexture(nil, "ARTWORK")
+    pinner:SetAllPoints(); pinner:SetColorTexture(0.05, 0.04, 0.03, 1)
+    pinner:SetDrawLayer("BORDER", 1)
+
+    local head = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    head:SetPoint("TOP", 0, -12)
+    head:SetText(GOLD .. "RUN senses enemies through nameplates|r")
+    local body = p:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    body:SetPoint("TOP", head, "BOTTOM", 0, -6)
+    body:SetPoint("LEFT", 14, 0); body:SetPoint("RIGHT", -14, 0)
+    body:SetText(DIM .. "Enemy nameplates are off, so rares can't be sensed"
+        .. " before you see them. Enable them now?|r")
+
+    local enable = makeTextButton(p, "[ Enable ]")
+    enable:SetPoint("BOTTOMLEFT", 40, 12)
+    enable:SetScript("OnClick", function()
+        -- the user's hardware click flips the (unprotected) CVar - never us
+        if _G.SetCVar then pcall(_G.SetCVar, "nameplateShowEnemies", "1") end
+        p:Hide()
+        RUN.print("enemy nameplates enabled - RUN can now sense rares near you.")
+    end)
+    local later = makeTextButton(p, "Not now")
+    later:SetPoint("BOTTOMRIGHT", -40, 12)
+    later:SetScript("OnClick", function() p:Hide() end)
+    return p
+end
+
+RUN.on("PLAYER_LOGIN", function()
+    if promptOffered then return end
+    local v = RUN.Guards.call(_G.GetCVar, "nameplateShowEnemies")
+    if v ~= "0" then return end
+    promptOffered = true
+    buildPrompt():Show()
+end)
 
 return Window

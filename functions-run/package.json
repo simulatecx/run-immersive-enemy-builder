@@ -1,0 +1,14 @@
+{
+  "name": "run-crowd-functions",
+  "description": "RUN crowd backend (canonical source): rareKills -> rareKillCounts/giantSlayers rollups. Deployed as functions/rareKills.js in the Foresight repo (one functions source per Firebase project).",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^7.4.0"
+  }
+}

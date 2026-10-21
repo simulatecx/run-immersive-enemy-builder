@@ -38,6 +38,7 @@ local function register()
         S.RegisterAddOnCategory(category)
     end)
     registered = ok and true or false
+    Options.registered = registered   -- surfaced by /ra diag
 end
 
 RUN.on("PLAYER_LOGIN", register)

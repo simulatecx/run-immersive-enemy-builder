@@ -1,0 +1,64 @@
+{
+  "$doc": "SINGLE SOURCE for RUN's rareKills crowd allow-list (WP-B / RUN-E). Edit THIS file, then run `python pipeline/gen_crowd_schema.py` to regenerate the mirrors: RUN/data/generated/crowd_schema.lua (addon payload builder), firebase/rareKills.rules.partial (the validRareKill server gate, applied verbatim into the Foresight repo web/firestore.rules between the same markers), and ../marketing/web/run-crowd-schema.js (web sanitize for run.html). The drift check (`gen_crowd_schema.py --check`) fails if any committed mirror differs, so a new field can never land in one consumer and leak past another. DATA-MINIMIZATION LAW: this is an ALLOW-LIST of non-identifying game data. The payload is an envelope { v, kinds, events, season, clientId?, sum?, named?, handle?, armory? }; each events[] element is one of the event shapes under 'events' (rules cannot iterate lists, so event internals are deep-validated by the addon builder, the web sanitize, and the rareKillsOnWrite function). 'identifying' fields ship ONLY under the opt-in named==true tier (a chosen handle, never a real name). 'nm' on sightings is a CREATURE name (game data), never a player's.",
+  "schemaVersion": 1,
+  "collection": "rareKills",
+  "site": "https://wow-foresight.web.app/run.html",
+  "fields": [
+    { "key": "v",        "tier": "anon", "kind": "const",  "value": 1,    "required": true,  "doc": "payload schema version" },
+    { "key": "kinds",    "tier": "anon", "kind": "list",   "maxSize": 4,  "of": ["death", "slay", "sighting", "wipe"], "required": true, "doc": "distinct event kinds present in events[]" },
+    { "key": "events",   "tier": "anon", "kind": "list",   "maxSize": 100, "required": true, "doc": "event objects; per-kind shapes under 'events'" },
+    { "key": "season",   "tier": "anon", "kind": "string", "maxSize": 8,  "matches": "[a-z0-9]+", "required": true, "doc": "season tag (s0 until the Hardcore-kickoff reset)" },
+    { "key": "clientId", "tier": "anon", "kind": "string", "maxSize": 40, "required": false, "doc": "pseudonymous dedup/rate-limit token, never identity" },
+    { "key": "sum",      "tier": "anon", "kind": "number", "required": false, "doc": "Fletcher16 over the canonical event string (tamper/truncation tell)" },
+    { "key": "named",    "tier": "anon", "kind": "bool",   "required": false, "doc": "opt-in: show me on Giant Slayers; GATES handle/armory" },
+    { "key": "handle",   "tier": "identifying", "kind": "string", "maxSize": 24, "matches": "[A-Za-z0-9_ -]+", "required": false, "doc": "chosen handle (never a real name); only when named==true" },
+    { "key": "armory",   "tier": "identifying", "kind": "string", "maxSize": 200, "matches": "https://[A-Za-z0-9._~:/?#@!$&*+,;=%()-]+", "required": false, "doc": "optional armory URL (https only, charset-locked); only when named==true" }
+  ],
+  "events": {
+    "death": {
+      "doc": "a creature killed a player",
+      "fields": [
+        { "key": "k",       "kind": "const",  "value": "death", "required": true },
+        { "key": "npc",     "kind": "number", "min": 1, "max": 10000000, "required": true, "doc": "creature npcID (species)" },
+        { "key": "mode",    "kind": "string", "maxSize": 4, "of": ["pve", "pvp", "hc"], "required": true },
+        { "key": "bracket", "kind": "number", "min": 0, "max": 200, "required": false, "doc": "player level floored to 10s - coarse, non-identifying" },
+        { "key": "zone",    "kind": "number", "required": false, "doc": "uiMapID (game data)" },
+        { "key": "season",  "kind": "string", "maxSize": 8, "required": true }
+      ]
+    },
+    "slay": {
+      "doc": "a solo-wager win (RISK IT); the server RECOMPUTES the tier from snap and ignores p",
+      "fields": [
+        { "key": "k",      "kind": "const",  "value": "slay", "required": true },
+        { "key": "npc",    "kind": "number", "min": 1, "max": 10000000, "required": true },
+        { "key": "p",      "kind": "number", "min": 0, "max": 1, "required": true, "doc": "client-asserted odds, ADVISORY only" },
+        { "key": "snap",   "kind": "map",    "keys": ["pLevel", "cLevel", "cls"], "required": false, "doc": "recomputable odds inputs at arm time; without it the server cannot verify and skips the entry" },
+        { "key": "mode",   "kind": "string", "maxSize": 4, "of": ["pve", "pvp", "hc"], "required": true },
+        { "key": "season", "kind": "string", "maxSize": 8, "required": true }
+      ]
+    },
+    "sighting": {
+      "doc": "a rare+ creature actually seen; names publish only at k-of-n distinct reporters",
+      "fields": [
+        { "key": "k",      "kind": "const",  "value": "sighting", "required": true },
+        { "key": "npc",    "kind": "number", "min": 1, "max": 10000000, "required": true },
+        { "key": "nm",     "kind": "string", "maxSize": 48, "required": true, "doc": "CREATURE name as the client saw it (game data, never a player name)" },
+        { "key": "cls",    "kind": "string", "maxSize": 10, "of": ["rare", "rareelite", "worldboss"], "required": true },
+        { "key": "zone",   "kind": "number", "required": false, "doc": "uiMapID" },
+        { "key": "season", "kind": "string", "maxSize": 8, "required": true }
+      ]
+    },
+    "wipe": {
+      "doc": "a group wipe; exactly one of npc (open world) or enc (boss encounter name)",
+      "fields": [
+        { "key": "k",      "kind": "const",  "value": "wipe", "required": true },
+        { "key": "npc",    "kind": "number", "min": 1, "max": 10000000, "required": false },
+        { "key": "enc",    "kind": "string", "maxSize": 48, "required": false, "doc": "encounter name (game data)" },
+        { "key": "size",   "kind": "number", "min": 0, "max": 40, "required": false, "doc": "group size when known" },
+        { "key": "mode",   "kind": "string", "maxSize": 4, "of": ["pve", "pvp", "hc"], "required": true },
+        { "key": "season", "kind": "string", "maxSize": 8, "required": true }
+      ]
+    }
+  },
+  "forbidden": ["realm", "account", "guild", "name", "guid", "ip", "at"]
+}

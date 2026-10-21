@@ -89,11 +89,18 @@ function Devil.tryArm(verdict)
     if armed then RUN.print("a wager is already armed: " .. tostring(armed.name)) return end
     if not verdict or not verdict.creature then return end
     if not isSolo() then RUN.print("wagers are SOLO only - leave your group first.") return end
+    local c = verdict.creature
     local snap = {
-        npc = verdict.creature.npcID, name = verdict.creature.name,
-        p = verdict.p, solo = true,
+        npc = c.npcID, name = c.name, p = verdict.p, solo = true,
+        -- the server recomputes the wager tier from these (crowd law: the
+        -- client's asserted % is advisory) - snapless slays earn no ladder spot
+        odds = {
+            pLevel = Guards.number(Guards.call(_G.UnitLevel, "player")),
+            cLevel = c.level, cls = c.classification,
+        },
     }
     armed = Devil.arm(snap, _G.GetTime and _G.GetTime() or 0)
+    if armed then armed.odds = snap.odds end
     if not armed then RUN.print("no wager here - the odds are too good.") return end
     RUN.print("WAGER ARMED (" .. Devil.tierLabel(armed.tier) .. "): slay "
         .. tostring(armed.name) .. " solo at ~" .. math.floor((armed.p or 0) * 100 + 0.5)
@@ -106,9 +113,17 @@ local function record(outcome)
     if outcome == "won" then
         local db = RUN.db()
         if type(db.slays) ~= "table" then db.slays = {} end
+        local hc = false
+        local GR = _G.C_GameRules
+        if GR and GR.IsHardcoreActive then
+            local okHC, v = pcall(GR.IsHardcoreActive)
+            hc = okHC and v and true or false
+        end
         table.insert(db.slays, {
             when = _G.time and _G.time() or 0,
             npc = armed.npc, name = armed.name, p = armed.p, tier = armed.tier,
+            snap = armed.odds,                 -- server-recomputable inputs
+            mode = hc and "hc" or "pve",
             who = Guards.call(_G.UnitName, "player"),
         })
         while #db.slays > 50 do table.remove(db.slays, 1) end

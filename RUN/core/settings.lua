@@ -21,6 +21,7 @@ Settings.defaults = {
     shareDeaths = true,      -- in-game anonymous death-ping to other RUN users (no name; opt-out)
     minimapButton = true,    -- the minimap button (opens the Account Ledger / options)
     heardAlerts = true,      -- banner when a notable creature claims another victim nearby
+    strictTrust = false,     -- publicly-shown heard counts use only corroborated pings (2+ witnesses)
     eulogy = false,          -- show the fallen's character name on heard deaths (display-only;
                              -- the name already rides the addon-message transport regardless)
     lastWords = true,        -- your final public chat line rides your death-ping (Hardcore classic)
@@ -42,6 +43,7 @@ Settings.defs = {
     { key = "recordDeaths",   label = "Record my deaths" },
     { key = "shareDeaths",    label = "Share anonymous death-pings" },
     { key = "heardAlerts",    label = "Banner notable heard deaths" },
+    { key = "strictTrust",    label = "Strict trust (corroborated only)" },
     { key = "eulogy",         label = "Name the fallen (eulogy mode)" },
     { key = "lastWords",      label = "Broadcast my last words" },
     { key = "tierFrames",     label = "Tier frames for titled enemies" },
