@@ -3,7 +3,7 @@
 addon-logic change; also runs in-game via /ra selftest.
 
 Gates BOTH flavors: RUN.toc (WoW: Forever, Interface 16001) and
-RUN_Vanilla.toc (Classic Era, Interface 11508). Each TOC's file list loads
+RUN_Vanilla.toc (Classic Era, Interface 11509). Each TOC's file list loads
 fresh in its OWN Lua runtime and runs the full selftest; version sync checks
 every TOC's ## Version against RUN.version.
 

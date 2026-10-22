@@ -159,6 +159,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.1 (2026-10-22, private beta): THE ERA PARTITION LOCK - HANDOFF.md
+  W0+W1 executed. [W0] RUN_Vanilla.toc Interface 11508 -> 11509 (the era
+  build Foresight field-verified going dual-flavor). [W1] platform-aware
+  season stamp: new RUN.seasonEra = "c0" constant beside RUN.season in
+  core/init.lua (one flip home, two independent game-line calendars);
+  Share.season() selects via Share.detectEra - API presence (C_QuestLog.
+  GetInfo absent + global GetQuestLogTitle present = era), never version
+  numbers; the shape clamp fails PARTITION-LOCAL (era -> "c0", Forever ->
+  "s0") so even a bad edit cannot blend the two games' counts; headless
+  resolves Forever-side (gate fixtures stay s0). Selftests: era-detection
+  truth table, partition prefixes, platform-tag-verbatim stamp, platform-
+  aware season flip, in-partition clamp - written to stay green in-game on
+  BOTH flavors. Version trio bumped (0.8.1) so the W2 field pass can
+  confirm the build from the login banner. Docs synced: ERA.md (11509
+  verified, the c0-stamp section, field checklist step 11), SEASONS.md
+  (two-line doctrine now live), ECOSYSTEM.md + HANDOFF.md dated shipped
+  notes. Gate: compliance green, BOTH flavors selftest 241/241. NEXT: W2
+  field verification (owner in game), then owner-gated W3 backend go-live.
 - v0.8.0 (2026-10-21, private beta): THE FLEET BUILD - six agents, two waves,
   everything on the board (owner: "build everything"). WAVE 1: [WP-A] Classic
   Era fork - era-aware quest log (presence-detected), RUN_Vanilla.toc 11508,

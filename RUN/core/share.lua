@@ -15,15 +15,34 @@ if not RUN then RUN = _G.RunAdvisor or {}; _G.RunAdvisor = RUN end
 local Share = {}
 RUN.Share = Share
 
--- Season tag rides every event. The ONE constant lives in core/init.lua
--- (RUN.season - flipped at the Hardcore-kickoff reset per docs/SEASONS.md);
--- share.lua only READS it, through this clamp: a valid tag passes verbatim,
--- anything off-shape (tampered SavedVariables cannot reach it, but a bad edit
--- could) falls back to "s0" rather than erroring or stamping junk.
-function Share.season()
-    local s = RUN.season
+-- Season tag rides every event. The constants live in core/init.lua - one per
+-- GAME LINE, because npcIDs are identical across the two games and the tag
+-- prefix is what keeps their counts from ever blending: WoW Forever stamps
+-- RUN.season ("s0", "s1", ...), Classic Era stamps RUN.seasonEra ("c0",
+-- "c1", ...). share.lua only READS them: the live client is classified by API
+-- presence (the quests.lua signal), never by version numbers, then the tag
+-- passes the shape clamp. Off-shape or missing falls back WITHIN its own
+-- partition ("s0"/"c0") - a bad edit must never stamp one game's counts into
+-- the other game's buckets. Headless (no client API at all) resolves to the
+-- Forever side, so the gate's fixtures stay on "s0".
+
+-- Pure: the era signal on injected handles (so selftests probe both shapes on
+-- any client). Modern C_QuestLog.GetInfo wins outright; the old global quest
+-- log marks era; neither present (headless/unknown) is NOT era.
+function Share.detectEra(CQ, getQuestLogTitle)
+    if type(CQ) == "table" and CQ.GetInfo ~= nil then return false end
+    return type(getQuestLogTitle) == "function"
+end
+
+-- Pure: partition-aware select + clamp.
+function Share.seasonFor(era)
+    local s = era and RUN.seasonEra or RUN.season
     if type(s) == "string" and #s <= 8 and s:match("^[a-z0-9]+$") then return s end
-    return "s0"
+    return era and "c0" or "s0"
+end
+
+function Share.season()
+    return Share.seasonFor(Share.detectEra(_G.C_QuestLog, _G.GetQuestLogTitle))
 end
 
 -- Per-kind caps keep one link honest and the URL short; slays are rarest and
@@ -590,35 +609,66 @@ if type(RUN.selftestChecks) == "table" then
         end)())
         check("share json arrays", S.toJSON({ 1, 2, 3 }) == "[1,2,3]"
             and S.toJSON({ k = "v" }) == '{"k":"v"}')
-        check("share season stamps RUN.season verbatim", (function()
-            -- the ONE constant (core/init.lua) rides the envelope AND every event
-            if type(RUN.season) ~= "string" or not payload then return false end
-            if payload.season ~= RUN.season then return false end
+        check("share era detection by API presence", (function()
+            local fn = function() end
+            -- Forever/mainline: C_QuestLog.GetInfo present - modern wins
+            -- outright, even with an era-named global also around
+            if S.detectEra({ GetInfo = fn }, fn) ~= false then return false end
+            -- era 1.15.x: C_QuestLog exists (GetQuestObjectives) WITHOUT
+            -- GetInfo, plus the old global quest log
+            if S.detectEra({ GetQuestObjectives = fn }, fn) ~= true then return false end
+            -- headless/unknown client: no API at all - never era
+            return S.detectEra(nil, nil) == false
+        end)())
+        check("share season partition prefixes", (function()
+            -- each game line stamps its OWN prefix (npcIDs are identical
+            -- across the games; the prefix is the partition)
+            return S.seasonFor(false):match("^s[0-9]+$") ~= nil
+                and S.seasonFor(true):match("^c[0-9]+$") ~= nil
+        end)())
+        check("share season stamps the platform tag verbatim", (function()
+            -- the live wiring: season() resolves through detection, and the
+            -- resolved tag rides the envelope AND every event
+            local want = S.seasonFor(S.detectEra(_G.C_QuestLog, _G.GetQuestLogTitle))
+            if not payload or S.season() ~= want or payload.season ~= want then
+                return false
+            end
             for _, e in ipairs(payload.events) do
-                if e.season ~= RUN.season then return false end
+                if e.season ~= want then return false end
             end
             return true
         end)())
         check("share season flip changes the stamp", (function()
-            local old = RUN.season
-            RUN.season = "s1"
+            -- flip the constant the LIVE platform reads (era clients read
+            -- RUN.seasonEra, Forever reads RUN.season) - green on both
+            local era = S.detectEra(_G.C_QuestLog, _G.GetQuestLogTitle)
+            local key = era and "seasonEra" or "season"
+            local want = era and "c1" or "s1"
+            local old = RUN[key]
+            RUN[key] = want
             local p = S.buildPayload(fixtureDb(), 100)
-            RUN.season = old
-            if not p or p.season ~= "s1" then return false end
+            RUN[key] = old
+            if not p or p.season ~= want then return false end
             for _, e in ipairs(p.events) do
-                if e.season ~= "s1" then return false end
+                if e.season ~= want then return false end
             end
             -- the flipped tag still validates and the checksum follows the canon
             return S.validate(p) == true and p.sum == S.fletcher16(S.canon(p))
         end)())
-        check("share season clamp fail-safe", (function()
-            local old = RUN.season
+        check("share season clamp fail-safe stays in-partition", (function()
+            local oldS, oldC = RUN.season, RUN.seasonEra
             RUN.season = "NOT A TAG!"           -- off-shape: never stamped
-            local bad = S.season()
+            RUN.seasonEra = "NOT A TAG!"
+            local badS, badC = S.seasonFor(false), S.seasonFor(true)
             RUN.season = nil                    -- missing: never errors
-            local missing = S.season()
-            RUN.season = old
-            return bad == "s0" and missing == "s0" and S.season() == old
+            RUN.seasonEra = nil
+            local missS, missC = S.seasonFor(false), S.seasonFor(true)
+            RUN.season, RUN.seasonEra = oldS, oldC
+            -- each line falls back to ITS OWN season-0: a bad edit may lose a
+            -- flip, but it must never cross the game partition
+            return badS == "s0" and badC == "c0"
+                and missS == "s0" and missC == "c0"
+                and S.seasonFor(false) == oldS and S.seasonFor(true) == oldC
         end)())
     end)
 end

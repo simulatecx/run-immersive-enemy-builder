@@ -6,6 +6,19 @@
 > §2 FIRST; if anything moved, append a dated BASELINE RECONCILIATION at the
 > top - never silently edit the text below.
 
+> EXECUTION RECONCILIATION 2026-10-22 (baseline unmoved - executed at
+> ed0c527, the commit this spec shipped in): **W0 + W1 are DONE - do not
+> rebuild** (v0.8.1, gate 241/241 BOTH flavors). W1 mechanism: a second
+> constant `RUN.seasonEra = "c0"` beside `RUN.season` in `core/init.lua`
+> (init.lua stays the one flip home; the two lines flip independently per
+> docs/SEASONS.md), `Share.season()` selects via `Share.detectEra` (API
+> presence, the quests.lua signal), and the clamp fail-safe is
+> PARTITION-LOCAL (era falls back to `c0`, never `s0`). One recorded
+> deviation: the version trio was bumped 0.8.0 -> 0.8.1 (spec silent on
+> versioning) so the W2 field pass can confirm the deployed build from the
+> login banner. docs/ERA.md gained checklist step 11 (the `c0` stamp
+> field-check). The queue resumes at W2.
+
 ## 1. What this product is
 
 **RUN - "Immersive Enemy Builder: enhancing the Azeroth we know and love."**

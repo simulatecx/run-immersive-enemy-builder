@@ -6,19 +6,27 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.8.0"
+RUN.version = "0.8.1"
 
--- THE one season constant (WP-G / RUN-G). Every crowd payload stamps this tag;
--- rollups and ladders key by it, so flipping it is the whole in-addon "reset" -
--- old-season data is never touched. Tag shape is schema-locked: lowercase
--- [a-z0-9], max 8 ("s0", "s1", ...; a Classic-fork season would take its own
--- prefix, e.g. "c1"). FLIP PROCEDURE (owner-gated; full runbook docs/SEASONS.md):
+-- THE season constants (WP-G / RUN-G) - one per GAME LINE, both living here so
+-- every flip happens in this file. Each crowd payload stamps the tag of the
+-- game it was recorded on (core/share.lua selects by API presence); rollups
+-- and ladders key by it, so flipping a line's tag is that line's whole
+-- in-addon "reset" - old-season data is never touched. The two lines flip
+-- INDEPENDENTLY (their calendars differ - docs/SEASONS.md): npcIDs are
+-- identical across the two games, so the tag prefix is the only thing keeping
+-- their counts from blending. Tag shape is schema-locked: lowercase [a-z0-9],
+-- max 8. FLIP PROCEDURE (owner-gated; full runbook docs/SEASONS.md):
 --   1) python pipeline/season_archive.py --dry-run           (count what moves)
 --   2) python pipeline/season_archive.py --archive --season s0 --next s1 --yes
 --      (backup -> copy to seasonArchive/ -> read-back; deletes NOTHING)
---   3) bump THIS constant to the new tag
+--   3) bump the flipping line's constant below to the new tag
 --   4) redeploy the web ladders' default-season to match
 RUN.season = "s0"
+-- Classic Era line ("c0", "c1", ...). share.lua stamps this when the client
+-- is era-shaped (quests.lua signal: C_QuestLog.GetInfo absent + global
+-- GetQuestLogTitle present) - never by version numbers.
+RUN.seasonEra = "c0"
 
 -- Parallel-build law: packages integrate through registries, never by editing
 -- another package's files. New slash subcommands register in RUN.commands;

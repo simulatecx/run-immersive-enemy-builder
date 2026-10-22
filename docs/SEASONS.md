@@ -7,18 +7,21 @@ NOT do, the exact runbook, and who runs it. The code artifacts are
 
 ## What a season is
 
-A season is a TAG, not a database. Every crowd payload stamps `RUN.season`
-(the one constant in `RUN/core/init.lua`) on its envelope and on every event;
-the schema locks the shape to lowercase `[a-z0-9]`, max 8 (`data/
-rare-kills-schema.json`). The Cloud Function (`functions-run/index.js`) keys
-its rollups by that tag, and the web ladders filter by it. Because everything
-downstream keys by season, "starting a new season" is nothing more than new
-submissions arriving under a new tag - old data keeps its old tag and is
-never touched.
+A season is a TAG, not a database. Every crowd payload stamps its GAME
+LINE's constant (`RUN/core/init.lua`: Forever = `RUN.season`, Classic Era =
+`RUN.seasonEra`; `core/share.lua` selects by API presence) on its envelope
+and on every event; the schema locks the shape to lowercase `[a-z0-9]`, max
+8 (`data/rare-kills-schema.json`). The Cloud Function
+(`functions-run/index.js`) keys its rollups by that tag, and the web ladders
+filter by it. Because everything downstream keys by season, "starting a new
+season" is nothing more than new submissions arriving under a new tag - old
+data keeps its old tag and is never touched.
 
-- `s0` - Season 0: everything from the private beta through Forever launch
-  (2026-11-04) until the Hardcore kickoff.
-- `s1`, `s2`, ... - the Hardcore seasons that follow.
+- `s0` - Forever Season 0: everything from the private beta through Forever
+  launch (2026-11-04) until the Hardcore kickoff.
+- `s1`, `s2`, ... - the Forever Hardcore seasons that follow.
+- `c0`, `c1`, ... - the Classic Era line's tags (its own calendar; see the
+  last section).
 
 ## What the kickoff reset does - and does NOT do
 
@@ -64,7 +67,8 @@ Owner-gated. Dry-run -> backup -> write -> read-back, always in that order:
      mismatch (originals untouched either way).
 3. **Constant bump**: edit `RUN/core/init.lua` -> `RUN.season = "s1"`; ship
    through the normal gate (`python pipeline/run_tests.py` - the share
-   selftests prove the new tag rides every payload verbatim).
+   selftests prove the new tag rides every payload verbatim). An ERA-line
+   flip edits `RUN.seasonEra` the same way; the two lines flip independently.
 4. **Ladder default**: redeploy the web ladders' default-season to `s1`
    (marketing repo; owner-gated scoped deploy, per docs/AGENT-PLAN.md).
 
@@ -78,13 +82,18 @@ owner-gated list in `docs/AGENT-PLAN.md`; agents implement, selftest, and
 dry-run - they never flip a season. The `--yes` flag is the explicit consent
 act, and the script aborts before any read without it.
 
-## Forever vs Classic-fork season naming
+## Forever vs Classic Era season naming (shipped 2026-10-22, v0.8.1)
 
 `s0`/`s1`/... are the **Forever** line's tags (launch 2026-11-04, Hardcore
-kickoff ~2026-12-04). The Classic Era fork (WP-A / RUN-O) serves a population
-whose seasons will not align with Forever's calendar - when it wants its own
-seasons it takes its own prefix (e.g. `c1`) within the same schema shape,
-rather than overloading the Forever tags. Both flavors load the same
-`init.lua` today, so the fork's split happens the day its first season
-diverges: a platform-gated assignment of `RUN.season`, decided then, never
-retrofitted into old data - tags are forever, exactly like the archive.
+kickoff ~2026-12-04); `c0`/`c1`/... are the **Classic Era** line's - a
+population whose seasons will not align with Forever's calendar, so the two
+lines flip independently, each within the same schema shape. The split is
+LIVE: `init.lua` carries both constants (`RUN.season = "s0"`,
+`RUN.seasonEra = "c0"`) and `Share.season()` (`core/share.lua`) picks by API
+presence (the quests.lua signal: `C_QuestLog.GetInfo` absent + global
+`GetQuestLogTitle` present = era), never by version numbers. The clamp
+fail-safe is partition-local - an off-shape or missing constant falls back
+to `s0`/`c0` on its OWN side, never across games - because npcIDs are
+identical across the two games and the prefix is the only wall between
+their counts. Tags are never retrofitted into old data - they are forever,
+exactly like the archive.

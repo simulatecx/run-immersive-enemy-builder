@@ -11,6 +11,12 @@
 > `HANDOFF.md` at the repo root - read that first; this file remains the
 > architecture reference.
 
+> SHIPPED 2026-10-22 (v0.8.1): W0 + W1 below are DONE - `RUN_Vanilla.toc`
+> Interface 11509, and `Share.season()` is platform-aware (era clients stamp
+> `c0` via the new `RUN.seasonEra` constant; API-presence detection; the
+> clamp fails within its own partition). Gate 241/241 BOTH flavors. The
+> queue resumes at W2 (field verification).
+
 > HANDOFF SPEC (written 2026-10-21). A fresh session executes against this.
 > Executor rules: re-pin the baselines below FIRST; if a repo moved, append a
 > dated BASELINE RECONCILIATION section at the top - never edit this text

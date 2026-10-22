@@ -7,12 +7,13 @@ TODAY, so the SAME addon folder also ships an era TOC: the client picks
 flavor-suffix convention). One codebase, two flavors - every divergence is
 handled by API PRESENCE checks at runtime, never by version sniffing.
 
-## Interface number - one-time verify needed
+## Interface number - 11509 (Foresight-verified)
 
-`RUN_Vanilla.toc` declares `## Interface: 11508` (1.15.x era build,
-classic-presumed). The exact current era build number needs a ONE-TIME verify
-at first era login: if the client flags RUN as out-of-date, tick "Load out of
-date AddOns" for the session, read the live number via
+`RUN_Vanilla.toc` declares `## Interface: 11509` - the 1.15.x build number
+Foresight verified in the field when it went dual-flavor (v0.53.0; RUN
+aligned 2026-10-22, work item W0). If a future era patch bumps the build and
+the client flags RUN as out-of-date, tick "Load out of date AddOns" for the
+session, read the live number via
 `/run print((select(4, GetBuildInfo())))`, and update the `## Interface:`
 line to match. Everything else is unaffected - the gate loads the file list,
 not the interface number.
@@ -36,6 +37,19 @@ pure matcher (`Quests.setTargets` / `Quests.isTarget`). The helpers are
 selftested headless via `RUN.selftestChecks`, so the gate covers the era
 parse path on every run. `isHeader` tolerates both `1/nil` (old clients) and
 booleans (1.15.x).
+
+## The season stamp: era shares carry `c0`, never `s0`
+
+npcIDs are identical across the two games, so crowd counts are partitioned by
+the season tag's prefix: Forever stamps `RUN.season` (`s0`, `s1`, ...), era
+stamps `RUN.seasonEra` (`c0`, `c1`, ...) - both constants live in
+`core/init.lua`, and `Share.season()` (`core/share.lua`) selects between them
+with the same API-presence signal as the quest log (`C_QuestLog.GetInfo`
+absent + global `GetQuestLogTitle` present). The shape clamp fails WITHIN its
+partition (`c0` on era), so a bad edit can never stamp one game's counts into
+the other's buckets. Headless resolves to the Forever side (`s0`), keeping
+gate fixtures stable; the selection, the clamp, and the detection truth table
+are selftested on every gate run. Full doctrine: docs/SEASONS.md.
 
 ## Already era-safe by construction (presence checks in place)
 
@@ -94,3 +108,8 @@ booleans (1.15.x).
 10. Death journal: after the death above, `/ra deaths` and the Ledger -
     expect the entry with killer, zone, and HC mode; reload UI and confirm it
     persisted (SavedVariables RUNDB).
+11. Season stamp: with at least one journal entry recorded, `/ra share` -
+    the link's payload must carry the era tag: search the URL text for `c0`
+    (appears on the envelope and every event) and confirm `s0` appears
+    nowhere. Do NOT paste the link anywhere unless you mean to contribute
+    the data.
