@@ -33,7 +33,37 @@ SCHEMA_PATH = ROOT / "data" / "rare-kills-schema.json"
 LUA_PATH = ROOT / "RUN" / "data" / "generated" / "crowd_schema.lua"
 PARTIAL_PATH = ROOT / "firebase" / "rareKills.rules.partial"
 
-MARKETING_ROOT = ROOT.parent / "marketing"
+def _resolve_marketing_root() -> Path:
+    """The Foresight repo that carries the DEPLOYABLE shared surface.
+
+    Candidates in order: the RUN_MARKETING_ROOT env var; the `overlay`
+    sibling (the real Foresight repo at the standard dev location - wins
+    once the RUN-surface branch merges to main); a `marketing` sibling;
+    the orca worktree where the surface currently lives (branch
+    simulatecx/marketing). First candidate whose web/ carries the RUN
+    surface marker wins; else first with a web/ dir; else the first
+    candidate (the check degrades gracefully when absent).
+    """
+    import os
+    candidates = []
+    env = os.environ.get("RUN_MARKETING_ROOT")
+    if env:
+        candidates.append(Path(env))
+    candidates += [
+        ROOT.parent / "overlay",
+        ROOT.parent / "marketing",
+        Path(r"C:\Users\BradsPC_2022\orca\workspaces\overlay\marketing"),
+    ]
+    for c in candidates:
+        if (c / "web" / "run-crowd-schema.js").exists():
+            return c
+    for c in candidates:
+        if (c / "web").is_dir():
+            return c
+    return candidates[0]
+
+
+MARKETING_ROOT = _resolve_marketing_root()
 JS_PATH = MARKETING_ROOT / "web" / "run-crowd-schema.js"
 MARKETING_RULES_PATH = MARKETING_ROOT / "web" / "firestore.rules"
 

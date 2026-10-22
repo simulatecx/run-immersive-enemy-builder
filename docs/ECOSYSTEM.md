@@ -1,5 +1,16 @@
 # The Ecosystem Plan - two apps x two games, one backend
 
+> BASELINE RECONCILIATION 2026-10-22: (1) the RUN repo moved to
+> `E:\Development_Related\development_projects\wowforever_addons\run-forever`;
+> the Foresight MAIN repo is the sibling `..\overlay` (the orca worktree on
+> branch `simulatecx/marketing` still carries the un-merged RUN shared
+> surface). (2) SUPERSEDED: "Foresight is Forever-only / Foresight Classic
+> rejected" - Foresight v0.53.0 is now DUAL-FLAVOR (Forever 16001 + Classic
+> Era **11509**) in one repo/CF project; RUN_Vanilla.toc's 11508 estimate
+> must align to 11509. (3) The live handoff + updated work queue (W0-W6) is
+> `HANDOFF.md` at the repo root - read that first; this file remains the
+> architecture reference.
+
 > HANDOFF SPEC (written 2026-10-21). A fresh session executes against this.
 > Executor rules: re-pin the baselines below FIRST; if a repo moved, append a
 > dated BASELINE RECONCILIATION section at the top - never edit this text
