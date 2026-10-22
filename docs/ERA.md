@@ -99,7 +99,9 @@ are selftested on every gate run. Full doctrine: docs/SEASONS.md.
    the kill-rank line from the journal.
 7. Quest target via the ERA API path: accept any kill quest ("X slain: 0/N"),
    wait a few seconds, then `/ra status` - expect "quest targets tracked" > 0;
-   mouse over the quest mob - expect the QUEST TARGET flag.
+   mouse over the quest mob - expect the QUEST TARGET flag on the tooltip AND
+   the gold QUEST TARGET tag above its nameplate (v0.8.2 `questPlates`;
+   finish the objective and the tag drops within a second).
 8. Nearby ping: approach an elite/rare with enemy nameplates on - expect the
    banner (tier title) and alert.
 9. Death ping end-to-end: with a second account/client (or a guildmate on an

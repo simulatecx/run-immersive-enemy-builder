@@ -159,6 +159,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.2 (2026-10-22, private beta): QUEST TARGET ON THE PLATE. Fit &
+  Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE -
+  recognition already existed (model/quests.lua matcher + ui/tooltip.lua
+  mouseover flag + nearby.lua QUEST TARGET NEARBY banner, all v0.8.0); the
+  gap was nothing persistent ON the enemy. New ui/plates.lua (both TOCs,
+  mirror law): gold QUEST TARGET tag anchored above a quest-named mob's
+  nameplate - own frames on UIParent anchored to the plate, NEVER parented
+  (taint law); reuses Quests.isTarget verbatim (no second matcher); 1s
+  self-healing sweep covers quest progress unflagging, newly accepted
+  quests, deaths, and the new `questPlates` toggle (default on, in the
+  Ledger + ESC options via Settings.defs). Presence-detected C_NamePlate
+  (degrades silently if absent); display-only; no new data captured or
+  stored beyond the type-validated settings flag; not externally reachable.
+  5 new selftests (shouldFlag truth table, nil-safe). CONTEXT SHIFT
+  (owner): Forever beta ENDED - field work is era-first; Forever gets a
+  fresh verification pass at launch (2026-11-04) against the new data set;
+  dual-flavor build law unchanged. Gate: compliance green, BOTH flavors
+  selftest 246/246.
 - v0.8.1 (2026-10-22, private beta): THE ERA PARTITION LOCK - HANDOFF.md
   W0+W1 executed. [W0] RUN_Vanilla.toc Interface 11508 -> 11509 (the era
   build Foresight field-verified going dual-flavor). [W1] platform-aware

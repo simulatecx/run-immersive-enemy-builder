@@ -18,6 +18,7 @@ Settings.defaults = {
     pingElite = true,        -- nearby ping for elites (gold dragon)
     pingUnique = true,       -- nearby ping for rares, rare elites and bosses
     pingQuest = true,        -- nearby ping for named QUEST targets (Bruuz etc.), any classification
+    questPlates = true,      -- gold QUEST TARGET tag on a quest-named mob's nameplate
     shareDeaths = true,      -- in-game anonymous death-ping to other RUN users (no name; opt-out)
     minimapButton = true,    -- the minimap button (opens the Account Ledger / options)
     heardAlerts = true,      -- banner when a notable creature claims another victim nearby
@@ -36,6 +37,7 @@ Settings.defs = {
     { key = "expansiveStats", label = "Expansive Enemy Stats" },
     { key = "nearbyPing",     label = "Nearby pings (master)" },
     { key = "pingQuest",      label = "Ping quest targets" },
+    { key = "questPlates",    label = "Quest flag on nameplates" },
     { key = "pingUnique",     label = "Ping rares and bosses" },
     { key = "pingElite",      label = "Ping elites" },
     { key = "pingNormal",     label = "Ping normal enemies" },

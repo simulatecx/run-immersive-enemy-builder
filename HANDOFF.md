@@ -19,6 +19,16 @@
 > login banner. docs/ERA.md gained checklist step 11 (the `c0` stamp
 > field-check). The queue resumes at W2.
 
+> CONTEXT SHIFT 2026-10-22 (owner): **the Forever BETA is over** - no Forever
+> field environment exists until launch (2026-11-04). Development stays
+> dual-flavor (LAW 2 unchanged: every change still gates on BOTH TOCs), but
+> field work is CLASSIC ERA-FIRST: W2's Forever-side checks are DEFERRED to
+> launch day, when Forever gets a fresh verification pass against the new
+> data set (re-pin Interface 16001, re-check API presence assumptions, rerun
+> the full field checklist there). v0.8.2 shipped the quest-target nameplate
+> badge (ui/plates.lua, `questPlates` setting) - era field checklist step 7
+> now covers it.
+
 ## 1. What this product is
 
 **RUN - "Immersive Enemy Builder: enhancing the Azeroth we know and love."**
