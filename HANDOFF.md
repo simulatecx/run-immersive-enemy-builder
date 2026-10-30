@@ -29,6 +29,23 @@
 > badge (ui/plates.lua, `questPlates` setting) - era field checklist step 7
 > now covers it.
 
+> LAUNCH CLIENT 2026-10-29: the live WoW: Forever product is installed -
+> flavor `wowf`, version **1.60.1.70685**, folder `_forever_` (NOT the old
+> beta folder). The `_classic_beta_` product is DEAD: removed from
+> .build.info; its folder remains on disk with a stranded RUN 0.8.2 copy -
+> ignore it. Interface numbers verified against the live products: Forever
+> 1.60.1 -> **16001** (RUN.toc already correct; live Foresight 0.53.0
+> concurs), era **1.15.9**.70576 -> **11509** (RUN_Vanilla.toc correct
+> post-W0). The `wowf` client loads the unsuffixed RUN.toc (Foresight's
+> live CurseForge packaging proves the convention). pipeline/deploy.py now
+> targets `_forever_` + `_classic_era_`; RUN v0.8.2 deployed to BOTH live
+> installs 2026-10-29. No RUNDB SavedVariables exist in ANY install (the
+> dead beta had none to migrate; the era W2 pass has not started) - W2 now
+> covers BOTH live environments. NEW-DATA RE-CHECK queued: the Creature.db2
+> "hotfix-sparse" verdict (SPRINTS RUN-B) was pinned on beta build 70338 -
+> re-verify against live build 70685 via pipeline/gen_rares.py before
+> assuming the sightings harvest stays the only rares source.
+
 ## 1. What this product is
 
 **RUN - "Immersive Enemy Builder: enhancing the Azeroth we know and love."**

@@ -159,6 +159,17 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- 2026-10-29 (infra - no addon change): FOREVER LAUNCH CLIENT LANDED.
+  Live product `wowf` 1.60.1.70685 in `_forever_`; the beta product is
+  dead (dropped from .build.info; stranded folder ignored). Verified:
+  Forever Interface 16001 and era 11509 both still correct against the
+  live versions (1.60.1 / 1.15.9); the `wowf` client loads unsuffixed
+  RUN.toc (live Foresight packaging proves it). pipeline/deploy.py
+  retargeted `_classic_beta_` -> `_forever_`; RUN v0.8.2 deployed to both
+  LIVE installs, gate green 246/246 both flavors. No RUNDB exists anywhere
+  yet - the W2 field pass now covers both live games. Queued: re-check the
+  Creature.db2 hotfix-sparse verdict (pinned on beta 70338) against live
+  70685 via gen_rares.py.
 - v0.8.2 (2026-10-22, private beta): QUEST TARGET ON THE PLATE. Fit &
   Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE -
   recognition already existed (model/quests.lua matcher + ui/tooltip.lua
