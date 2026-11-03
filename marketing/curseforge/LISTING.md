@@ -142,8 +142,8 @@ below):
 
 ## 6. Publish checklist (owner-gated - do not run without the owner)
 
-1. Gate green both flavors; zip via the normal pipeline (whole `RUN/`
-   folder, both TOCs).
+1. `python pipeline/package.py` - gate-then-zip; produces
+   `dist/RUN-v<version>-forever-and-era.zip` (RUN/ at zip root, both TOCs).
 2. Create the CF project with the name above; paste §2 + §3; upload §4 in
    order.
 3. The W3 backend go-live is INDEPENDENT of this listing: the description

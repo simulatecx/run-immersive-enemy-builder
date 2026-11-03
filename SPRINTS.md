@@ -165,6 +165,13 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- 2026-11-03 (infra): pipeline/package.py - the release zipper (gate-then-
+  zip, RUN/ at zip root, one file both flavors, prints the CF upload
+  reminders). dist/RUN-v0.8.3-forever-and-era.zip built for the CF project
+  creation; cards+screenshots gathered in marketing/curseforge/. No new
+  git: the local repo stays the one canonical home; CF updates are manual
+  owner-gated uploads (package -> upload -> tag both game versions ->
+  changelog from the SPRINTS entry).
 - v0.8.3 (2026-11-03, private beta): THE NOTORIETY GLOW + the CurseForge
   kit. Fit & Overlap - category: passive awareness layer (RUN-C). Verdict:
   ENHANCE the tier-presentation family (panel.lua tier frames, tooltip
