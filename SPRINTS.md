@@ -159,6 +159,22 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- 2026-11-03 (infra + review - no addon logic change): THE DB2 RE-CHECK +
+  launch-readiness review. Creature.db2 re-verified against BOTH live
+  builds via the wago.tools scrape: Forever 70685 = 184-row hotfix stub
+  (all Classification 0, names blank), era 70576 = effectively empty - the
+  RUN-B hotfix-sparse verdict HOLDS on live; sightings harvest + overrides
+  remain the only rares sources (evidence now current, was pinned on dead
+  beta 70338). gen_rares.py: DEFAULT_BUILD -> 70685, poisoned-cache hint
+  on the red path; rares.lua header re-stamped (table unchanged: empty).
+  Code review of v0.8.1/v0.8.2/retarget: season partition fail-directions
+  verified self-consistent (a misdetected client stamps its own game's
+  quest-path flavor - never crosses buckets); plates lifecycle sound
+  (ADDED/REMOVED + 1s sweep, pool bounded by plate recycling, silent
+  degrade without C_NamePlate); two cosmetic field-watch items logged for
+  W2 (badge ignores plate distance-scale; MEDIUM strata may overdraw
+  stacked plates). Gate green 246/246 both flavors; both live installs
+  redeployed.
 - 2026-10-29 (infra - no addon change): FOREVER LAUNCH CLIENT LANDED.
   Live product `wowf` 1.60.1.70685 in `_forever_`; the beta product is
   dead (dropped from .build.info; stranded folder ignored). Verified:

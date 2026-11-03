@@ -45,6 +45,13 @@
 > "hotfix-sparse" verdict (SPRINTS RUN-B) was pinned on beta build 70338 -
 > re-verify against live build 70685 via pipeline/gen_rares.py before
 > assuming the sightings harvest stays the only rares source.
+> RE-CHECK DONE 2026-11-03: the verdict HOLDS on BOTH live builds - Forever
+> 70685's Creature.db2 is a 184-row hotfix stub (every row Classification 0,
+> names blank) and era 70576's is effectively empty; creature names remain
+> server-side in both clients. The sightings harvest + data/overrides.lua
+> stay the ONLY rares sources - do not revisit without a new build.
+> gen_rares.py DEFAULT_BUILD bumped to 70685; rares.lua header re-stamped
+> (table unchanged: empty).
 
 ## 1. What this product is
 

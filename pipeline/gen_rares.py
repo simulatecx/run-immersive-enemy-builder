@@ -17,7 +17,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-DEFAULT_BUILD = "1.60.1.70338"
+DEFAULT_BUILD = "1.60.1.70685"   # Forever LIVE launch build (verified 2026-11-03)
 BASE_URL = "https://wago.tools/db2/Creature/csv?build={build}"
 OUT = Path(__file__).parent.parent / "RUN" / "data" / "generated" / "rares.lua"
 
@@ -55,6 +55,8 @@ def generate(build: str, force: bool) -> int:
         cls_col = "Classification" if "Classification" in cols else None
         if not name_col or not cls_col:
             print(f"GEN RED: unexpected Creature.csv columns: {cols[:12]}")
+            print("(a poisoned cache - e.g. an HTML error page - persists "
+                  "until you re-run with --force)")
             return 1
         for row in reader:
             cls = CLASSIFICATIONS.get((row.get(cls_col) or "").strip())
