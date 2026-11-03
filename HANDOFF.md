@@ -53,6 +53,15 @@
 > gen_rares.py DEFAULT_BUILD bumped to 70685; rares.lua header re-stamped
 > (table unchanged: empty).
 
+> 2026-11-03 (owner): **CurseForge REOPENED** - W4 is revised: the launch
+> channel is a CF listing (one project, both flavors, the Foresight
+> pattern) INSTEAD of waitlist-only; canonical paste-ready copy +
+> screenshots: `marketing/curseforge/LISTING.md`. Publish stays
+> owner-gated and is independent of W3 (the listing promises no live
+> leaderboards). Shipped same day: v0.8.3 tier glow (`ui/glow.lua`,
+> `tierGlow` setting) - the owner-asked target-frame treatment that
+> expands around the stock frame without touching it.
+
 ## 1. What this product is
 
 **RUN - "Immersive Enemy Builder: enhancing the Azeroth we know and love."**

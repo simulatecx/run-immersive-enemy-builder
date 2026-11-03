@@ -16,6 +16,12 @@ separate-repo decision); full handoff spec kept at
   deferred until the owner flips it.
 - Slash is `/runadvisor` (+ `/runa`, `/ra`): plain `/run` is Blizzard's
   built-in script command and can never be taken by an addon.
+- 2026-11-03 (owner): **CurseForge REOPENED for RUN** - the 2026-10-19
+  waitlist-only stance is superseded for the Forever launch window.
+  Canonical listing copy + screenshots live in `marketing/curseforge/`
+  (name recommendation: "RUN: Immersive Enemy Builder"; nemesis framing as
+  INSPIRATION in body copy only - never "Nemesis System" in the name).
+  Actual publish stays owner-gated.
 - 2026-10-19 (owner): **passive-first UX** - players must never RELY on slash
   commands. The always-on layer is mouseover/target tooltip FLAGS (Elite /
   Rare / Rare Elite / Boss) + a kill-earned danger rank (Blooded 1 /
@@ -159,6 +165,26 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.3 (2026-11-03, private beta): THE NOTORIETY GLOW + the CurseForge
+  kit. Fit & Overlap - category: passive awareness layer (RUN-C). Verdict:
+  ENHANCE the tier-presentation family (panel.lua tier frames, tooltip
+  ranks) with the owner-asked "expands, never modifies" target-frame
+  treatment. New ui/glow.lua (both TOCs, mirror law): two additive rings
+  anchored around Blizzard's TargetFrame rect - OWN frame on UIParent at
+  BACKGROUND strata, never parented, no keys written, stock art untouched
+  (a silver elite's dragon stays Blizzard's); tint = Notoriety.colorFor
+  verbatim (the ember -> blood ramp IS the asked "light red/orange hue by
+  tier"), lit for any hostile living non-player target at tier >= 1;
+  re-evaluates on PLAYER_TARGET_CHANGED + a 1s ticker (mid-fight tier
+  rises, target death, toggle). New `tierGlow` setting (default on,
+  Ledger + ESC surfaced). Presence-guarded TargetFrame (hidden/absent -
+  e.g. ConsolePort - degrades silently; field-watch item). 5 new
+  selftests. MARKETING: `marketing/curseforge/` - paste-ready LISTING.md
+  (name candidates + recommendation, nemesis-inspiration framing, honest
+  Foresight pairing callout - bridge probed, API not yet exposed; no
+  live-leaderboard promises pre-W3) + the 4 in-game screenshots named and
+  captioned. Gate: compliance green, BOTH flavors selftest 251/251;
+  deployed to both live installs.
 - 2026-11-03 (infra + review - no addon logic change): THE DB2 RE-CHECK +
   launch-readiness review. Creature.db2 re-verified against BOTH live
   builds via the wago.tools scrape: Forever 70685 = 184-row hotfix stub

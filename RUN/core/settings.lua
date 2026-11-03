@@ -27,6 +27,7 @@ Settings.defaults = {
                              -- the name already rides the addon-message transport regardless)
     lastWords = true,        -- your final public chat line rides your death-ping (Hardcore classic)
     tierFrames = true,       -- tier-styled unit frame for titled enemies (the Nemesis frame)
+    tierGlow = true,         -- light tier-hued halo around the stock target frame (ember -> blood)
     riskButton = true,       -- the RISK IT wager button on the odds frame (solo, <50% odds)
 }
 
@@ -49,6 +50,7 @@ Settings.defs = {
     { key = "eulogy",         label = "Name the fallen (eulogy mode)" },
     { key = "lastWords",      label = "Broadcast my last words" },
     { key = "tierFrames",     label = "Tier frames for titled enemies" },
+    { key = "tierGlow",       label = "Tier glow on the target frame" },
     { key = "riskButton",     label = "RISK IT wager button" },
     { key = "minimapButton",  label = "Minimap button" },
 }
