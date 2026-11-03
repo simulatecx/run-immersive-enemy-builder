@@ -107,7 +107,19 @@ survivability engine feeding RUN's odds on the roadmap for both flavors.
 
 ---
 
-## 4. Screenshot gallery (upload order + captions)
+## 4. Images (ALL PNGs live beside this file - two folders)
+
+**`cards/`** - the branded ember/blood set (from the v0.8.0 marketing
+build, copied out of the marketing worktree so everything uploadable is in
+ONE place):
+- `run-01-cover.png` - THE PROJECT IMAGE (CF logo/avatar slot).
+- `run-gallery-1600x900.png` - the composite; good first gallery slide.
+- `run-02-nemesis-tiers.png` / `run-03-nearby-banners.png` /
+  `run-04-death-network.png` / `run-05-risk-it.png` / `run-06-ledger.png` -
+  one feature card per pillar; upload after the screenshots.
+
+**`screenshots/`** - real in-game captures (gallery slots 2-5, captions
+below):
 
 1. `screenshots/01-ledger-most-wanted-infamous.png` - "The Account Ledger:
    Most Wanted, your death record, and every option in one place. On the
