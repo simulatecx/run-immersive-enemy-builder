@@ -53,6 +53,20 @@
 > gen_rares.py DEFAULT_BUILD bumped to 70685; rares.lua header re-stamped
 > (table unchanged: empty).
 
+> LAUNCH DAY 2026-11-04: WoW: Forever went live and patched to build
+> **1.60.1.70790** (was 70685; Wow.exe stamped 13:14). Era UNCHANGED
+> (1.15.9.70576). Re-verified against the launch build: Interface **16001**
+> STILL CORRECT (the whole 1.60.1 line 70450->70790 maps to 16001 -
+> cross-checked online; a hotfix build bump within 1.60.1 is not an API
+> patch, so no TOC change and RUN's presence-detection is unaffected). DB2
+> re-check on 70790: Creature.db2 is STILL an 11 KB hotfix stub (0 rares) -
+> the server-side-names verdict holds on the launch build. gen_rares.py
+> DEFAULT_BUILD -> 70790; both live installs redeployed (v0.8.3, gate
+> 251/251). No RUNDB exists in the Forever install yet (owner has not run a
+> RUN character far enough to save on the new build) - the W2 Forever field
+> pass is still outstanding; the login-banner "out of date?" check is the
+> final interface confirm.
+
 > 2026-11-03 (owner): **CurseForge REOPENED** - W4 is revised: the launch
 > channel is a CF listing (one project, both flavors, the Foresight
 > pattern) INSTEAD of waitlist-only; canonical paste-ready copy +

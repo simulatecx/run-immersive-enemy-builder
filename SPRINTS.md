@@ -165,6 +165,17 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- 2026-11-04 (infra - no addon logic change): FOREVER LAUNCH-DAY BUILD
+  VERIFY. WoW: Forever went live and patched 70685 -> 1.60.1.70790 (era
+  unchanged 1.15.9.70576). Re-verified against the launch build: Interface
+  16001 STILL CORRECT (whole 1.60.1 line maps to 16001, cross-checked
+  online; the hotfix bump is not an API patch - RUN's presence-detection
+  unaffected, no TOC change). DB2 re-check on 70790: still an 11 KB
+  hotfix stub, 0 rares - the server-side-names verdict holds. gen_rares.py
+  DEFAULT_BUILD -> 70790; rares.lua header re-stamped (table unchanged:
+  empty); both live installs redeployed (v0.8.3, gate 251/251). No RUNDB
+  in Forever yet - the W2 Forever field pass (login-banner interface
+  confirm first) still outstanding.
 - 2026-11-03 (infra): pipeline/package.py - the release zipper (gate-then-
   zip, RUN/ at zip root, one file both flavors, prints the CF upload
   reminders). dist/RUN-v0.8.3-forever-and-era.zip built for the CF project
