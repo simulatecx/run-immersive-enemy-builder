@@ -185,10 +185,25 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
   60s prune job. /ra diag now prints "firewall: N RUN errors swallowed" +
   the last one (0 = all-clear; field errors are now visible without a
   crash). 12 new selftests (safeCall swallow/passthrough, ring bound,
-  dispatch throttle, prune). Gate: compliance green, BOTH flavors
-  251->263/263; both live installs redeployed; dist/RUN-v0.8.4 zip built.
-  Owner action: re-enable RUN in the in-game AddOns list, /reload, /ra diag
-  (expect firewall 0).
+  dispatch throttle, prune). PLUS the two things that make the error
+  FINDABLE, not just survivable: (1) pipeline/client_smoke.py - a
+  client-path harness mocking the WoW API (incl. a faithful secret-value
+  sentinel that errors on compare/concat like live Forever), that LOADS the
+  client code the pure gate skips and drives the full lifecycle (login,
+  world, nameplates, target, CLEU, tickers, tooltip) in an open AND a
+  restricted/secret pass with a notorious target + expansiveStats on - now
+  a REQUIRED gate step (closes the "zero client coverage" gap). GREEN both
+  flavors, so the common + secret paths are proven robust; the exact launch
+  line is a narrower edge the dump's C++-only trace cannot name. (2) the
+  firewall PERSISTS swallowed errors to RUNDB.safetyLog (additive, capped
+  25, no PII) - a black-box recorder, so the precise error is recoverable
+  from SavedVariables after play; /ra errors dumps it in game, /ra diag
+  shows the count. 14 new selftests total. Gate: compliance green, BOTH
+  flavors 251->264/264 + client smoke; both live installs redeployed;
+  dist/RUN-v0.8.4 zip built. Owner action: re-enable RUN in the AddOns
+  list, /reload, play ~15 min, then /ra errors (or send RUN.lua) to pin the
+  exact line before the Curse push - the firewall makes it deploy-safe
+  either way.
 - 2026-11-04 (infra - no addon logic change): FOREVER LAUNCH-DAY BUILD
   VERIFY. WoW: Forever went live and patched 70685 -> 1.60.1.70790 (era
   unchanged 1.15.9.70576). Re-verified against the launch build: Interface

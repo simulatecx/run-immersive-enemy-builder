@@ -27,10 +27,26 @@ local ERR_MAX = 20
 local errors = {}
 Safety.errorCount = 0
 
+-- Best-effort persist to RUNDB so a swallowed error survives a reload/logout
+-- and is recoverable from SavedVariables on disk (the black-box recorder) -
+-- additive key, capped, RUN's own error strings only (no PII, never networked).
+local PERSIST_MAX = 25
+local function persist(rec)
+    if type(RUN.db) ~= "function" then return end
+    local ok, db = pcall(RUN.db)
+    if not ok or type(db) ~= "table" then return end
+    if type(db.safetyLog) ~= "table" then db.safetyLog = {} end
+    db.safetyLog[#db.safetyLog + 1] = rec
+    while #db.safetyLog > PERSIST_MAX do table.remove(db.safetyLog, 1) end
+end
+
 function Safety.note(where, err)
     Safety.errorCount = Safety.errorCount + 1
-    errors[#errors + 1] = { where = tostring(where), err = tostring(err) }
+    local rec = { where = tostring(where), err = tostring(err),
+                  v = tostring(RUN.version), n = Safety.errorCount }
+    errors[#errors + 1] = rec
     while #errors > ERR_MAX do table.remove(errors, 1) end
+    persist(rec)
 end
 
 function Safety.recent() return errors end
@@ -120,6 +136,15 @@ if type(RUN.selftestChecks) == "table" then
             return #S.recent() <= 20
         end)())
 
+        check("errors persist to RUNDB, capped", (function()
+            local db = RUN.db()
+            db.safetyLog = {}
+            for _ = 1, 40 do RUN.safeCall("persisted", function() error("y") end) end
+            return type(db.safetyLog) == "table" and #db.safetyLog == 25
+                and tostring(db.safetyLog[#db.safetyLog].where) == "persisted"
+                and db.safetyLog[#db.safetyLog].v ~= nil
+        end)())
+
         check("ticker registration is pure + shaped", (function()
             local before = #S.jobs()
             RUN.ticker("selftest-job", 2, function() end)
@@ -155,6 +180,28 @@ if type(RUN.selftestChecks) == "table" then
         check("dispatch nil-safe", Safety.dispatch(nil, 0) == 0
             and Safety.dispatch("junk", 0) == 0)
     end)
+end
+
+-- /ra errors: dump the black-box recorder (this session's ring + the
+-- persisted RUNDB log that survived prior reloads) so a field error is
+-- readable in game AND off disk.
+RUN.commands = RUN.commands or {}
+RUN.commands["errors"] = function()
+    local n = Safety.errorCount or 0
+    RUN.print("firewall: " .. n .. " error" .. (n == 1 and "" or "s")
+        .. " swallowed this session.")
+    local db = RUN.db()
+    local log = (type(db) == "table" and type(db.safetyLog) == "table") and db.safetyLog or {}
+    if #log == 0 then
+        RUN.print("persisted log: empty (no RUN errors recorded on this character).")
+        return
+    end
+    RUN.print("persisted log (newest last, max " .. #log .. "):")
+    local from = math.max(1, #log - 9)
+    for i = from, #log do
+        local e = log[i]
+        RUN.print("  [v" .. tostring(e.v) .. "] " .. tostring(e.where) .. ": " .. tostring(e.err))
+    end
 end
 
 -- Everything below drives the shared ticker; headless harness stops here.

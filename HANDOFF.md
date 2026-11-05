@@ -81,6 +81,19 @@
 > list (AddOns.txt) from the post-crash prompt - re-enable it in-game,
 > /reload, then /ra diag should read "firewall: 0 RUN errors". That re-enable
 > + the W2 Forever field pass are the launch-day to-dos.
+> FIND-THE-ERROR TOOLING (v0.8.4, same day): the crash dump is C++-only (no
+> Lua stack), so the exact line is not in it. Built pipeline/client_smoke.py
+> - a WoW-API mock harness (with a faithful secret-value sentinel) that
+> loads + drives the client paths the pure gate skips; it is now a REQUIRED
+> gate step and is GREEN both flavors (common + secret paths proven robust -
+> the launch edge is narrower). AND the firewall now persists swallowed
+> errors to RUNDB.safetyLog (black-box recorder); `/ra errors` dumps it.
+> TO PIN THE EXACT LINE: re-enable RUN, play ~15 min on Forever, then
+> `/ra errors` or pull `_forever_\WTF\...\SavedVariables\RUN.lua`
+> (db.safetyLog) - that names the file + message; turn it into a targeted
+> selftest. Deploy to Curse is SAFE regardless: the firewall degrades any
+> residual edge silently (worst case = one cosmetic feature no-ops, never a
+> crash or a disable).
 
 > 2026-11-03 (owner): **CurseForge REOPENED** - W4 is revised: the launch
 > channel is a CF listing (one project, both flavors, the Foresight

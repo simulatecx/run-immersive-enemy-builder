@@ -128,6 +128,20 @@ def main() -> int:
         print(f"GATE RED: flavor version drift - {sorted(versions)}")
         return 1
 
+    # 4) client-path smoke: load + drive the client code the selftests cannot
+    # reach (frames, events, tickers, hooks, secret-value contexts). The
+    # Forever launch crash lived in exactly this blind spot.
+    smoke = subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "client_smoke.py")],
+        capture_output=True, text=True,
+    )
+    if smoke.returncode != 0:
+        print("GATE RED: client smoke failed")
+        print((smoke.stdout or "").strip())
+        print((smoke.stderr or "").strip())
+        return 1
+    print("client smoke green (both flavors: load + lifecycle + tickers + secrets)")
+
     summary = ", ".join(f"{name} selftest {p}/{p} ({c} files)"
                         for name, p, c, _ in results)
     print(f"gate green: {summary}, version {results[0][3]}")

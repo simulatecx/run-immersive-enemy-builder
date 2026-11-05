@@ -51,6 +51,7 @@ function RUN.initSavedVariables()
     if type(db.wipes) ~= "table" then db.wipes = {} end
     if type(db.sightings) ~= "table" then db.sightings = {} end
     if type(db.guildWipes) ~= "table" then db.guildWipes = {} end
+    if type(db.safetyLog) ~= "table" then db.safetyLog = {} end
     -- deaths entries are re-validated at read time by model/attribution.lua
     return db
 end
