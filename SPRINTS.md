@@ -165,6 +165,30 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.5 (2026-11-05, private beta): THE RANK EFFECTS LADDER. Fit &
+  Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE
+  ui/glow.lua (the v0.8.3 single two-ring halo) into a VOCABULARY of
+  rank-escalating effects, per the owner's reference palette. Owner
+  decisions (2026-11-05): (a) effects ESCALATE across rank bands, not a
+  picker and not 1:1 - tier 1-2 subtle soft halo, 3-4 aura (ringed glow),
+  5-6 reticle (ticked ring), 7 orbit (horizontal ellipse), 8 ripple
+  (concentric outward pulse), 9 brackets (locked-on corners), 10 sigil
+  (counter-rotating rings + twinkling sparkles); (b) target frame ONLY
+  (nameplate surface deferred - Beam + Beacon held back for it). Tint stays
+  Notoriety.colorFor (ember->blood), retinted live as kills land mid-fight.
+  Built RUN-native: OWN frames anchored around (never touching) TargetFrame
+  - taint law intact, a silver elite keeps its dragon; from ONLY
+  always-present textures (WHITE8X8 + portrait soft-mask + cooldown star)
+  and ONLY Rotation+Alpha animations (the Scale-anim API drifted between
+  Classic and modern - avoided on purpose); effects built lazily + cached,
+  all re-checks on the firewall ticker. New pure maps effectForTier +
+  ringPoint, 3 new selftests (escalation table, ring geometry, + existing
+  shouldGlow). client_smoke.py extended to SWEEP all 7 effect builders
+  (every band constructs + the switch logic runs) - green both flavors.
+  Gate: compliance green, client smoke green, BOTH flavors 266/266; both
+  live installs redeployed; dist/RUN-v0.8.5 zip built. FIELD-WATCH: confirm
+  the 3 textures render (no green squares) on Classic Era + Forever - any
+  miss is a one-line swap of the SOFT/STAR/SHARP constants in ui/glow.lua.
 - v0.8.4 (2026-11-04, private beta): THE FIREWALL - never conflict with the
   game (owner directive after the launch-day crash). INCIDENT: first login
   on the live build crashed ~14s into a packed starter zone - client dump

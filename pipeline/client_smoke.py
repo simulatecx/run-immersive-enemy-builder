@@ -317,6 +317,19 @@ function(RUN)
     _G.GetChannelName = function(n) return 5 end
     drive("restricted")
 
+    -- Build-coverage sweep: walk the target through every rank band so EVERY
+    -- glow effect builder constructs (its textures + animations) and the
+    -- effect-switching logic (clear old, play new) runs across all of them.
+    _G.__secretsOn = false
+    if RUN.gen and RUN.gen.crowdCounts then
+        local totals = { 1, 5, 15, 40, 60, 80, 100 }   -- tiers 1,3,5,7,8,9,10
+        for _, tot in ipairs(totals) do
+            RUN.gen.crowdCounts[7024] = { total = tot }
+            local ok, err = pcall(function() fire("PLAYER_TARGET_CHANGED") end)
+            if not ok then fired[#fired + 1] = "glow band " .. tot .. ": " .. tostring(err) end
+        end
+    end
+
     local swallowed = {}
     if RUN.Safety and RUN.Safety.recent then
         for _, e in ipairs(RUN.Safety.recent()) do
