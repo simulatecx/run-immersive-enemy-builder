@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.8.3"
+RUN.version = "0.8.4"
 
 -- THE season constants (WP-G / RUN-G) - one per GAME LINE, both living here so
 -- every flip happens in this file. Each crowd payload stamps the tag of the
@@ -182,6 +182,16 @@ RUN.commands["diag"] = function()
     local nChecks = type(RUN.selftestChecks) == "table" and #RUN.selftestChecks or 0
     RUN.print("diag: v" .. RUN.version .. " | registries: " .. nCommands
         .. " commands, " .. nChecks .. " package selftest checks")
+
+    -- The firewall readout (core/safety.lua): 0 errors is the all-clear; any
+    -- count names where the last one came from, so a field error is instant
+    -- to spot without a crash.
+    if RUN.Safety then
+        local n = RUN.Safety.errorCount or 0
+        RUN.print("firewall: " .. n .. " RUN error" .. (n == 1 and "" or "s")
+            .. " swallowed this session"
+            .. (n > 0 and (" | last: " .. tostring(RUN.Safety.lastError())) or ""))
+    end
 
     local hookMode = "none (flags cannot inject)"
     if _G.TooltipDataProcessor and _G.Enum and _G.Enum.TooltipDataType then

@@ -106,18 +106,10 @@ end
 
 RUN.on("PLAYER_TARGET_CHANGED", evaluate)
 
--- Self-healing re-check: kills land MID-fight (the tier can rise while you
--- are looking at the creature), targets die, the toggle flips. Once a
--- second is plenty and bounded (one unitInfo read per tick).
--- Ticker lives on its own always-shown frame: the glow frame hides, and a
--- hidden frame's OnUpdate never fires.
-local nextCheck = 0
-local ticker = CreateFrame("Frame", "RUNGlowTicker")
-ticker:SetScript("OnUpdate", function()
-    local now = _G.GetTime and _G.GetTime() or 0
-    if now < nextCheck then return end
-    nextCheck = now + 1
-    evaluate()
-end)
+-- Self-healing re-check through the shared firewall ticker (core/safety.lua):
+-- kills land MID-fight (the tier can rise while you are looking at the
+-- creature), targets die, the toggle flips. One guarded, throttled unitInfo
+-- read per second - never a raw per-file OnUpdate that could spam the client.
+RUN.ticker("glow", 1, evaluate)
 
 return Glow

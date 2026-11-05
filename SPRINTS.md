@@ -165,6 +165,30 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.4 (2026-11-04, private beta): THE FIREWALL - never conflict with the
+  game (owner directive after the launch-day crash). INCIDENT: first login
+  on the live build crashed ~14s into a packed starter zone - client dump
+  = ERROR #8 Out of Memory with the SYSTEM at 94% RAM (1.7G free, low page
+  file) and <LuaErrors> 1; on relog the client disabled RUN (newest addon).
+  Both RUN 0.8.3 + Foresight 0.54.0 had loaded; same Interface 16001, so
+  NOT an out-of-date disable. Diagnosis: all RUN.on event handlers were
+  already pcall-wrapped (the hub) and the three CLEU buffers capped - but
+  the raw per-file OnUpdate tickers (glow, plates, alert) and the tooltip
+  hook were UNGUARDED, so a live-client API edge could error every frame
+  into a client already at its memory ceiling. FIX (incident-to-gate, fix
+  the class): new core/safety.lua firewall - RUN.safeCall (pcall + bounded
+  error ring + swallow, never rethrow), RUN.ticker (ONE shared guarded
+  throttled OnUpdate every periodic job routes through), Safety.dispatch
+  (pure, headless-tested throttle). Refactored glow/plates/alert off raw
+  tickers onto RUN.ticker; tooltip inject now wrapped in safeInject. Memory:
+  Nearby.pruneSeen caps the one unbounded table (`seen` cooldown map) via a
+  60s prune job. /ra diag now prints "firewall: N RUN errors swallowed" +
+  the last one (0 = all-clear; field errors are now visible without a
+  crash). 12 new selftests (safeCall swallow/passthrough, ring bound,
+  dispatch throttle, prune). Gate: compliance green, BOTH flavors
+  251->263/263; both live installs redeployed; dist/RUN-v0.8.4 zip built.
+  Owner action: re-enable RUN in the in-game AddOns list, /reload, /ra diag
+  (expect firewall 0).
 - 2026-11-04 (infra - no addon logic change): FOREVER LAUNCH-DAY BUILD
   VERIFY. WoW: Forever went live and patched 70685 -> 1.60.1.70790 (era
   unchanged 1.15.9.70576). Re-verified against the launch build: Interface

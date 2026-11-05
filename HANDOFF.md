@@ -67,6 +67,21 @@
 > pass is still outstanding; the login-banner "out of date?" check is the
 > final interface confirm.
 
+> LAUNCH-DAY INCIDENT + FIX 2026-11-04 (v0.8.4): first live login CRASHED
+> ~14s into a packed starter zone - client dump = Out of Memory with the
+> SYSTEM at 94% RAM and one RUN Lua error; the client then disabled RUN on
+> relog (newest addon; NOT out-of-date - Foresight 0.54.0 at the same 16001
+> stayed enabled, and RUNDB saved clean at 0.8.3). Whether or not RUN caused
+> the OOM, the owner directive is "never conflict with the game": v0.8.4
+> ships core/safety.lua - the firewall. Every periodic job + hook now routes
+> through RUN.safeCall / RUN.ticker (one shared guarded throttled OnUpdate),
+> the one unbounded table is pruned, and /ra diag reports swallowed-error
+> count. RUNDB is on 0.8.3 but fully forward-compatible (additive law).
+> OWNER ACTION OUTSTANDING: RUN is still `disabled` in the Forever AddOns
+> list (AddOns.txt) from the post-crash prompt - re-enable it in-game,
+> /reload, then /ra diag should read "firewall: 0 RUN errors". That re-enable
+> + the W2 Forever field pass are the launch-day to-dos.
+
 > 2026-11-03 (owner): **CurseForge REOPENED** - W4 is revised: the launch
 > channel is a CF listing (one project, both flavors, the Foresight
 > pattern) INSTEAD of waitlist-only; canonical paste-ready copy +

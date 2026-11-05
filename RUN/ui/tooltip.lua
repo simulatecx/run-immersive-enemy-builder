@@ -109,10 +109,16 @@ end
 
 -- Modern tooltip pipeline when present (mainline 12.x API), classic hook as
 -- fallback - both are post-hooks on the shared GameTooltip: display-only.
+-- Guarded through the firewall (core/safety.lua): this hook runs on EVERY
+-- unit tooltip, so a single bad unit must degrade silently, never error into
+-- the client (the launch-day lesson).
+local function safeInject(tt)
+    RUN.safeCall("tooltip", inject, tt)
+end
 if _G.TooltipDataProcessor and _G.Enum and _G.Enum.TooltipDataType then
-    _G.TooltipDataProcessor.AddTooltipPostCall(_G.Enum.TooltipDataType.Unit, inject)
+    _G.TooltipDataProcessor.AddTooltipPostCall(_G.Enum.TooltipDataType.Unit, safeInject)
 elseif _G.GameTooltip and _G.GameTooltip.HookScript then
-    _G.GameTooltip:HookScript("OnTooltipSetUnit", inject)
+    _G.GameTooltip:HookScript("OnTooltipSetUnit", safeInject)
 end
 
 return Tooltip

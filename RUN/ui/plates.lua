@@ -95,16 +95,12 @@ RUN.on("NAME_PLATE_UNIT_REMOVED", function(unit)
     active[unit] = nil
 end)
 
--- The self-healing sweep: once a second, re-evaluate every visible plate.
--- Covers quest progress ("8/8" unflags), newly accepted quests flagging mobs
--- already on screen, deaths, and the questPlates toggle - without touching
--- any other file's routers. Bounded work: a handful of frames per tick.
-local sweeper = CreateFrame("Frame", "RUNPlateSweeper")
-local nextSweep = 0
-sweeper:SetScript("OnUpdate", function()
-    local now = _G.GetTime and _G.GetTime() or 0
-    if now < nextSweep then return end
-    nextSweep = now + 1
+-- The self-healing sweep through the shared firewall ticker (core/safety.lua):
+-- once a second, re-evaluate every visible plate. Covers quest progress
+-- ("8/8" unflags), newly accepted quests flagging mobs already on screen,
+-- deaths, and the questPlates toggle - without a raw per-file OnUpdate.
+-- Bounded work: a handful of frames per tick.
+local function sweep()
     local NP = _G.C_NamePlate
     if not (NP and NP.GetNamePlates) then return end
     local ok, plates = pcall(NP.GetNamePlates)
@@ -114,6 +110,7 @@ sweeper:SetScript("OnUpdate", function()
         local unit = p and (p.namePlateUnitToken or (p.UnitFrame and p.UnitFrame.unit))
         if unit then evaluate(unit) end
     end
-end)
+end
+RUN.ticker("plates", 1, sweep)
 
 return Plates

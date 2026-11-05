@@ -58,6 +58,42 @@ function Nearby.bannerTitle(info)
     return Nearby.titleFor(info and info.classification)
 end
 
+-- Pure: drop ping-cooldown entries older than the 600s window. Without this
+-- the `seen` map grows one entry per unique creature for the whole session -
+-- a slow leak that a packed launch-day zone makes fast. Returns kept count.
+function Nearby.pruneSeen(seen, now)
+    if type(seen) ~= "table" then return 0 end
+    now = tonumber(now) or 0
+    local kept = 0
+    for k, t in pairs(seen) do
+        if type(t) ~= "number" or (now - t) >= 600 then
+            seen[k] = nil
+        else
+            kept = kept + 1
+        end
+    end
+    return kept
+end
+
+if type(RUN.selftestChecks) == "table" then
+    table.insert(RUN.selftestChecks, function(check)
+        check("nearby pruneSeen drops expired, keeps fresh", (function()
+            -- ages at now=1000: a=1000 drop, b=600 drop (boundary is >=600),
+            -- c=100 keep
+            local seen = { a = 0, b = 400, c = 900 }
+            local kept = Nearby.pruneSeen(seen, 1000)
+            return kept == 1 and seen.a == nil and seen.b == nil and seen.c == 900
+        end)())
+        check("nearby pruneSeen drops non-number entries", (function()
+            local seen = { a = "tampered", b = 100 }
+            Nearby.pruneSeen(seen, 200)
+            return seen.a == nil and seen.b == 100
+        end)())
+        check("nearby pruneSeen nil-safe", Nearby.pruneSeen(nil, 0) == 0
+            and Nearby.pruneSeen("junk", 0) == 0)
+    end)
+end
+
 if not _G.CreateFrame then return Nearby end
 
 local Guards = RUN.Guards
@@ -70,6 +106,12 @@ local function alreadyPinged(key)
     seen[key] = now
     return false
 end
+
+-- Prune expired cooldowns once a minute through the firewall ticker - keeps
+-- `seen` bounded over a long session with no per-insert cost.
+RUN.ticker("nearby-prune", 60, function()
+    Nearby.pruneSeen(seen, _G.GetTime and _G.GetTime() or 0)
+end)
 
 function Nearby.ping(info, mapID, x, y)
     if not RUN.Settings.get("nearbyPing") then return end

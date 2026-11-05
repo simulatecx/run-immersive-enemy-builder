@@ -34,9 +34,12 @@ local sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 sub:SetPoint("TOP", title, "BOTTOM", 0, -4)
 sub:SetTextColor(0.9, 0.86, 0.76)
 
+-- Auto-hide via the shared firewall ticker (core/safety.lua) instead of a raw
+-- per-frame OnUpdate: the banner only needs a few checks a second to drop on
+-- time, and routing it through RUN.ticker keeps every periodic surface guarded.
 local hideAt = 0
-f:SetScript("OnUpdate", function(self)
-    if _G.GetTime and _G.GetTime() > hideAt then self:Hide() end
+RUN.ticker("alert-hide", 0.2, function()
+    if f:IsShown() and _G.GetTime and _G.GetTime() > hideAt then f:Hide() end
 end)
 
 -- Show the banner for ~6s with a raid-warning sound. Optional colour (the
