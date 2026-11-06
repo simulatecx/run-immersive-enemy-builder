@@ -214,8 +214,19 @@ if not _G.CreateFrame then return Window end
 
 local GOLD, DIM = "|cffefd488", "|cffb7a988"
 
+-- Options layout drives the checkbox grid; the HOME page height is COMPUTED
+-- from the ledger text plus this block at refresh time (Window.refresh), so the
+-- window fits its content exactly - no option ever spills past the frame AND no
+-- dead gap when the ledger is short (field bug: the glow toggles overflowed the
+-- old fixed 588 height). Two columns that flow directly under the ledger.
+local OPT_COLS, OPT_ROWH, OPT_CB = 2, 26, 24
+local OPT_ROWS = math.ceil(#RUN.Settings.defs / OPT_COLS)
+local OPT_BLOCK = 16 + 8 + (OPT_ROWS - 1) * OPT_ROWH + OPT_CB   -- header + gap + rows
+local STATS_TOP, HEADER_GAP, BOTTOM_PAD = 36, 14, 16
+local HEARD_H = 588   -- the Heard page is a fixed 14-row list
+
 local f = CreateFrame("Frame", "RUNLedgerWindow", UIParent)
-f:SetSize(400, 588)
+f:SetSize(400, 560)   -- initial; Window.refresh sets the real per-page height
 f:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
 f:SetFrameStrata("DIALOG")
 f:SetMovable(true)
@@ -304,17 +315,17 @@ local OPTION_DEFS = RUN.Settings.defs   -- one list drives every options surface
 local homeWidgets = { stats }           -- everything the Heard page hides
 
 local optHeader = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-optHeader:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 14, 258)
+optHeader:SetPoint("TOPLEFT", stats, "BOTTOMLEFT", 0, -HEADER_GAP)   -- flow under the ledger
 optHeader:SetText(GOLD .. "Options|r")
 table.insert(homeWidgets, optHeader)
 
 local checks = {}
 for i, def in ipairs(OPTION_DEFS) do
     local cb = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
-    cb:SetSize(24, 24)
-    local col = (i - 1) % 2
-    local row = math.floor((i - 1) / 2)
-    cb:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 14 + col * 192, 250 - row * 26)
+    cb:SetSize(OPT_CB, OPT_CB)
+    local col = (i - 1) % OPT_COLS
+    local row = math.floor((i - 1) / OPT_COLS)
+    cb:SetPoint("TOPLEFT", optHeader, "BOTTOMLEFT", col * 192, -8 - row * OPT_ROWH)
     local label = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     label:SetPoint("LEFT", cb, "RIGHT", 2, 1)
     label:SetText(def.label)
@@ -514,11 +525,24 @@ local function buildStats()
 end
 
 function Window.refresh()
-    stats:SetText(buildStats())
+    local text = buildStats()
+    stats:SetText(text)
     for key, cb in pairs(checks) do
         cb:SetChecked(RUN.Settings.get(key) and true or false)
     end
-    if mode == "heard" then renderHeard() end
+    if mode == "heard" then
+        f:SetHeight(HEARD_H)
+        renderHeard()
+    else
+        -- HOME page: size the window to the ledger text + the options block, so
+        -- it fits exactly (no overflow, no dead gap). GetStringHeight is exact
+        -- when laid out; the line-count floor covers the not-yet-shown case.
+        local nLines = 1
+        for _ in text:gmatch("\n") do nLines = nLines + 1 end
+        local lh = stats:GetStringHeight() or 0
+        if lh < nLines * 13 then lh = nLines * 13 end
+        f:SetHeight(STATS_TOP + lh + HEADER_GAP + OPT_BLOCK + BOTTOM_PAD)
+    end
 end
 
 function Window.toggle()

@@ -165,6 +165,23 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.7 (2026-11-05, private beta): LEDGER FITS ITS CONTENT (owner field
+  bug: the Minimap-button option extended PAST the window frame). Fit &
+  Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE
+  ui/window.lua. Cause: the Account Ledger height was HARD-CODED (588) and
+  the checkboxes bottom-anchored at a fixed offset; adding the three v0.8.6
+  glow toggles pushed the 11th row (Minimap button) 10px below the frame.
+  Fix: the home page is now SELF-SIZING - the options block flows directly
+  under the ledger text (optHeader anchored to the stats FontString's
+  bottom; checkboxes grow from there), and Window.refresh computes the frame
+  height from the live ledger text height (GetStringHeight, with a
+  line-count floor for the not-yet-shown case) + the option-block height.
+  Result: every toggle is inside the frame no matter how many we add, AND
+  the dead gap that showed when the ledger was sparse is gone (window fits
+  exactly). Heard page keeps its fixed height. client_smoke.py now drives
+  Window.refresh + the page toggle. Gate: compliance + client smoke green,
+  BOTH flavors 268/268; both live installs redeployed; dist/RUN-v0.8.7 zip
+  built.
 - v0.8.6 (2026-11-05, private beta): GLOW = FREE OVERLAY + normal opt-out
   (owner field feedback on ConsolePort). Fit & Overlap - category: passive
   awareness layer (RUN-C). Verdict: ENHANCE ui/glow.lua + settings.

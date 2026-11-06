@@ -348,6 +348,15 @@ function(RUN)
     db.settings.glowLocked = true
     db.settings.markNormal = true
 
+    -- Account Ledger: render (home-page height math) + the Heard-page toggle.
+    if RUN.Window and RUN.Window.refresh then
+        local okR, eR = pcall(RUN.Window.refresh)
+        if not okR then fired[#fired + 1] = "ledger refresh: " .. tostring(eR) end
+    end
+    if RUN.Window and RUN.Window.toggle then
+        pcall(RUN.Window.toggle); pcall(RUN.Window.toggle)   -- open + close
+    end
+
     local swallowed = {}
     if RUN.Safety and RUN.Safety.recent then
         for _, e in ipairs(RUN.Safety.recent()) do
