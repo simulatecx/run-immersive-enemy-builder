@@ -12,6 +12,7 @@ Settings.defaults = {
     flags = true,            -- mouseover/target tooltip flags: Elite / Rare / Boss + kill rank
     expansiveStats = false,  -- Expansive Enemy Stats: your win-chance on the tooltip + the odds panel
     autoMark = true,         -- drop a map waypoint at your feet when a rare appears
+    minimapPins = true,      -- tier-coloured minimap blip where a rare/elite was seen
     recordDeaths = true,     -- local journal of what killed you (never leaves your machine)
     nearbyPing = true,       -- master switch for all nearby pings
     quietInstances = true,   -- mute RUN's pop-up notifications in dungeons/raids (data still tracked)
@@ -48,6 +49,7 @@ Settings.defs = {
     { key = "pingElite",      label = "Ping elites" },
     { key = "pingNormal",     label = "Ping normal enemies" },
     { key = "autoMark",       label = "Auto map-mark rares" },
+    { key = "minimapPins",    label = "Minimap blips for rares/elites" },
     { key = "recordDeaths",   label = "Record my deaths" },
     { key = "shareDeaths",    label = "Share anonymous death-pings" },
     { key = "heardAlerts",    label = "Banner notable heard deaths" },

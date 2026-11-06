@@ -130,13 +130,22 @@ function Nearby.ping(info, mapID, x, y)
     end
     local title = Nearby.bannerTitle(info)
 
+    -- where is it? vignette true coords when we have them, else your spot.
+    local bmap, bx, by
+    if mapID and x and y then
+        bmap, bx, by = mapID, x, y
+    else
+        bmap, bx, by = RUN.Waypoint.playerPos()
+    end
+
     -- the sightings harvest: a real rare+ seen = a named, located species
     if RUN.Detect.isNotable(info.classification) then
-        if mapID and x and y then
-            RUN.Detect.recordSighting(info, mapID, x, y)
-        else
-            RUN.Detect.recordSighting(info, RUN.Waypoint.playerPos())
-        end
+        RUN.Detect.recordSighting(info, bmap, bx, by)
+    end
+
+    -- the minimap blip (owner 2026-11-06): drop a tier-coloured dot where it is.
+    if RUN.MinimapPins then
+        RUN.MinimapPins.add(info.npcID, info.name, bmap, bx, by, noto.tier)
     end
 
     local r, g, b

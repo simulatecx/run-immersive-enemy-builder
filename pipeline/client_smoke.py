@@ -178,7 +178,10 @@ _G.C_Map = {
     SetUserWaypoint = function(p) end,
     CanSetUserWaypointOnMap = function(m) return true end,
     GetUserWaypoint = function() return nil end,
+    GetPlayerMapPosition = function(m, u) return { GetXY = function() return 0.5, 0.5 end } end,
+    GetMapWorldSize = function(m) return 3000.0, 2000.0 end,
 }
+_G.GetPlayerFacing = function() return 0.0 end
 _G.UiMapPoint = { CreateFromCoordinates = function(m, x, y) return {} end }
 _G.C_SuperTrack = { SetSuperTrackedUserWaypoint = function(b) end }
 _G.C_VignetteInfo = nil

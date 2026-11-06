@@ -2,7 +2,7 @@
 ## Title: RUN
 ## Notes: "RUN" Immersive Enemy Builder - enhancing the Azeroth we know and love. Enemies grow with every player they fell: ranks, titles, banners, and your odds against them.
 ## Author: SimulateCX
-## Version: 0.9.4
+## Version: 0.9.5
 ## SavedVariables: RUNDB
 ## IconTexture: Interface\Icons\Ability_Rogue_Sprint
 ## X-License: All Rights Reserved
@@ -38,5 +38,6 @@ ui\options.lua
 ui\export.lua
 ui\plates.lua
 ui\glow.lua
+ui\minimap_pins.lua
 model\nearby.lua
 selftest.lua

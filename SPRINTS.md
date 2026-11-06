@@ -165,6 +165,25 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.5 (2026-11-06, private beta): MINIMAP BLIPS - where the rare/elite is
+  (owner ask). Fit & Overlap - category: awareness layer (RUN-C) / Map &
+  Minimap. Verdict: ENHANCE the nearby/sighting flow with a RareScanner-style
+  minimap pin surface (RUN's own data). New ui/minimap_pins.lua: tier-coloured
+  blips ON the minimap (never modifies it) at the spot a notable creature was
+  seen - vignette TRUE coords when available, else the player's position at
+  ping time. Session-transient (no RUNDB change), current map only, fade after
+  10 min, behind the new `minimapPins` option (default on). The placement MATH
+  is pure + headless-tested - MinimapPins.project (yard offset -> pixel offset,
+  in-range, exact north-up + a rotation branch for rotateMinimap) +
+  radiusYards (zoom table) + offsetYards; 5 selftests. Live wiring reads
+  zoom/rotation via Guards and refreshes on the firewall ticker (0.1s).
+  Fed from Nearby.ping (same position it already computes). client_smoke
+  gained the C_Map player-pos/world-size mocks + drives the pin path. Gate:
+  compliance + client smoke green, BOTH flavors 282->287/287; both installs
+  redeployed; dist/RUN-v0.9.5 zip built. FIELD-WATCH: (1) blip placement on a
+  ROTATING minimap - flip FACING_SIGN in ui/minimap_pins.lua if mirrored;
+  (2) indoor radius uses the outdoor table (direction right, distance a touch
+  off indoors).
 - v0.9.4 (2026-11-06, private beta): THE SHARED SKIN - depth, not flat (owner:
   the UI looks flat; best tool to enhance it?). Decision: WoW-native shared
   skin, no custom art, applied to ALL frames at once. New ui/skin.lua: one
