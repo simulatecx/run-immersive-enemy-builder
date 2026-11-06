@@ -166,7 +166,14 @@ below):
 
 ## 5. CF metadata
 
-- Categories: Tooltip, Unit Frames, Quests & Leveling, Roleplay.
+- Categories (owner review 2026-11-06 - "Quests&Leveling main + Misc + Map
+  felt weak"):
+  - **Main: Unit Frames** - RUN's signature (tier frames + the rank glow);
+    strongest lead. (Tooltip is the only other defensible primary.)
+  - **Additional: Tooltip, Roleplay, Combat** (+ Quests & Leveling if CF
+    allows a 4th - quest-target tags are real but a supporting fit).
+  - **Do NOT use: Miscellaneous** (reads as uncategorised) **or Map &
+    Minimap** (the waypoint is a minor sub-feature).
 - License: All Rights Reserved (source-available; bundled libs keep their
   own licenses).
 - Game versions: WoW Forever (1.60.1) + Classic Era (1.15.9) - one file,
