@@ -165,6 +165,17 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.1 (2026-11-05, private beta): GLOW = LIGHT SEE-THROUGH (fix for the
+  v0.9.0 overcorrection). Field: v0.9.0's opacity bump added a solid
+  alpha-BLEND backing that rendered the tier highlight as an OPAQUE disc you
+  could not see through. Owner: "we should be able to see through - a light
+  glow." Fix: removed every BLEND backing + the helper; all glow effects are
+  ADDITIVE again (translucent by construction - adds light, never blocks),
+  with moderate alphas (subtle pulse 0.45-0.75, fills ~0.6) so it is present
+  but you see the world and your character through it. Only ui/glow.lua
+  builders touched. Gate green BOTH flavors 277/277; both installs
+  redeployed; dist/RUN-v0.9.1 zip built. Opacity is an easy dial if it needs
+  nudging either way.
 - v0.9.0 (2026-11-05, private beta): THE FORESIGHT BRIDGE GOES LIVE (W6a) +
   tier-highlight opacity. Owner: build the bridge (no T&Cs impact, stacks as
   addons do) + make the tier highlight more opaque. Fit & Overlap - category:
