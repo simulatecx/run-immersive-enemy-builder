@@ -330,6 +330,24 @@ function(RUN)
         end
     end
 
+    -- Glow option branches: the normal-enemy mark gate + the unlocked
+    -- positioning/drag path (owner asks 2026-11-05).
+    local db = RUN.db()
+    db.settings.markNormal = false
+    _G.UnitClassification = function(u) return "normal" end
+    local ok1, e1 = pcall(function() fire("PLAYER_TARGET_CHANGED") end)   -- should suppress
+    if not ok1 then fired[#fired + 1] = "glow normal-gate: " .. tostring(e1) end
+    db.settings.glowLocked = false
+    local ok2, e2 = pcall(function() fire("PLAYER_TARGET_CHANGED") end)   -- unlocked placeholder
+    if not ok2 then fired[#fired + 1] = "glow unlocked: " .. tostring(e2) end
+    if RUN.Glow and RUN.commands and RUN.commands["glow"] then
+        local ok3, e3 = pcall(RUN.commands["glow"])                        -- /ra glow toggle
+        if not ok3 then fired[#fired + 1] = "glow cmd: " .. tostring(e3) end
+    end
+    _G.UnitClassification = function(u) return "elite" end
+    db.settings.glowLocked = true
+    db.settings.markNormal = true
+
     local swallowed = {}
     if RUN.Safety and RUN.Safety.recent then
         for _, e in ipairs(RUN.Safety.recent()) do

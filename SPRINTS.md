@@ -165,6 +165,27 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.6 (2026-11-05, private beta): GLOW = FREE OVERLAY + normal opt-out
+  (owner field feedback on ConsolePort). Fit & Overlap - category: passive
+  awareness layer (RUN-C). Verdict: ENHANCE ui/glow.lua + settings.
+  PROBLEM (screenshot): the glow hard-anchored to Blizzard's TargetFrame;
+  on a custom unit-frame UI (ConsolePort hides/moves it) it rendered at the
+  stock frame's vanilla spot (center, on the player) at BACKGROUND strata
+  (behind everything). FIX: the glow is now a FREE, user-positioned overlay
+  - never anchors into a Blizzard frame; HIGH strata (never behind standard
+  frames); draggable + lockable (new glowLocked setting, default locked;
+  /ra glow toggles; unlocked shows a labelled placeholder you drag;
+  position saved per char in RUNDB.ui.glowPos, type-validated to the 9 real
+  anchors). Drag handlers routed through the firewall (safeCall). Ask 2:
+  new markNormal setting (default on) + pure Glow.markable - turning it off
+  suppresses the overlay on NORMAL-classification enemies entirely while
+  DEATHS ARE STILL TRACKED (attribution is independent; the gate is
+  display-only). 3 new selftests (markable gate, validGlowPos accept/reject,
+  + existing). client_smoke.py extended to drive the normal-gate + unlocked
+  + /ra glow paths. Gate: compliance + client smoke green, BOTH flavors
+  266->268/268; both live installs redeployed; dist/RUN-v0.8.6 zip built.
+  Field: /ra glow to place it over your ConsolePort target frame, /ra glow
+  to lock.
 - v0.8.5 (2026-11-05, private beta): THE RANK EFFECTS LADDER. Fit &
   Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE
   ui/glow.lua (the v0.8.3 single two-ring halo) into a VOCABULARY of
