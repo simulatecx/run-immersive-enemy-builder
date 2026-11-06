@@ -85,23 +85,36 @@ end
 -- never lets a geared character read as invincible. The per-level baselines are
 -- presumed classic scaling (hence the (p) tag stays). Returns nil without a
 -- profile, so the caller falls back to the live-health path.
+--
+-- THE CONNECTION GROWS HERE. Every Foresight field is read DEFENSIVELY, so as
+-- the bridge exposes more (offense/dps today; sustain, burst, schools next),
+-- this math deepens automatically - no lockstep release with Foresight.
 function Odds.readiness(profile)
     if type(profile) ~= "table" then return nil end
     local level = tonumber(profile.level) or 1
     if level < 1 then level = 1 end
 
-    -- survivability: prefer real max health (0 when secret), else stamina.
+    -- EFFECTIVE HEALTH = raw health, lifted by MITIGATION (armor DR) and
+    -- AVOIDANCE (dodge+parry). Prefer real max health (0 when secret), else a
+    -- stamina-derived pool.
     local hp = tonumber(profile.maxHealth) or 0
-    local survive
-    if hp > 0 then
-        survive = hp / (60 + level * 55)      -- rough expected HP for the level
-    else
-        local sta = tonumber(profile.stamina) or 0
-        survive = sta / (20 + level * 4)      -- rough expected stamina for the level
-    end
+    local base = hp > 0 and hp or ((tonumber(profile.stamina) or 0) * 10 + 60)
+    local armor = tonumber(profile.armor) or 0
+    local armorDR = armor / (armor + 400 + 85 * level)     -- classic-ish DR vs a same-level hitter
+    local avoid = (tonumber(profile.avoidancePct) or 0) / 100
+    if avoid < 0 then avoid = 0 elseif avoid > 0.6 then avoid = 0.6 end
+    local effHealth = base / ((1 - armorDR) * (1 - avoid))
+    local survive = effHealth / (120 + level * 60)         -- vs expected effective HP for level
 
-    local off = (tonumber(profile.attackPower) or 0) + (tonumber(profile.spellPower) or 0)
-    local offense = off / (10 + level * 8)    -- rough expected offense for the level
+    -- OFFENSE: Foresight's dps when present (its engine), else raw power.
+    local offense
+    local dps = tonumber(profile.dps)
+    if dps and dps > 0 then
+        offense = dps / (4 + level * 1.1)                  -- vs expected dps for level
+    else
+        local raw = (tonumber(profile.attackPower) or 0) + (tonumber(profile.spellPower) or 0)
+        offense = raw / (10 + level * 8)
+    end
 
     if survive <= 0 then survive = 1 end
     if offense <= 0 then offense = 1 end
@@ -162,6 +175,20 @@ if type(RUN.selftestChecks) == "table" then
             local weak = Odds.readiness({ level = 13, stamina = 10, attackPower = 10 })
             local strong = Odds.readiness({ level = 13, maxHealth = 5000, attackPower = 2000 })
             return weak >= 0.5 and weak <= 1.6 and strong <= 1.6 and strong > weak
+        end)())
+        check("odds readiness folds in mitigation (armor + avoidance)", (function()
+            -- same health, but armor + dodge/parry raise effective survivability
+            local armored = Odds.readiness({ level = 13, maxHealth = 800,
+                armor = 1800, avoidancePct = 18, attackPower = 60 })
+            local bare = Odds.readiness({ level = 13, maxHealth = 800,
+                armor = 0, avoidancePct = 0, attackPower = 60 })
+            return armored > bare
+        end)())
+        check("odds readiness prefers Foresight dps for offense", (function()
+            -- a real dps reads differently from the raw-power fallback
+            local withDps = Odds.readiness({ level = 13, maxHealth = 800, dps = 120 })
+            local rawOnly = Odds.readiness({ level = 13, maxHealth = 800, attackPower = 5 })
+            return withDps > rawOnly
         end)())
         check("odds readiness clears the degraded case", (function()
             -- secret health + a Foresight readiness -> NOT degraded

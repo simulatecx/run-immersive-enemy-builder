@@ -26,7 +26,8 @@ end
 function Bridge.validProfile(p)
     if type(p) ~= "table" then return nil end
     if type(p.level) ~= "number" or p.level ~= p.level or p.level < 1 then return nil end
-    local keys = { "stamina", "attackPower", "spellPower", "armor", "maxHealth", "avoidancePct" }
+    local keys = { "stamina", "attackPower", "spellPower", "armor",
+                   "maxHealth", "avoidancePct", "dps" }
     for i = 1, #keys do
         local v = p[keys[i]]
         if v ~= nil and (type(v) ~= "number" or v ~= v or v < 0) then return nil end

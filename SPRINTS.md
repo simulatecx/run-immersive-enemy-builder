@@ -165,6 +165,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.2 (2026-11-05, private beta): THE BRIDGE DEEPENS (offense + mitigation)
+  + fainter glow. Owner: make the glow more faint; and "as we build Foresight
+  our connection should expand in its math." FAINT: one global dial -
+  root:SetAlpha(0.5) on the glow overlay (still additive/see-through, now
+  lighter). THE CONNECTION GROWS (the real work): the bridge is now a GROWTH
+  SURFACE - Foresight exposes more, RUN reads it defensively, odds deepen with
+  no lockstep. Foresight v0.56.0 (API v1->v2): GetCombatProfile() adds `dps`
+  (BridgeAPI.estimateDPS - white-swing + AP + spell-power; Foresight's sim can
+  refine later), profileFrom now a named `fields` table so new fields append
+  cleanly. RUN v0.9.2: Bridge.validProfile accepts dps; Odds.readiness now
+  folds in MITIGATION (armor DR + dodge/parry avoidance -> effective health)
+  AND prefers Foresight's `dps` for offense (raw AP+spellpower fallback) -
+  each field read defensively so future Foresight capability (sustain, burst,
+  schools) sharpens the odds automatically. Still bounded [0.5,1.6], still
+  (p). 2 new RUN selftests (mitigation lift, dps offense) + 1 Foresight
+  (estimateDPS). Gate: RUN 277->279/279 BOTH flavors + client smoke; Foresight
+  308/263 BOTH flavors. Both addons redeployed to both installs; dist/RUN-
+  v0.9.2 zip built.
 - v0.9.1 (2026-11-05, private beta): GLOW = LIGHT SEE-THROUGH (fix for the
   v0.9.0 overcorrection). Field: v0.9.0's opacity bump added a solid
   alpha-BLEND backing that rendered the tier highlight as an OPAQUE disc you

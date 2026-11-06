@@ -138,6 +138,7 @@ local SHARP = "Interface\\Buttons\\WHITE8X8"                      -- sharp lines
 local root = CreateFrame("Frame", "RUNNotorietyGlow", UIParent)
 root:SetSize(150, 150)
 root:SetFrameStrata("HIGH")
+root:SetAlpha(0.5)   -- the one faintness dial: a light, translucent glow
 root:SetMovable(true)
 root:EnableMouse(false)
 root:RegisterForDrag("LeftButton")

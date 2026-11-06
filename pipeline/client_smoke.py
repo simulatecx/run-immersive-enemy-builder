@@ -224,9 +224,9 @@ _G.TomTom = nil
 _G.ForesightAPI = {
     addon = "Foresight", version = 1,
     GetCombatProfile = function()
-        return { v = 1, level = 13, stamina = 120, attackPower = 90,
+        return { v = 2, level = 13, stamina = 120, attackPower = 90,
                  spellPower = 0, armor = 400, avoidancePct = 8, maxHealth = 0,
-                 class = "WARRIOR", source = "foresight" }
+                 dps = 42, class = "WARRIOR", source = "foresight" }
     end,
 }
 """
