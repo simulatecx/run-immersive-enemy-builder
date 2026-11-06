@@ -115,6 +115,7 @@ end)
 
 function Nearby.ping(info, mapID, x, y)
     if not RUN.Settings.get("nearbyPing") then return end
+    if RUN.Detect.quietHere() then return end   -- muted in dungeons/raids (owner 2026-11-05)
     local noto = RUN.Notoriety.describe(info.npcID, info.classification)
     if noto.softElite then info.notorious = true end
     if not RUN.Settings.get(Nearby.gateFor(info)) then return end

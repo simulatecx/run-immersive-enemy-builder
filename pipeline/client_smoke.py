@@ -145,6 +145,9 @@ _G.IsInRaid = function() return false end
 _G.IsInGuild = function() return false end
 _G.GetNumGroupMembers = function() return 0 end
 _G.GetGuildInfo = function(u) return nil end
+_G.IsInInstance = function() return _G.__inInstance == true, _G.__instanceKind or "none" end
+_G.__inInstance = false
+_G.__instanceKind = "none"
 _G.GetZoneText = function() return "Durotar" end
 _G.GetRealZoneText = function() return "Durotar" end
 
@@ -358,6 +361,19 @@ function(RUN)
     _G.UnitClassification = function(u) return "elite" end
     db.settings.glowLocked = true
     db.settings.markNormal = true
+
+    -- Dungeon/raid notification mute: in an instance, the nearby ping + heard
+    -- alert paths must run clean (and suppress) without erroring.
+    _G.__inInstance = true
+    _G.__instanceKind = "party"
+    local okI, eI = pcall(function()
+        fire("NAME_PLATE_UNIT_ADDED", "nameplate1")
+        fire("CHAT_MSG_ADDON", "RUNDP", "RDP1:7024:1413:10:" ..
+            tostring(RUN.Deathping.fletcher16("7024:1413:10")), "CHANNEL", "Someone")
+    end)
+    if not okI then fired[#fired + 1] = "instance mute: " .. tostring(eI) end
+    _G.__inInstance = false
+    _G.__instanceKind = "none"
 
     -- Odds panel drag + the unified /ra move lock toggle (owner ask 2026-11-05).
     db.settings.panelLocked = false

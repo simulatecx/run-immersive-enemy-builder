@@ -69,10 +69,44 @@ function Detect.tierOf(classification)
     return TIERS[classification] or "normal"
 end
 
+-- Pure: RUN's proactive notifications (nearby banners, heard-death alerts) are
+-- MUTED inside instances when the quietInstances option is on - a dungeon full
+-- of elites is noise, not news. Data (death journal, heard counts) keeps flowing
+-- silently; only the pop-ups are suppressed. instanceKind is the 2nd return of
+-- IsInInstance ("none"/"party"/"raid"/"pvp"/"arena").
+local MUTE_KINDS = { party = true, raid = true, pvp = true, arena = true }
+function Detect.isInstanceKind(kind)
+    return MUTE_KINDS[kind] == true
+end
+function Detect.notificationsMuted(instanceKind, quietSetting)
+    return Detect.isInstanceKind(instanceKind) and (quietSetting and true or false)
+end
+
+if type(RUN.selftestChecks) == "table" then
+    table.insert(RUN.selftestChecks, function(check)
+        check("detect instance kinds mute, open world does not",
+            Detect.isInstanceKind("party") and Detect.isInstanceKind("raid")
+            and Detect.isInstanceKind("pvp") and Detect.isInstanceKind("arena")
+            and not Detect.isInstanceKind("none") and not Detect.isInstanceKind(nil))
+        check("detect notifications muted only in-instance + opted in", (function()
+            return Detect.notificationsMuted("party", true) == true
+                and Detect.notificationsMuted("party", false) == false   -- opt-out
+                and Detect.notificationsMuted("none", true) == false       -- open world
+                and Detect.notificationsMuted(nil, true) == false
+        end)())
+    end)
+end
+
 -- Everything below reads the client.
 if not _G.CreateFrame then return Detect end
 
 local Guards = RUN.Guards
+
+-- Live: is RUN quiet here? (In an instance AND the quietInstances option is on.)
+function Detect.quietHere()
+    local kind = Guards.select(2, _G.IsInInstance)   -- 2nd return = instance type
+    return Detect.notificationsMuted(kind, RUN.Settings.get("quietInstances"))
+end
 
 -- Read everything the odds model needs about a unit, through Guards. Fields that
 -- come back secret/missing are nil - the odds model degrades honestly.

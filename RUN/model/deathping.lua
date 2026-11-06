@@ -520,6 +520,9 @@ local function onPing(ping, who, now)
         or (RUN.Detect.sightingFor and RUN.Detect.sightingFor(ping.npc))
     local notable = (known ~= nil) or noto.tier >= 3
     if not notable then return end
+    -- the heard COUNT is already recorded above; only the pop-up is muted in
+    -- dungeons/raids (owner 2026-11-05).
+    if RUN.Detect.quietHere() then return end
     local name = Deathping.npcName(ping.npc)
     local titled = noto.title and (name .. " \"" .. noto.title .. "\"") or name
     local line

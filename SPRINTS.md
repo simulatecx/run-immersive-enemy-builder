@@ -165,6 +165,20 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.3 (2026-11-05, private beta): QUIET IN DUNGEONS & RAIDS. Fit &
+  Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE the
+  ping/alert system. Owner: "turn off RUN notifications in dungeons." RUN is
+  the open-world living-enemy layer; a dungeon full of elites is noise, not
+  news. New `quietInstances` setting (default ON) + Detect.quietHere()
+  (presence-detected IsInInstance 2nd-return kind; mutes in party/raid/pvp/
+  arena). Gated: Nearby.ping (banner/alert/sound/mark) and the Deathping
+  heard-death pop-up - both suppressed in instances. DATA KEEPS FLOWING: the
+  death journal, heard COUNTS, and broadcasts are recorded above the mute;
+  tooltips/panel (on-demand, not notifications) still work. Pure
+  Detect.notificationsMuted + isInstanceKind with 2 selftests; client_smoke
+  drives an in-instance pass. Option "Quiet in dungeons & raids" (uncheck to
+  keep pings in instances). Gate: compliance + client smoke green, BOTH
+  flavors 279->281/281; both installs redeployed; dist/RUN-v0.9.3 zip built.
 - v0.9.2 (2026-11-05, private beta): THE BRIDGE DEEPENS (offense + mitigation)
   + fainter glow. Owner: make the glow more faint; and "as we build Foresight
   our connection should expand in its math." FAINT: one global dial -
