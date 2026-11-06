@@ -165,6 +165,23 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.4 (2026-11-06, private beta): THE SHARED SKIN - depth, not flat (owner:
+  the UI looks flat; best tool to enhance it?). Decision: WoW-native shared
+  skin, no custom art, applied to ALL frames at once. New ui/skin.lua: one
+  helper every RUN frame routes through - gradient fill (dark top -> darker
+  bottom), a soft radial drop-shadow for lift, a thin accent border (retint-
+  able per tier), and a top highlight bevel; plus Skin.title (outline + text
+  shadow). Cross-flavor-safe gradient: new SetGradient(CreateColor) ->
+  SetGradientAlpha fallback -> flat, all pcall-guarded. Applied: ui/panel.lua
+  (odds, border retints per tier), ui/window.lua (Ledger + nameplate prompt),
+  ui/alert.lua (nearby banner, tier tint now rides the accent border),
+  ui/export.lua (replaced the stock dialog art for a consistent dark-gold
+  look). Each frame's hand-rolled flat bg/border deleted in favour of the one
+  helper (consistency + the branded texture pack can later swap in behind the
+  SAME helper, no caller changes). client_smoke mock gained CreateColor so the
+  modern gradient path runs; it skins every frame at load. 1 skin selftest.
+  Gate: compliance + client smoke green, BOTH flavors 281->282/282; both
+  installs redeployed; dist/RUN-v0.9.4 zip built.
 - v0.9.3 (2026-11-05, private beta): QUIET IN DUNGEONS & RAIDS. Fit &
   Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE the
   ping/alert system. Owner: "turn off RUN notifications in dungeons." RUN is

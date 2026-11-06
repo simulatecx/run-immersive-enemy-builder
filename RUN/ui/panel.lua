@@ -28,18 +28,14 @@ f:EnableMouse(false)              -- mouse on only while unlocked (for dragging)
 f:RegisterForDrag("LeftButton")
 f:Hide()
 
-local border = f:CreateTexture(nil, "BACKGROUND")
-border:SetPoint("TOPLEFT", -2, 2)
-border:SetPoint("BOTTOMRIGHT", 2, -2)
-border:SetColorTexture(0.78, 0.64, 0.3, 0.8)
-
-local bg = f:CreateTexture(nil, "ARTWORK")
-bg:SetAllPoints()
-bg:SetColorTexture(0.05, 0.04, 0.03, 0.93)
+-- Shared skin: gradient fill + soft shadow + accent border (retinted per tier
+-- via `border` below). Replaces the old flat fill.
+local border = RUN.Skin.panel(f)
 
 local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 title:SetPoint("TOPLEFT", 10, -8)
 title:SetJustifyH("LEFT")
+RUN.Skin.title(title)
 
 local tierBadge = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 tierBadge:SetPoint("TOPRIGHT", -10, -9)

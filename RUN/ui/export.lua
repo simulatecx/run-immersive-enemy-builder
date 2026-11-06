@@ -26,18 +26,12 @@ local function build()
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", function(f) f:StartMoving() end)
     frame:SetScript("OnDragStop", function(f) f:StopMovingOrSizing() end)
-    if frame.SetBackdrop then
-        frame:SetBackdrop({
-            bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true, tileSize = 32, edgeSize = 32,
-            insets = { left = 8, right = 8, top = 8, bottom = 8 },
-        })
-    end
+    RUN.Skin.panel(frame)   -- the shared RUN look (replaces the stock dialog art)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOP", 0, -16)
     title:SetText("RUN crowd share")
+    RUN.Skin.title(title)
     local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     hint:SetPoint("TOP", title, "BOTTOM", 0, -6)
     hint:SetText("Ctrl+C to copy, then paste into your browser. Nothing is sent until you do.")

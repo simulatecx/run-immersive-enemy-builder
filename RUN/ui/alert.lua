@@ -15,20 +15,14 @@ f:SetPoint("TOP", UIParent, "TOP", 0, -140)
 f:SetFrameStrata("HIGH")
 f:Hide()
 
-local bg = f:CreateTexture(nil, "BACKGROUND")
-bg:SetAllPoints()
-bg:SetColorTexture(0.05, 0.04, 0.03, 0.82)
-
-local edgeTop = f:CreateTexture(nil, "BORDER")
-edgeTop:SetPoint("TOPLEFT"); edgeTop:SetPoint("TOPRIGHT"); edgeTop:SetHeight(1)
-edgeTop:SetColorTexture(0.94, 0.83, 0.53, 0.9)
-local edgeBot = f:CreateTexture(nil, "BORDER")
-edgeBot:SetPoint("BOTTOMLEFT"); edgeBot:SetPoint("BOTTOMRIGHT"); edgeBot:SetHeight(1)
-edgeBot:SetColorTexture(0.94, 0.83, 0.53, 0.9)
+-- Shared skin: gradient fill + soft shadow + accent border (retinted per tier
+-- in Alert.show via Skin.setBorder).
+RUN.Skin.panel(f)
 
 local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 title:SetPoint("TOP", 0, -10)
 title:SetTextColor(0.94, 0.83, 0.53)
+RUN.Skin.title(title)
 
 local sub = f:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
 sub:SetPoint("TOP", title, "BOTTOM", 0, -4)
@@ -49,8 +43,7 @@ function Alert.show(titleText, subText, r, g, b)
     r, g, b = r or 0.94, g or 0.83, b or 0.53
     title:SetText(tostring(titleText or ""))
     title:SetTextColor(r, g, b)
-    edgeTop:SetColorTexture(r, g, b, 0.9)
-    edgeBot:SetColorTexture(r, g, b, 0.9)
+    RUN.Skin.setBorder(f, r, g, b)   -- the tier tint rides the accent border
     sub:SetText(tostring(subText or ""))
     hideAt = (_G.GetTime and _G.GetTime() or 0) + 6
     f:Show()

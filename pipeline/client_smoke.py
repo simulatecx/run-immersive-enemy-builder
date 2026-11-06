@@ -221,6 +221,9 @@ _G.TooltipDataProcessor = {
 }
 _G.BackdropTemplateMixin = {}
 _G.TomTom = nil
+_G.CreateColor = function(r, g, b, a)
+    return { r = r, g = g, b = b, a = a }
+end
 
 -- Foresight bridge present with a combat profile (maxHealth 0 = secret, so the
 -- stamina-survivability + degraded-clearing paths both run).
