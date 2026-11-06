@@ -32,7 +32,16 @@ URL slug suggestion: `run-immersive-enemy-builder`.
 > it. A living-world enemy layer for WoW: Forever, inspired by the
 > nemesis-style foes of Shadow of Mordor.
 
-## 3. Full description (CF Markdown)
+## 3. Full description
+
+> PASTE-READY HTML lives in **`description.html`** - on the CF Description tab
+> click the `<>` (source) button and paste that file's body (everything after
+> the top comment). It uses only CF-sanitiser-safe tags (headings, lists,
+> bold, blockquote, hr, links) for a RICH, scannable layout - far better than
+> flat text. The Markdown below is the same copy, kept for reference / other
+> channels.
+
+### Markdown copy (reference)
 
 ---
 
