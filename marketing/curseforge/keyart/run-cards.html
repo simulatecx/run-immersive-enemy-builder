@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Barlow+Condensed:ital,wght@0,500;0,600;1,500&family=Barlow:wght@400;600;800&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0705; font-family:'Barlow',sans-serif; }
+
+.card {
+  position:relative; width:1280px; height:720px; overflow:hidden; color:#e7d6c2;
+  background:
+    radial-gradient(55% 80% at 24% 40%, rgba(255,150,60,0.20), rgba(255,90,30,0.07) 34%, transparent 62%),
+    radial-gradient(40% 70% at 20% 58%, rgba(210,38,20,0.22), transparent 60%),
+    radial-gradient(130% 120% at 88% 112%, rgba(140,18,14,0.40), transparent 56%),
+    linear-gradient(135deg,#190c07 0%,#120907 46%,#0a0604 100%);
+}
+.card::before { content:""; position:absolute; inset:0; opacity:0.05; mix-blend-mode:overlay;
+  background:repeating-linear-gradient(118deg,#fff 0 1px,transparent 1px 4px); }
+.card::after { content:""; position:absolute; inset:0; pointer-events:none;
+  box-shadow: inset 0 -110px 150px -50px rgba(0,0,0,0.8), inset -150px 0 160px -70px rgba(0,0,0,0.5); }
+
+.topbar { position:absolute; top:40px; left:64px; right:64px; display:flex;
+  justify-content:space-between; align-items:center; z-index:5; }
+.brand { font-family:'Cinzel',serif; font-weight:900; font-size:30px; letter-spacing:2px;
+  background:linear-gradient(176deg,#ffe7b0,#ffb24d 40%,#ff6a24 75%,#c81c12);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 0 16px rgba(255,80,24,0.5)); }
+.seclabel { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:18px;
+  letter-spacing:4px; text-transform:uppercase; color:#b98a54; }
+
+.body { position:absolute; left:64px; top:150px; width:560px; z-index:4; }
+.eyebrow { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:20px;
+  letter-spacing:5px; text-transform:uppercase; color:#ff7a34;
+  text-shadow:0 0 16px rgba(255,80,30,0.4); }
+h2 { font-family:'Cinzel',serif; font-weight:900; font-size:62px; line-height:0.98;
+  letter-spacing:1px; margin:10px 0 24px; color:#ffe9cf;
+  text-shadow:0 2px 2px rgba(0,0,0,0.6), 0 0 36px rgba(255,80,30,0.25); }
+ul { list-style:none; }
+li { position:relative; padding-left:28px; font-size:21px; line-height:1.42; color:#d7c3ad;
+  margin-bottom:14px; max-width:540px; }
+li::before { content:""; position:absolute; left:2px; top:11px; width:9px; height:9px;
+  border-radius:50%; background:radial-gradient(circle,#ffd27a,#ff6a2a 60%,rgba(255,80,20,0)); }
+li b { color:#ffb765; font-weight:800; }
+
+.foot { position:absolute; left:64px; bottom:40px; z-index:5;
+  font-family:'Barlow Condensed',sans-serif; font-size:19px; letter-spacing:2px;
+  text-transform:uppercase; color:#8a6f52; }
+.flavor { position:absolute; right:64px; bottom:40px; z-index:5;
+  font-family:'Barlow Condensed',sans-serif; font-size:19px; letter-spacing:2px;
+  text-transform:uppercase; color:#b98a54; }
+.flavor .dot { color:#ff6a24; margin:0 8px; }
+
+/* right-side visual stage */
+.visual { position:absolute; right:60px; top:150px; width:560px; height:430px; z-index:4; }
+
+/* reusable in-game nameplate */
+.plate { border-radius:9px; padding:16px 18px 14px;
+  background:linear-gradient(180deg,rgba(26,16,12,0.96),rgba(9,6,5,0.98));
+  box-shadow:0 0 0 1px var(--ac,#ff6a24), 0 0 26px rgba(255,80,24,0.4),
+             0 20px 44px -18px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,220,180,0.1); }
+.plate .pt { display:flex; justify-content:space-between; align-items:baseline; }
+.plate .nm { font-family:'Cinzel',serif; font-weight:700; font-size:22px; color:#ffe9cf; }
+.plate .tr { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:15px;
+  letter-spacing:2px; color:var(--ac,#ff5a3c); }
+.plate .ep { font-family:'Cinzel',serif; font-style:italic; font-size:18px; color:#ff8a4a;
+  margin-top:1px; text-shadow:0 0 12px rgba(255,80,30,0.4); }
+.plate .rk { margin-top:7px; font-family:'Barlow Condensed',sans-serif; font-size:16px;
+  color:#cbb89f; letter-spacing:.5px; }
+.plate .rk b { color:#ff6a3a; }
+.plate .hp { margin-top:9px; height:8px; border-radius:4px; background:#0a0605;
+  box-shadow:inset 0 0 0 1px rgba(255,120,60,0.3); overflow:hidden; }
+.plate .hp > i { display:block; height:100%;
+  background:linear-gradient(90deg,#7a120c,#e03018 70%,#ff7a3a); }
+
+.ladder { display:flex; gap:7px; margin-top:4px; }
+.ladder span { width:40px; height:12px; border-radius:3px; }
+
+.banner { border-radius:7px; padding:14px 20px; text-align:center;
+  background:linear-gradient(180deg,rgba(26,16,12,0.96),rgba(9,6,5,0.98));
+  box-shadow:0 0 0 1px var(--ac,#ff6a24), 0 0 26px rgba(255,80,24,0.45), 0 18px 40px -16px rgba(0,0,0,.9); }
+.banner .bt { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:24px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--ac,#ff6a3a);
+  text-shadow:0 0 16px rgba(255,80,30,0.5); }
+.banner .bs { font-size:17px; color:#d7c3ad; margin-top:3px; }
+
+.panel { border-radius:9px; padding:16px 18px;
+  background:linear-gradient(180deg,rgba(26,16,12,0.96),rgba(9,6,5,0.98));
+  box-shadow:0 0 0 1px var(--ac,#ff6a24), 0 0 24px rgba(255,80,24,0.4), 0 20px 44px -18px rgba(0,0,0,.9); }
+.pill { display:inline-block; font-family:'Barlow Condensed',sans-serif; font-weight:600;
+  font-size:15px; letter-spacing:1.5px; text-transform:uppercase; color:#140a06;
+  background:linear-gradient(180deg,#ffd37a,#ff8a2e); padding:5px 13px; border-radius:20px;
+  box-shadow:0 6px 16px rgba(255,120,40,0.45); }
+.tag { display:inline-block; font-family:'Barlow Condensed',sans-serif; font-weight:600;
+  font-size:16px; letter-spacing:1px; color:#140a06; background:#ffb24d; padding:3px 10px;
+  border-radius:4px; }
+.fight { font-family:'Barlow Condensed',sans-serif; font-weight:600; letter-spacing:1px; }
+.rows { font-size:18px; line-height:1.9; color:#cbb89f; }
+.rows b { color:#ffe9cf; } .rows .r { color:#ff6a6a; }
+.vtag { color:#8dffc4; } .ftag { color:#76d0ff; }
+</style>
+</head>
+<body>
+
+<!-- CARD 1 - Notoriety tiers -->
+<div class="card" id="c1">
+  <div class="topbar"><div class="brand">RUN</div><div class="seclabel">The Nemesis System</div></div>
+  <div class="body">
+    <div class="eyebrow">Every death makes a legend</div>
+    <h2>Enemies that<br>grow in rank</h2>
+    <ul>
+      <li>A <b>10-tier notoriety ladder</b> &ndash; from first blood to 100+ player kills.</li>
+      <li><b>Earned titles</b>, never random: the same creature carries the same name for everyone, forever.</li>
+      <li>Kill counts blend <b>your deaths + deaths heard nearby + the verified crowd</b>.</li>
+    </ul>
+  </div>
+  <div class="visual">
+    <div class="plate" style="--ac:#ff3b22; margin-bottom:18px;">
+      <div class="pt"><span class="nm">Sunscale Lashtail</span><span class="tr">TIER 9</span></div>
+      <div class="ep">&ldquo;the Widowmaker&rdquo;</div>
+      <div class="rk">Infamous &middot; <b>killed 44 players</b></div>
+      <div class="hp"><i style="width:68%"></i></div>
+    </div>
+    <div class="plate" style="--ac:#ff6a2a; margin-bottom:22px;">
+      <div class="pt"><span class="nm">Shagglefang</span><span class="tr">TIER 8</span></div>
+      <div class="ep">&ldquo;Nightmare Made Flesh&rdquo;</div>
+      <div class="rk">Deadly &middot; <b>killed 31 players</b></div>
+      <div class="hp"><i style="width:54%"></i></div>
+    </div>
+    <div class="ladder">
+      <span style="background:#ffd27a"></span><span style="background:#ffb24d"></span>
+      <span style="background:#ff9a3a"></span><span style="background:#ff7a2e"></span>
+      <span style="background:#ff5a28"></span><span style="background:#ef3c20"></span>
+      <span style="background:#d8261a"></span><span style="background:#bf1a14"></span>
+      <span style="background:#a3120f"></span><span style="background:#7a0b0a"></span>
+    </div>
+  </div>
+  <div class="foot">Display &amp; advice only &ndash; never acts for you</div>
+  <div class="flavor">Forever <span class="dot">&bull;</span> Classic Era</div>
+</div>
+
+<!-- CARD 2 - See them coming -->
+<div class="card" id="c2">
+  <div class="topbar"><div class="brand">RUN</div><div class="seclabel">Always-on awareness</div></div>
+  <div class="body">
+    <div class="eyebrow">You will see them coming</div>
+    <h2>The world,<br>marked up</h2>
+    <ul>
+      <li>A light <b>ember-to-blood glow</b> on your target that deepens with its tier &ndash; the stock frame is never touched.</li>
+      <li>Gold <b>QUEST TARGET</b> tags on the nameplates of anything your quests want dead.</li>
+      <li><b>Nearby banners</b> for rares, elites &amp; notorious killers &ndash; and quiet in dungeons.</li>
+    </ul>
+  </div>
+  <div class="visual">
+    <div class="banner" style="--ac:#ff4a2a; margin-bottom:26px;">
+      <div class="bt">Notorious Enemy Nearby</div>
+      <div class="bs">Sunscale Screecher &ndash; <b style="color:#ff8a4a">&ldquo;the Cruel&rdquo;</b> &middot; Deadly</div>
+    </div>
+    <div style="display:flex; gap:16px; align-items:center;">
+      <div class="plate" style="--ac:#ff6a2a; flex:1;">
+        <div class="pt"><span class="nm" style="font-size:19px">Burning Blade Acolyte</span></div>
+        <span class="tag" style="margin-top:8px; display:inline-block">&#9873; QUEST TARGET</span>
+      </div>
+    </div>
+    <div style="margin-top:20px; font-family:'Cinzel',serif; font-style:italic; color:#c99; font-size:17px; text-align:center">
+      A ring of ember light says: <b style="color:#ff9a4a">this one remembers you.</b>
+    </div>
+  </div>
+  <div class="foot">Passive &amp; automatic &ndash; nothing to set up</div>
+  <div class="flavor">Forever <span class="dot">&bull;</span> Classic Era</div>
+</div>
+
+<!-- CARD 3 - Death network -->
+<div class="card" id="c3">
+  <div class="topbar"><div class="brand">RUN</div><div class="seclabel">The P2P death network</div></div>
+  <div class="body">
+    <div class="eyebrow">The world hears every fall</div>
+    <h2>When you die,<br>they listen</h2>
+    <ul>
+      <li>An <b>anonymous, creature-centric ping</b> &ndash; who the monster is, never who you are.</li>
+      <li>Your <b>last words</b> can ride along, Hardcore-style.</li>
+      <li><b>Heard deaths</b> feed the same notoriety tiers as your own journal.</li>
+    </ul>
+  </div>
+  <div class="visual">
+    <div class="panel" style="--ac:#ff5a2a;">
+      <div class="rows">
+        <div><span class="vtag">&#9888; heard:</span> <b>Snagglefang</b> has claimed another victim <span style="color:#8a6f52">&middot; 7 kills</span></div>
+        <div><span class="vtag">&#9888; heard:</span> <b>Dreadmaw Crocolisk</b> has slain another player</div>
+        <div><span class="vtag">&#9888; heard:</span> <b>Sunscale Screecher</b> &ndash; <span class="r">2 nearby witnesses</span></div>
+        <div style="margin-top:8px; font-family:'Cinzel',serif; font-style:italic; color:#ff8a4a; font-size:16px">
+          &ldquo;no names, only the monster that did it&rdquo;</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">No PII, ever &ndash; realm, account &amp; guild never leave your machine</div>
+  <div class="flavor">Forever <span class="dot">&bull;</span> Classic Era</div>
+</div>
+
+<!-- CARD 4 - RISK IT -->
+<div class="card" id="c4">
+  <div class="topbar"><div class="brand">RUN</div><div class="seclabel">The solo wager</div></div>
+  <div class="body">
+    <div class="eyebrow">Name your odds, take the wager</div>
+    <h2>RISK IT</h2>
+    <ul>
+      <li>Target something above your weight and RUN shows your <b>honest win chance</b>.</li>
+      <li>Under 50%? <b>Arm the wager.</b> Win a sub-25% fight and you&rsquo;re a <b>Giant Slayer</b>.</li>
+      <li>Lose, and the creature&rsquo;s legend grows. Either way, it&rsquo;s on the record.</li>
+    </ul>
+  </div>
+  <div class="visual">
+    <div class="panel" style="--ac:#ff8a2e; margin-bottom:22px;">
+      <div class="pt" style="display:flex; justify-content:space-between; align-items:baseline">
+        <span class="nm" style="font-family:'Cinzel',serif; font-size:21px; color:#ffe9cf">Fleeting Plainstrider</span>
+        <span style="font-family:'Barlow Condensed'; color:#ff5a3c; letter-spacing:2px">TIER 3</span></div>
+      <div class="hp" style="margin-top:10px"><i style="width:40%"></i></div>
+      <div style="margin-top:12px; display:flex; align-items:baseline; gap:12px">
+        <span class="fight" style="font-size:26px; color:#ff9a3a; text-shadow:0 0 14px rgba(255,120,40,.4)">RISKY</span>
+        <span style="font-size:18px; color:#d7c3ad">~38% to win <span style="color:#8a6f52">(p)</span></span>
+      </div>
+    </div>
+    <div class="banner" style="--ac:#ffcf5a; background:linear-gradient(180deg,rgba(40,28,10,0.96),rgba(18,12,5,0.98))">
+      <div class="bt" style="color:#ffd27a">&#9733; Giant Slayer &#9733;</div>
+      <div class="bs">You beat a creature that had killed <b style="color:#ffd27a">38 players</b></div>
+    </div>
+  </div>
+  <div class="foot">Honest odds &ndash; carries a (p), never pretends to certainty</div>
+  <div class="flavor">Forever <span class="dot">&bull;</span> Classic Era</div>
+</div>
+
+<!-- CARD 5 - Account Ledger -->
+<div class="card" id="c5">
+  <div class="topbar"><div class="brand">RUN</div><div class="seclabel">The Account Ledger</div></div>
+  <div class="body">
+    <div class="eyebrow">Your enemies, on the record</div>
+    <h2>Most Wanted</h2>
+    <ul>
+      <li>Your deaths, your slays, your guild&rsquo;s wipes &ndash; <b>account-wide, all local</b>.</li>
+      <li>Every creature you&rsquo;ve seen, named and located.</li>
+      <li>The <b>Most Wanted</b> board: the enemies that earned their names at your expense.</li>
+    </ul>
+  </div>
+  <div class="visual">
+    <div class="panel" style="--ac:#ffb24d; padding:18px 20px;">
+      <div style="font-family:'Cinzel',serif; color:#ffd27a; font-size:20px; margin-bottom:4px">Most Wanted</div>
+      <div style="font-size:14px; color:#8a6f52; letter-spacing:1px; text-transform:uppercase; margin-bottom:12px">notoriety: yours + heard</div>
+      <div class="rows" style="font-size:19px; line-height:1.95">
+        <div>1. <b>Dreadmaw Crocolisk</b> <span style="color:#ff8a4a">&ldquo;the Scarred&rdquo;</span> <span style="color:#8a6f52">&middot; tier 7</span></div>
+        <div>2. <b>Razormane Hunter</b> <span style="color:#ff8a4a">&ldquo;the Vicious&rdquo;</span> <span style="color:#8a6f52">&middot; tier 5</span></div>
+        <div>3. <b>Sunscale Screecher</b> <span style="color:#ff8a4a">&ldquo;Fleshrender&rdquo;</span> <span style="color:#8a6f52">&middot; tier 4</span></div>
+        <div style="margin-top:10px; color:#8a6f52; font-size:15px">Totals &middot; deaths 23 &middot; heard 61 &middot; slays 4</div>
+      </div>
+    </div>
+  </div>
+  <div class="foot">Everything lives in your SavedVariables &ndash; yours alone</div>
+  <div class="flavor">Forever <span class="dot">&bull;</span> Classic Era</div>
+</div>
+
+<!-- CARD 6 - Expanded stats with Foresight -->
+<div class="card" id="c6">
+  <div class="topbar"><div class="brand">RUN</div><div class="seclabel" style="color:#76d0ff">+ Foresight</div></div>
+  <div class="body">
+    <div class="eyebrow" style="color:#76d0ff; text-shadow:0 0 16px rgba(80,180,255,.4)">Expanded stats</div>
+    <h2>Install Foresight,<br>sharpen your odds</h2>
+    <ul>
+      <li>RUN auto-detects <b style="color:#9fd8ff">Foresight</b> and feeds in your <b>real survivability + offense</b>.</li>
+      <li>Your win chance becomes <b>character-accurate</b> &ndash; gear, mitigation &amp; damage, not a guess.</li>
+      <li>Works even where the client <b>hides your health</b> (PvP realms). The deeper your build, the sharper the read.</li>
+    </ul>
+  </div>
+  <div class="visual">
+    <div class="panel" style="--ac:#5fe08a;">
+      <div class="pt" style="display:flex; justify-content:space-between; align-items:baseline">
+        <span class="nm" style="font-family:'Cinzel',serif; font-size:21px; color:#ffe9cf">Burning Blade Acolyte</span>
+        <span style="font-family:'Barlow Condensed'; color:#ff5a3c; letter-spacing:2px">TIER 2</span></div>
+      <div class="hp" style="margin-top:10px"><i style="width:75%"></i></div>
+      <div style="margin-top:12px; display:flex; align-items:baseline; gap:12px">
+        <span class="fight" style="font-size:26px; color:#5fe08a; text-shadow:0 0 14px rgba(60,220,120,.4)">FIGHT</span>
+        <span style="font-size:18px; color:#d7c3ad">~72% to win <span class="ftag">&middot; via Foresight</span></span>
+      </div>
+    </div>
+    <div style="margin-top:22px; display:flex; align-items:center; gap:16px; justify-content:center">
+      <span style="font-family:'Cinzel',serif; font-weight:900; font-size:30px; color:#ff8a3a">RUN</span>
+      <span style="font-size:30px; color:#76d0ff">&#43;</span>
+      <span style="font-family:'Cinzel',serif; font-weight:700; font-size:30px; color:#76d0ff; text-shadow:0 0 18px rgba(80,180,255,.45)">Foresight</span>
+    </div>
+    <div style="margin-top:10px; text-align:center; font-family:'Barlow Condensed'; letter-spacing:2px; text-transform:uppercase; color:#9fb7c9; font-size:15px">
+      character-accurate, automatically</div>
+  </div>
+  <div class="foot">Two addons, one studio, one living Azeroth</div>
+  <div class="flavor" style="color:#76d0ff">curseforge.com/wow/addons/foresight</div>
+</div>
+
+</body>
+</html>

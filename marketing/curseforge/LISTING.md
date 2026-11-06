@@ -136,12 +136,20 @@ re-render from the `.html` sources via any browser if you want to tweak):
   slashes, an in-game Most-Wanted tier nameplate, and the Foresight
   callout). Upload as the first gallery image.
 
-**`cards/`** - the older branded ember/blood set (v0.8.0 marketing build),
-kept as additional feature cards:
-- `run-gallery-1600x900.png` - composite; a good secondary slide.
-- `run-02-nemesis-tiers.png` / `run-03-nearby-banners.png` /
-  `run-04-death-network.png` / `run-05-risk-it.png` / `run-06-ledger.png` -
-  one feature card per pillar; upload after the screenshots.
+**`cards-new/`** - the CURRENT feature-card set (2026-11-06, generated to
+MATCH the new key art; `run-cards.html` is the re-renderable source). Upload
+these as gallery slides after the screenshots:
+- `run-01-tiers.png` - the 10-tier notoriety ladder + earned titles.
+- `run-02-see-them-coming.png` - glow / quest-plate / nearby banner.
+- `run-03-death-network.png` - the anonymous P2P death pings.
+- `run-04-risk-it.png` - the solo wager + Giant Slayer.
+- `run-05-ledger.png` - the Account Ledger / Most Wanted.
+- `run-06-foresight.png` - **Expanded stats with Foresight** (the live bridge
+  cross-sell; the one genuinely new card - drives installs of both).
+
+> The old `cards/` folder (v0.8.0 build) is SUPERSEDED by `cards-new/` - it
+> has a stale "join the waitlist" cover and a slightly different font. Don't
+> upload it; safe to delete.
 
 **`screenshots/`** - real in-game captures (gallery slots 2-5, captions
 below):
