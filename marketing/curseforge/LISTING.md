@@ -29,8 +29,8 @@ URL slug suggestion: `run-immersive-enemy-builder`.
 
 > Your enemies remember. Every player a creature fells makes it more
 > notorious - tiers, earned titles, banners, and your honest odds against
-> it. A living-world enemy layer for WoW: Forever and Classic Era,
-> inspired by the nemesis-style foes of Shadow of Mordor and Shadow of War.
+> it. A living-world enemy layer for WoW: Forever, inspired by the
+> nemesis-style foes of Shadow of Mordor.
 
 ## 3. Full description (CF Markdown)
 
@@ -77,15 +77,25 @@ never casts, never moves you, never acts for you. Classic's rules stay
 classic: silver dragons stay silver dragons; RUN only adds the layer the
 world remembers.
 
-### Better together with Foresight
+### Expanded stats - install Foresight
 
 RUN is made by SimulateCX, the studio behind
-**[Foresight](https://www.curseforge.com/wow/addons/foresight)** - the
-layman's oracle for your own character. One Azeroth, two jobs: Foresight
-reads YOUR character; RUN reads the WORLD'S enemies. Install both and RUN
-auto-detects Foresight (it ships as an optional dependency) - the
-integration deepens with each release, with Foresight's real
-survivability engine feeding RUN's odds on the roadmap for both flavors.
+**[Foresight: the layman's oracle](https://www.curseforge.com/wow/addons/foresight)**
+- plain-language analysis of your own character. One Azeroth, two jobs:
+Foresight reads YOUR character; RUN reads the WORLD'S enemies, and they
+**talk to each other.**
+
+**Add Foresight and RUN's odds get smarter automatically.** RUN detects it
+(an optional dependency) and feeds in Foresight's real survivability +
+offense model - so your win chance reflects your actual gear, mitigation,
+and damage instead of a coarse guess, and it still works even where the
+client hides your live health (PvP realms). No setup: install both, and the
+"~% to win" under your target becomes **character-accurate**. The deeper
+your Foresight profile, the sharper RUN's read - the connection grows with
+every Foresight release.
+
+RUN is fully standalone and great on its own; Foresight just expands the
+stats. Two addons, one studio, one living Azeroth.
 
 ### Privacy, up front
 
@@ -107,13 +117,19 @@ survivability engine feeding RUN's odds on the roadmap for both flavors.
 
 ---
 
-## 4. Images (ALL PNGs live beside this file - two folders)
+## 4. Images (ALL PNGs live beside this file)
 
-**`cards/`** - the branded ember/blood set (from the v0.8.0 marketing
-build, copied out of the marketing worktree so everything uploadable is in
-ONE place):
-- `run-01-cover.png` - THE PROJECT IMAGE (CF logo/avatar slot).
-- `run-gallery-1600x900.png` - the composite; good first gallery slide.
+**`keyart/`** - the NEW generated key art (designed ember/blood, 2026-11-06;
+re-render from the `.html` sources via any browser if you want to tweak):
+- `run-logo-800x800.png` - **THE PROJECT IMAGE / avatar** (square: glowing
+  "RUN" + Immersive Enemy Builder + "Your enemies remember").
+- `run-keyart-1280x720.png` - **THE GALLERY HERO / banner** (wordmark, claw
+  slashes, an in-game Most-Wanted tier nameplate, and the Foresight
+  callout). Upload as the first gallery image.
+
+**`cards/`** - the older branded ember/blood set (v0.8.0 marketing build),
+kept as additional feature cards:
+- `run-gallery-1600x900.png` - composite; a good secondary slide.
 - `run-02-nemesis-tiers.png` / `run-03-nearby-banners.png` /
   `run-04-death-network.png` / `run-05-risk-it.png` / `run-06-ledger.png` -
   one feature card per pillar; upload after the screenshots.
