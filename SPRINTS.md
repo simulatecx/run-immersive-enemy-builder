@@ -165,6 +165,22 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.9 (2026-11-05, private beta): HONEST "degraded" copy + diagnosis of
+  the Foresight-math question. Owner asked why the odds read "advice
+  degraded" with Foresight installed. DIAGNOSIS (no bug): (1) the ForesightAPI
+  bridge is NOT built - verified the Foresight repo exposes no ForesightAPI/
+  GetDangerVerdict anywhere, so RUN.Bridge.dangerVerdict returns nil and
+  Odds.forUnit falls to the coarse model (the W6 synergy play is still
+  roadmap). (2) The coarse model factors current HP; on the owner's PvP
+  realm the Forever client returns player health as a SECRET value, so RUN
+  can't read it and flagged "degraded". But the shown "~X% to win" is
+  already the level+classification estimate = the full-health number; only
+  the current-HP adjustment was missing. FIX: reword the panel foot from
+  "your health is secret here - advice degraded" to "full-health estimate -
+  your current HP is hidden here" (honest, not alarming). The real fix (odds
+  that don't need RUN to read secret HP) is the Foresight bridge - owner to
+  decide whether to prioritize W6. Gate green BOTH flavors 269/269; both
+  live installs redeployed; dist/RUN-v0.8.9 zip built.
 - v0.8.8 (2026-11-05, private beta): ODDS PANEL IS DRAGGABLE + /ra move
   (owner field ask: the "FIGHT" odds readout under the unit frame needs to
   move too). Fit & Overlap - category: passive awareness layer (RUN-C).

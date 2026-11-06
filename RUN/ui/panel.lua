@@ -203,7 +203,11 @@ local function renderFor(unit)
                 pct:SetText(string.format("~%d%% to win %s",
                     math.floor(verdict.p * 100 + 0.5), verdict.tag))
             end
-            foot:SetText(verdict.degraded and "your health is secret here - advice degraded"
+            -- "degraded" only means we could not read your CURRENT hp (secret
+            -- on PvP realms / restricted contexts) - so this is the full-health
+            -- estimate, honestly labelled, not a broken number.
+            foot:SetText(verdict.degraded
+                and "full-health estimate - your current HP is hidden here"
                 or crowdLine(verdict.creature, noto))
         end
     else
