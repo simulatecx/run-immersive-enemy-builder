@@ -151,10 +151,21 @@ label:Hide()
 -- ---------------------------------------------------------------------------
 -- Build helpers (additive-blended so the tier tint reads as light).
 -- ---------------------------------------------------------------------------
-local function dot(parent, size, kind, layer)
+local function dot(parent, size, kind, layer, blend)
     local t = parent:CreateTexture(nil, layer or "ARTWORK")
-    t:SetTexture(kind); t:SetBlendMode("ADD"); t:SetSize(size, size)
+    t:SetTexture(kind); t:SetBlendMode(blend or "ADD"); t:SetSize(size, size)
     return t
+end
+
+-- A solid (alpha-blended, NOT additive) tier-coloured halo that reads over any
+-- background - the "body" of the highlight. Additive sparkle/rings layer on
+-- top for the glow. This is what makes the tier highlight opaque, not washed
+-- out over bright terrain (owner ask 2026-11-05).
+local function backing(host, size, alpha)
+    local b = dot(host, size, SOFT, "BACKGROUND", "BLEND")
+    b:SetPoint("CENTER")
+    b:SetAlpha(alpha or 0.55)
+    return b
 end
 
 local function bar(parent, w, h)
@@ -199,21 +210,25 @@ local function append(dst, src) for i = 1, #src do dst[#dst + 1] = src[i] end en
 local builders = {}
 
 builders.subtle = function(host)
-    local g = dot(host, 118, SOFT, "BACKGROUND"); g:SetPoint("CENTER")
-    return { tints = { g }, ags = { pulse(host, 0.45, 0.85, 1.6) } }
+    local tints = {}
+    tints[#tints + 1] = backing(host, 108, 0.6)                  -- solid body
+    tints[#tints + 1] = dot(host, 118, SOFT, "BACKGROUND"); tints[#tints]:SetPoint("CENTER")
+    return { tints = tints, ags = { pulse(host, 0.8, 1.0, 1.6) } }
 end
 
 builders.aura = function(host)
     local tints = {}
+    tints[#tints + 1] = backing(host, 94, 0.6)
     local fill = dot(host, 96, SOFT, "BACKGROUND"); fill:SetPoint("CENTER")
     tints[#tints + 1] = fill
     local ring, ag = spinner(host, 9, 360)
     append(tints, ringOfDots(ring, 16, 18, 52, 52))
-    return { tints = tints, ags = { ag, pulse(host, 0.7, 1.0, 2.0) } }
+    return { tints = tints, ags = { ag, pulse(host, 0.88, 1.0, 2.0) } }
 end
 
 builders.reticle = function(host)
     local tints = {}
+    tints[#tints + 1] = backing(host, 86, 0.4)                   -- faint body behind the ring
     local ring, ag = spinner(host, 6, 360)
     append(tints, ringOfDots(ring, 28, 9, 54, 54))
     append(tints, ringOfDots(ring, 4, 16, 54, 54))
@@ -222,6 +237,7 @@ end
 
 builders.orbit = function(host)
     local tints = {}
+    tints[#tints + 1] = backing(host, 44, 0.6)
     local c = dot(host, 40, SOFT, "BACKGROUND"); c:SetPoint("CENTER")
     tints[#tints + 1] = c
     local ring, ag = spinner(host, 10, 360)
@@ -231,6 +247,7 @@ end
 
 builders.ripple = function(host)
     local tints, ags = {}, {}
+    tints[#tints + 1] = backing(host, 60, 0.4)
     local radii = { 28, 46, 64 }
     for k = 1, 3 do
         local layer = CreateFrame("Frame", nil, host); layer:SetAllPoints(host)
@@ -248,6 +265,7 @@ end
 
 builders.brackets = function(host)
     local tints = {}
+    tints[#tints + 1] = backing(host, 96, 0.35)                  -- faint body inside the brackets
     local S, len, th = 54, 16, 3
     local corners = { { -1, 1 }, { 1, 1 }, { -1, -1 }, { 1, -1 } }
     for c = 1, #corners do
@@ -263,6 +281,7 @@ end
 
 builders.sigil = function(host)
     local tints, ags = {}, {}
+    tints[#tints + 1] = backing(host, 70, 0.6)                   -- solid legend body
     local center = dot(host, 44, SOFT, "BACKGROUND"); center:SetPoint("CENTER")
     tints[#tints + 1] = center
     local outer, agO = spinner(host, 14, 360)

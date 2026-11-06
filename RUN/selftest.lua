@@ -458,9 +458,9 @@ function RUN.selftest()
     end)())
     check("settings type-validated", S.set("autoMark", "garbage") == false)
 
-    -- ---- bridge: absent Foresight degrades ----
-    check("bridge nil without Foresight", RUN.Bridge.foresight() == nil or _G.ForesightAPI ~= nil)
-    check("bridge verdict nil-safe", RUN.Bridge.dangerVerdict(123, {}) == nil or _G.ForesightAPI ~= nil)
+    -- ---- bridge: the Foresight probe is defensive (new GetCombatProfile contract) ----
+    check("bridge foresight probe", RUN.Bridge.foresight() == nil or _G.ForesightAPI ~= nil)
+    check("bridge profile nil-safe", RUN.Bridge.combatProfile() == nil or _G.ForesightAPI ~= nil)
 
     -- ---- version sync ----
     check("version set", type(RUN.version) == "string" and RUN.version:match("^%d+%.%d+%.%d+$") ~= nil)

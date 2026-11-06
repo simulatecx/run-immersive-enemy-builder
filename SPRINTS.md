@@ -165,6 +165,31 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.0 (2026-11-05, private beta): THE FORESIGHT BRIDGE GOES LIVE (W6a) +
+  tier-highlight opacity. Owner: build the bridge (no T&Cs impact, stacks as
+  addons do) + make the tier highlight more opaque. Fit & Overlap - category:
+  RUN-C odds + the synergy play. Verdict: the W6 bridge, built for real.
+  ARCHITECTURE (Two Laws): Foresight exposes CHARACTER data, RUN owns the
+  ODDS - so the old GetDangerVerdict(npcID) contract (wrong: Foresight does
+  not know creatures) is REPLACED by GetCombatProfile(). FORESIGHT SIDE
+  (v0.55.0, separate repo, additive): new core/bridge_api.lua publishes
+  _G.ForesightAPI.GetCombatProfile() -> { level, stamina, attackPower,
+  spellPower, armor, avoidancePct, maxHealth, class } from the live sheet via
+  its Guards (secret/missing -> 0); 2 TOC lines + version trio + 2 selftests;
+  Foresight gate 262/262. RUN SIDE: core/bridge.lua rewritten to
+  combatProfile() (validated - untrusted sibling input); model/odds.lua gains
+  Odds.readiness(profile) - a BOUNDED [0.5,1.6] character-readiness multiplier
+  (survivability + offense vs presumed per-level baselines) that replaces the
+  secret-live-HP term, so Foresight CLEARS the "advice degraded" case and
+  sharpens the odds; panel shows "(via Foresight)". Pure, (p) still honest.
+  Addon-to-addon only: nothing leaves the client, no backend, no T&Cs/privacy
+  touch. Degrades silently without Foresight (coarse model). OPACITY: glow
+  effects gained a solid alpha-blended tier-coloured BACKING (reads over
+  bright terrain, not just additive wash) + higher pulse floors; panel tier
+  border 0.85 -> 1.0. 8 new RUN selftests. Gate: compliance + client smoke
+  green, BOTH flavors 269->277/277; both addons redeployed to both installs;
+  dist/RUN-v0.9.0 zip built. Field: /ra status should read "Foresight bridge:
+  connected"; the odds panel no longer says degraded on your PvP realm.
 - v0.8.9 (2026-11-05, private beta): HONEST "degraded" copy + diagnosis of
   the Foresight-math question. Owner asked why the odds read "advice
   degraded" with Foresight installed. DIAGNOSIS (no bug): (1) the ForesightAPI

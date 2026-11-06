@@ -167,7 +167,7 @@ local function renderFor(unit)
     else
         r, g, b = 0.78, 0.64, 0.3
     end
-    border:SetColorTexture(r, g, b, 0.85)
+    border:SetColorTexture(r, g, b, 1.0)
 
     title:SetText(tostring(info.name or "Unknown"))
     title:SetTextColor(1, 0.95, 0.85)
@@ -203,12 +203,19 @@ local function renderFor(unit)
                 pct:SetText(string.format("~%d%% to win %s",
                     math.floor(verdict.p * 100 + 0.5), verdict.tag))
             end
-            -- "degraded" only means we could not read your CURRENT hp (secret
-            -- on PvP realms / restricted contexts) - so this is the full-health
-            -- estimate, honestly labelled, not a broken number.
-            foot:SetText(verdict.degraded
-                and "full-health estimate - your current HP is hidden here"
-                or crowdLine(verdict.creature, noto))
+            -- "degraded" only fires when we could not read your CURRENT hp AND
+            -- Foresight is not bridging (secret hp on PvP realms). With Foresight
+            -- the odds are sharpened by your real character profile - marked so.
+            local footText
+            if verdict.degraded then
+                footText = "full-health estimate - your current HP is hidden here"
+            else
+                footText = crowdLine(verdict.creature, noto)
+                if verdict.source == "foresight" then
+                    footText = footText .. "  |cff8dffc4(via Foresight)|r"
+                end
+            end
+            foot:SetText(footText)
         end
     else
         band:SetText("")

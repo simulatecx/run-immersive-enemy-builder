@@ -218,6 +218,17 @@ _G.TooltipDataProcessor = {
 }
 _G.BackdropTemplateMixin = {}
 _G.TomTom = nil
+
+-- Foresight bridge present with a combat profile (maxHealth 0 = secret, so the
+-- stamina-survivability + degraded-clearing paths both run).
+_G.ForesightAPI = {
+    addon = "Foresight", version = 1,
+    GetCombatProfile = function()
+        return { v = 1, level = 13, stamina = 120, attackPower = 90,
+                 spellPower = 0, armor = 400, avoidancePct = 8, maxHealth = 0,
+                 class = "WARRIOR", source = "foresight" }
+    end,
+}
 """
 
 
