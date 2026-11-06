@@ -28,7 +28,8 @@ Settings.defaults = {
     lastWords = true,        -- your final public chat line rides your death-ping (Hardcore classic)
     tierFrames = true,       -- tier-styled unit frame for titled enemies (the Nemesis frame)
     tierGlow = true,         -- the tier-escalating rank effect for your target (ember -> blood)
-    glowLocked = true,       -- lock the rank glow in place; unlock (/ra glow) to drag it
+    glowLocked = true,       -- lock the rank glow in place; unlock (/ra glow or /ra move) to drag it
+    panelLocked = true,      -- lock the odds/FIGHT panel in place; unlock (/ra move) to drag it
     markNormal = true,       -- draw the overlay on NORMAL-classification enemies (deaths tracked regardless)
     riskButton = true,       -- the RISK IT wager button on the odds frame (solo, <50% odds)
 }
@@ -54,6 +55,7 @@ Settings.defs = {
     { key = "tierFrames",     label = "Tier frames for titled enemies" },
     { key = "tierGlow",       label = "Rank glow (notoriety effect)" },
     { key = "glowLocked",     label = "Lock rank glow position" },
+    { key = "panelLocked",    label = "Lock odds panel position" },
     { key = "markNormal",     label = "Mark normal enemies" },
     { key = "riskButton",     label = "RISK IT wager button" },
     { key = "minimapButton",  label = "Minimap button" },

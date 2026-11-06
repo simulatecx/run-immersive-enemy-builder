@@ -64,20 +64,10 @@ function Glow.ringPoint(i, count, rx, ry)
     return math.cos(a) * (tonumber(rx) or 0), math.sin(a) * (tonumber(ry) or 0)
 end
 
--- Pure: validate a saved drag position (RUNDB is user-editable). Only the nine
--- real anchor points, finite in-range offsets; anything off-shape -> nil (fall
--- back to the default placement) rather than erroring on SetPoint.
-local VALID_POINTS = {
-    CENTER = true, TOP = true, BOTTOM = true, LEFT = true, RIGHT = true,
-    TOPLEFT = true, TOPRIGHT = true, BOTTOMLEFT = true, BOTTOMRIGHT = true,
-}
+-- Pure: validate a saved drag position - the shared core helper (init.lua)
+-- does the work; this stays as the glow's named entry point + selftest target.
 function Glow.validGlowPos(p)
-    if type(p) ~= "table" then return nil end
-    if type(p.point) ~= "string" or not VALID_POINTS[p.point] then return nil end
-    if type(p.x) ~= "number" or type(p.y) ~= "number" then return nil end
-    if p.x ~= p.x or p.y ~= p.y then return nil end          -- NaN
-    if math.abs(p.x) > 5000 or math.abs(p.y) > 5000 then return nil end
-    return p
+    return RUN.validAnchorPos(p)
 end
 
 -- Selftests (registered; run headless and in-game).
@@ -406,6 +396,11 @@ local function evaluate()
     root:Show()
     local r, g, b = RUN.Notoriety.colorFor(noto.tier)
     show(name, r, g, b)
+end
+
+-- Re-evaluate on demand (e.g. after /ra move flips the lock), firewall-wrapped.
+function Glow.refresh()
+    RUN.safeCall("glow-eval", evaluate)
 end
 
 -- /ra glow: unlock to drag, lock to save. The lock/unlock the owner asked for.

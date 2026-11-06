@@ -165,6 +165,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.8.8 (2026-11-05, private beta): ODDS PANEL IS DRAGGABLE + /ra move
+  (owner field ask: the "FIGHT" odds readout under the unit frame needs to
+  move too). Fit & Overlap - category: passive awareness layer (RUN-C).
+  Verdict: ENHANCE ui/panel.lua, same pattern as the v0.8.6 glow. The odds/
+  tier panel (RUNOddsPanel) is now click-draggable: SetMovable + firewall-
+  wrapped drag handlers save RUNDB.ui.panelPos (type-validated); anchor()
+  uses the saved pos else the Blizzard target frame else centre-left; mouse
+  is on only while unlocked. New panelLocked setting (default locked) +
+  "Lock odds panel position" in the options. NEW UNIFIED /ra move command:
+  one arrange mode that unlocks BOTH the rank glow and the odds panel to
+  drag, then locks both - the single gesture to position RUN's overlays.
+  DRY: the position validator is now shared core RUN.validAnchorPos (init.
+  lua, selftested); Glow.validGlowPos delegates to it; added Glow.refresh
+  for the immediate re-eval. client_smoke.py drives the panel refresh +
+  /ra move. Gate: compliance + client smoke green, BOTH flavors 268->269/
+  269; both live installs redeployed; dist/RUN-v0.8.8 zip built. Field:
+  /ra move, target an enemy, drag the FIGHT panel + the glow, /ra move to
+  lock.
 - v0.8.7 (2026-11-05, private beta): LEDGER FITS ITS CONTENT (owner field
   bug: the Minimap-button option extended PAST the window frame). Fit &
   Overlap - category: passive awareness layer (RUN-C). Verdict: ENHANCE

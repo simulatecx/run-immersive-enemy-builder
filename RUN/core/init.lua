@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "0.8.7"
+RUN.version = "0.8.8"
 
 -- THE season constants (WP-G / RUN-G) - one per GAME LINE, both living here so
 -- every flip happens in this file. Each crowd payload stamps the tag of the
@@ -68,6 +68,34 @@ local PREFIX = "|cff8dffc4RUN|r "
 function RUN.print(msg)
     local f = _G.DEFAULT_CHAT_FRAME
     if f and f.AddMessage then f:AddMessage(PREFIX .. tostring(msg)) end
+end
+
+-- Shared: validate a saved UI anchor position (RUNDB is user-editable). Only
+-- the nine real anchor points with finite, in-range offsets; anything off-shape
+-- returns nil so a draggable frame falls back to its default placement instead
+-- of erroring on SetPoint. Used by every movable overlay (glow, odds panel).
+local VALID_ANCHOR = {
+    CENTER = true, TOP = true, BOTTOM = true, LEFT = true, RIGHT = true,
+    TOPLEFT = true, TOPRIGHT = true, BOTTOMLEFT = true, BOTTOMRIGHT = true,
+}
+function RUN.validAnchorPos(p)
+    if type(p) ~= "table" then return nil end
+    if type(p.point) ~= "string" or not VALID_ANCHOR[p.point] then return nil end
+    if type(p.x) ~= "number" or type(p.y) ~= "number" then return nil end
+    if p.x ~= p.x or p.y ~= p.y then return nil end          -- NaN
+    if math.abs(p.x) > 5000 or math.abs(p.y) > 5000 then return nil end
+    return p
+end
+
+if type(RUN.selftestChecks) == "table" then
+    table.insert(RUN.selftestChecks, function(check)
+        check("validAnchorPos accepts good, rejects bad",
+            RUN.validAnchorPos({ point = "LEFT", x = 1, y = 2 }) ~= nil
+            and RUN.validAnchorPos({ point = "BAD", x = 0, y = 0 }) == nil
+            and RUN.validAnchorPos({ point = "LEFT", x = 99999, y = 0 }) == nil
+            and RUN.validAnchorPos({ point = "LEFT", x = "a", y = 0 }) == nil
+            and RUN.validAnchorPos(nil) == nil)
+    end)
 end
 
 -- Everything below wires the client; headless harness stops here.

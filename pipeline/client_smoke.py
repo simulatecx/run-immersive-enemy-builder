@@ -348,6 +348,18 @@ function(RUN)
     db.settings.glowLocked = true
     db.settings.markNormal = true
 
+    -- Odds panel drag + the unified /ra move lock toggle (owner ask 2026-11-05).
+    db.settings.panelLocked = false
+    if RUN.Panel and RUN.Panel.refresh then
+        local okP, eP = pcall(RUN.Panel.refresh)
+        if not okP then fired[#fired + 1] = "panel refresh: " .. tostring(eP) end
+    end
+    if RUN.commands and RUN.commands["move"] then
+        local okM, eM = pcall(RUN.commands["move"])
+        if not okM then fired[#fired + 1] = "ra move: " .. tostring(eM) end
+    end
+    db.settings.panelLocked = true
+
     -- Account Ledger: render (home-page height math) + the Heard-page toggle.
     if RUN.Window and RUN.Window.refresh then
         local okR, eR = pcall(RUN.Window.refresh)

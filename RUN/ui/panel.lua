@@ -23,6 +23,9 @@ local Detect = RUN.Detect
 local f = CreateFrame("Frame", "RUNOddsPanel", UIParent)
 f:SetSize(250, 118)
 f:SetFrameStrata("MEDIUM")
+f:SetMovable(true)
+f:EnableMouse(false)              -- mouse on only while unlocked (for dragging)
+f:RegisterForDrag("LeftButton")
 f:Hide()
 
 local border = f:CreateTexture(nil, "BACKGROUND")
@@ -92,10 +95,41 @@ risk:SetScript("OnClick", function()
     end
 end)
 
--- Anchor under the Blizzard target frame when it exists; fallback centre-left.
+-- Draggable: by default the panel follows the Blizzard target frame, but on a
+-- custom unit-frame UI (ConsolePort, ElvUI) that frame moves or hides - so the
+-- user can click-drag it anywhere (unlock via /ra move), saved per character.
+local moving = false
+f:SetScript("OnDragStart", function(self)
+    RUN.safeCall("panel-drag", function()
+        if RUN.Settings.get("panelLocked") then return end
+        moving = true
+        self:StartMoving()
+    end)
+end)
+f:SetScript("OnDragStop", function(self)
+    RUN.safeCall("panel-drop", function()
+        self:StopMovingOrSizing()
+        moving = false
+        local p, _, _, x, y = self:GetPoint()
+        local db = RUN.db()
+        if type(db.ui) ~= "table" then db.ui = {} end
+        db.ui.panelPos = { point = tostring(p or "LEFT"),
+                           x = math.floor((tonumber(x) or 0) + 0.5),
+                           y = math.floor((tonumber(y) or 0) + 0.5) }
+    end)
+end)
+
+-- Saved drag position if set, else under the Blizzard target frame, else a
+-- centre-left fallback. Mouse follows the lock. Never fights an active drag.
 local function anchor()
+    if moving then return end
+    f:EnableMouse(not RUN.Settings.get("panelLocked"))
     f:ClearAllPoints()
-    if _G.TargetFrame then
+    local db = RUN.db()
+    local pos = RUN.validAnchorPos(db.ui and db.ui.panelPos)
+    if pos then
+        f:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
+    elseif _G.TargetFrame then
         f:SetPoint("TOP", _G.TargetFrame, "BOTTOM", 0, -4)
     else
         f:SetPoint("LEFT", UIParent, "LEFT", 40, -60)
@@ -288,5 +322,24 @@ RUN.on("UPDATE_MOUSEOVER_UNIT", function()
 end)
 
 RUN.on("PLAYER_ENTERING_WORLD", function() Panel.update() end)
+
+-- /ra move: one arrange mode for every movable RUN frame - unlocks the rank
+-- glow AND the odds/FIGHT panel to drag, then /ra move again to lock. Keeps
+-- both in sync so there is a single gesture to position RUN's overlays.
+RUN.commands = RUN.commands or {}
+RUN.commands["move"] = function()
+    local anyLocked = RUN.Settings.get("glowLocked") or RUN.Settings.get("panelLocked")
+    local lock = not anyLocked   -- anything locked -> unlock all; else lock all
+    RUN.Settings.set("glowLocked", lock)
+    RUN.Settings.set("panelLocked", lock)
+    if lock then
+        RUN.print("RUN frames LOCKED - positions saved.")
+    else
+        RUN.print("RUN frames UNLOCKED - drag the rank glow and the odds panel "
+            .. "(target an enemy to show it) where you want them, then /ra move to lock.")
+    end
+    if RUN.Panel and RUN.Panel.refresh then RUN.Panel.refresh() end
+    if RUN.Glow and RUN.Glow.refresh then RUN.Glow.refresh() end
+end
 
 return Panel
