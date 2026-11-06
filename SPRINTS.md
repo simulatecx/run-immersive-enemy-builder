@@ -165,6 +165,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.6 (2026-11-06, private beta): MINIMAP PINS use the standard algorithm
+  (owner: "use the same approach as the other addons"). The ecosystem standard
+  is the HereBeDragons-Pins LIBRARY - evaluated and REJECTED for RUN for two
+  concrete reasons: (1) it is NOT headless-safe (GetBuildInfo/CreateFrame at
+  load), so it would break RUN's load-every-file gate or force an untested
+  excluded black box; (2) it branches on client flavor and never targeted the
+  bespoke WoW:Forever client - unverifiable risk. So RUN keeps its own
+  C_Map-based, dual-flavor-safe, headless-tested pins and adopts HBD's actual
+  positioning METHOD. Fix this version: the indoor/outdoor radius is now the
+  canonical Astrolabe/HBD detection (compare live Minimap:GetZoom() to the
+  minimapZoom vs minimapInsideZoom CVars; pick the matching diameter table) -
+  resolves the v0.9.5 indoor caveat deterministically. radiusYards(zoom,
+  indoors) + indoor selftests. Gate: BOTH flavors 287/287; both installs
+  redeployed; dist/RUN-v0.9.6 zip. REMAINING field-watch: the rotating-minimap
+  sign (FACING_SIGN) - affects only rotateMinimap users; a 1-char flip after an
+  in-game check (even the libraries verify this in-client). Offer on the table:
+  vendor the real HereBeDragons-Pins + a Libs/ gate exclusion if the owner
+  wants the library despite the tradeoffs.
 - v0.9.5 (2026-11-06, private beta): MINIMAP BLIPS - where the rare/elite is
   (owner ask). Fit & Overlap - category: awareness layer (RUN-C) / Map &
   Minimap. Verdict: ENHANCE the nearby/sighting flow with a RareScanner-style

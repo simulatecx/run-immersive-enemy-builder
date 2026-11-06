@@ -15,13 +15,17 @@ if not RUN then RUN = _G.RunAdvisor or {}; _G.RunAdvisor = RUN end
 local MinimapPins = {}
 RUN.MinimapPins = MinimapPins
 
--- Pure: the default round minimap's VISIBLE RADIUS in yards per zoom (0-5),
--- outdoor values (RUN pins are open-world rares/elites). Half the known
--- diameter table; indoors is a touch tighter but the direction stays right.
-local OUTDOOR_DIAMETER = { [0] = 466.66, [1] = 400, [2] = 333.33,
-                           [3] = 266.66, [4] = 200, [5] = 133.33 }
-function MinimapPins.radiusYards(zoom)
-    local d = OUTDOOR_DIAMETER[tonumber(zoom) or 0] or OUTDOOR_DIAMETER[3]
+-- Pure: the round minimap's VISIBLE RADIUS in yards per zoom (0-5). These are
+-- the canonical Astrolabe / HereBeDragons diameter tables (half = radius); the
+-- outdoor and indoor sets differ, and the live code below picks between them
+-- the standard way (comparing the current zoom to the zoom CVars).
+local DIAMETER = {
+    outdoor = { [0] = 466.66, [1] = 400, [2] = 333.33, [3] = 266.66, [4] = 200, [5] = 133.33 },
+    indoor  = { [0] = 300,    [1] = 240, [2] = 180,    [3] = 120,    [4] = 80,  [5] = 50 },
+}
+function MinimapPins.radiusYards(zoom, indoors)
+    local t = DIAMETER[indoors and "indoor" or "outdoor"]
+    local d = t[tonumber(zoom) or 0] or t[3]
     return d / 2
 end
 
@@ -63,8 +67,11 @@ end
 if type(RUN.selftestChecks) == "table" then
     table.insert(RUN.selftestChecks, function(check)
         local function near(a, b) return math.abs(a - b) < 0.01 end
-        check("pins radiusYards from zoom", near(MinimapPins.radiusYards(4), 100)
-            and near(MinimapPins.radiusYards(0), 233.33))
+        check("pins radiusYards outdoor + indoor from zoom",
+            near(MinimapPins.radiusYards(4), 100)           -- outdoor z4 = 200/2
+            and near(MinimapPins.radiusYards(0), 233.33)    -- outdoor z0 = 466.66/2
+            and near(MinimapPins.radiusYards(4, true), 40)  -- indoor z4 = 80/2
+            and near(MinimapPins.radiusYards(0, true), 150)) -- indoor z0 = 300/2
         check("pins offsetYards east/north", (function()
             local e, n = MinimapPins.offsetYards(0.5, 0.5, 0.6, 0.4, 1000, 2000)
             return near(e, 100) and near(n, 200)   -- +east, +north (north = -y)
@@ -137,8 +144,15 @@ local function update()
                            Guards.select(2, C_Map.GetMapWorldSize, mapID)
     if not (worldW and worldW > 0) then return hideFrom(1) end
 
-    local zoom = (Minimap.GetZoom and select(2, pcall(Minimap.GetZoom, Minimap))) or 0
-    local radiusY = MinimapPins.radiusYards(tonumber(zoom) or 0)
+    -- Zoom + indoor/outdoor the standard way: the client keeps two zoom CVars
+    -- (outdoor "minimapZoom", indoor "minimapInsideZoom"); whichever equals the
+    -- live Minimap:GetZoom() tells us the mode. Ambiguous/unknown -> outdoor
+    -- (RUN pins are open-world).
+    local zoom = tonumber((Minimap.GetZoom and select(2, pcall(Minimap.GetZoom, Minimap)))) or 0
+    local inside = tonumber(Guards.call(_G.GetCVar, "minimapInsideZoom"))
+    local outside = tonumber(Guards.call(_G.GetCVar, "minimapZoom"))
+    local indoors = (inside and outside and inside ~= outside) and (zoom == inside) or false
+    local radiusY = MinimapPins.radiusYards(zoom, indoors)
     local radiusP = (Minimap.GetWidth and (Minimap:GetWidth() / 2)) or 70
     local rotate = Guards.call(_G.GetCVar, "rotateMinimap") == "1"
     local facing = rotate and (Guards.call(_G.GetPlayerFacing) or 0) or 0
