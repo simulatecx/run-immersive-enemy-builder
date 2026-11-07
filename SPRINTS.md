@@ -165,6 +165,22 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.7 (2026-11-06, private beta): FIX - minimap pins no longer touch the
+  secure Minimap (taint). Owner: "UI error each time I load - RUN has been
+  blocked." Diagnosis from the black-box recorder: RUNDB.safetyLog EMPTY + no
+  crash dump -> NOT a Lua error RUN throws (the firewall catches those); the
+  "blocked from an action only available to the Blizzard UI" message is TAINT
+  (pcall can't catch it). The v0.9.5 minimap pins created textures as CHILDREN
+  of the secure, EditMode-managed Minimap, which can taint the secure minimap/
+  EditMode layout at login. FIX: pins now live on RUN's OWN frame
+  (RUNMinimapPinHost on UIParent, SetAllPoints the Minimap rect) - RUN adds
+  NOTHING to the Minimap frame; only READS its position/size (reads never
+  taint). Plus a world-ready gate (no pin work during the secure login
+  layout - waits for PLAYER_ENTERING_WORLD). Gate BOTH flavors 287/287; both
+  installs redeployed; dist/RUN-v0.9.7 zip. CONFIRM IN GAME: /reload - the
+  error should be gone; if it persists it is NOT the pins - send the exact
+  message + `/console taintLog 2` -> reload -> Logs/taint.log names the path.
+  Immediate relief if needed: /ra set minimapPins off.
 - v0.9.6 (2026-11-06, private beta): MINIMAP PINS use the standard algorithm
   (owner: "use the same approach as the other addons"). The ecosystem standard
   is the HereBeDragons-Pins LIBRARY - evaluated and REJECTED for RUN for two

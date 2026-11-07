@@ -99,7 +99,23 @@ if not _G.CreateFrame then return MinimapPins end
 
 local Guards = RUN.Guards
 local pins = {}    -- [key] = { npc, name, mapID, x, y, when, tier }
-local pool = {}    -- reusable blip textures on the Minimap
+local pool = {}    -- reusable blip textures (on OUR host, never on the Minimap)
+local ready = false -- only draw once the world exists (not during the login layout)
+
+-- RUN's OWN pin host: a frame on UIParent sized to the Minimap's rect, NEVER a
+-- child of the (secure, EditMode-managed) Minimap. This is the taint fix - RUN
+-- adds nothing to the Minimap frame, so it can't taint the secure minimap/
+-- EditMode layout at login ("blocked from an action..."). Positioning reads the
+-- Minimap's rect (reads never taint); the pins live on our host.
+local host = CreateFrame("Frame", "RUNMinimapPinHost", UIParent)
+host:SetFrameStrata("MEDIUM")
+if _G.Minimap then host:SetAllPoints(_G.Minimap) end
+host:SetFrameLevel((_G.Minimap and _G.Minimap.GetFrameLevel and (_G.Minimap:GetFrameLevel() + 7)) or 10)
+
+RUN.on("PLAYER_ENTERING_WORLD", function()
+    ready = true
+    if _G.Minimap then host:SetAllPoints(_G.Minimap) end
+end)
 
 -- Record a sighting to blip. Called by the nearby ping with the best position
 -- we have (vignette coords, else the player's spot).
@@ -114,7 +130,7 @@ end
 local function blip(i)
     local t = pool[i]
     if t then return t end
-    t = _G.Minimap:CreateTexture(nil, "OVERLAY")
+    t = host:CreateTexture(nil, "OVERLAY")   -- on OUR host, not the Minimap
     t:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask")
     t:SetBlendMode("ADD")
     t:SetSize(15, 15)
@@ -129,7 +145,8 @@ end
 
 local function update()
     local Minimap = _G.Minimap
-    if not Minimap or not RUN.Settings.get("minimapPins") then return hideFrom(1) end
+    -- Never run during the secure login layout; never if disabled.
+    if not ready or not Minimap or not RUN.Settings.get("minimapPins") then return hideFrom(1) end
 
     local C_Map = _G.C_Map
     if not (C_Map and C_Map.GetBestMapForUnit and C_Map.GetPlayerMapPosition
@@ -171,7 +188,7 @@ local function update()
                 local r, g, b = RUN.Notoriety.colorFor(p.tier)
                 t:SetVertexColor(r, g, b)
                 t:ClearAllPoints()
-                t:SetPoint("CENTER", Minimap, "CENTER", ox, oy)
+                t:SetPoint("CENTER", host, "CENTER", ox, oy)   -- our host, not the Minimap
                 t:Show()
             end
         end
