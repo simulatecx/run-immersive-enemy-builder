@@ -165,6 +165,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.8 (2026-11-06, private beta): MINIMAP PINS match the RareScanner/
+  HereBeDragons technique (owner installed RareScanner; scanned its files).
+  Findings: RareScanner uses HereBeDragons-Pins, which (a) runs fine on
+  FOREVER - so HBD is Forever-viable, my earlier "untested" concern was
+  unfounded; (b) parents pin FRAMES to the Minimap and NEVER calls
+  Minimap:CreateTexture. That pins down the v0.9.5 taint: RUN was creating
+  texture REGIONS on the secure Minimap (the one thing HBD avoids); v0.9.7's
+  move to RUN's own host already removed exactly that. Adopted HBD's actual
+  math: radius now prefers C_Minimap.GetViewRadius() (modern EXACT api, same
+  as HBD/RareScanner) with the zoom-table fallback - resolves the indoor
+  approximation EXACTLY; and a rotating minimap with unreadable facing now
+  HIDES pins (HBD behaviour) instead of mis-placing. client_smoke mock gained
+  C_Minimap.GetViewRadius. Gate BOTH flavors 287/287; both installs
+  redeployed; dist/RUN-v0.9.8 zip. NOTE: kept RUN's own gate-clean pins (not
+  the HBD library) - HBD isn't headless-safe, so vendoring it would need a
+  Libs/ gate exclusion; RUN's version is now technique-equivalent + Forever-
+  robust. Offer open: vendor the real HBD-Pins (Forever-working copy exists in
+  RareScanner/ExternalLibs) if the library itself is wanted.
 - v0.9.7 (2026-11-06, private beta): FIX - minimap pins no longer touch the
   secure Minimap (taint). Owner: "UI error each time I load - RUN has been
   blocked." Diagnosis from the black-box recorder: RUNDB.safetyLog EMPTY + no

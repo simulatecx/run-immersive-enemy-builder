@@ -161,18 +161,30 @@ local function update()
                            Guards.select(2, C_Map.GetMapWorldSize, mapID)
     if not (worldW and worldW > 0) then return hideFrom(1) end
 
-    -- Zoom + indoor/outdoor the standard way: the client keeps two zoom CVars
-    -- (outdoor "minimapZoom", indoor "minimapInsideZoom"); whichever equals the
-    -- live Minimap:GetZoom() tells us the mode. Ambiguous/unknown -> outdoor
-    -- (RUN pins are open-world).
-    local zoom = tonumber((Minimap.GetZoom and select(2, pcall(Minimap.GetZoom, Minimap)))) or 0
-    local inside = tonumber(Guards.call(_G.GetCVar, "minimapInsideZoom"))
-    local outside = tonumber(Guards.call(_G.GetCVar, "minimapZoom"))
-    local indoors = (inside and outside and inside ~= outside) and (zoom == inside) or false
-    local radiusY = MinimapPins.radiusYards(zoom, indoors)
+    -- Minimap radius in yards: prefer the modern EXACT api (C_Minimap.
+    -- GetViewRadius - what HereBeDragons/RareScanner use), else the standard
+    -- indoor/outdoor zoom table (whichever zoom CVar matches the live zoom).
+    local radiusY
+    if _G.C_Minimap and _G.C_Minimap.GetViewRadius then
+        radiusY = Guards.call(_G.C_Minimap.GetViewRadius)
+    end
+    if not (radiusY and radiusY > 0) then
+        local zoom = tonumber((Minimap.GetZoom and select(2, pcall(Minimap.GetZoom, Minimap)))) or 0
+        local inside = tonumber(Guards.call(_G.GetCVar, "minimapInsideZoom"))
+        local outside = tonumber(Guards.call(_G.GetCVar, "minimapZoom"))
+        local indoors = (inside and outside and inside ~= outside) and (zoom == inside) or false
+        radiusY = MinimapPins.radiusYards(zoom, indoors)
+    end
     local radiusP = (Minimap.GetWidth and (Minimap:GetWidth() / 2)) or 70
+
+    -- Rotating minimap: if the facing can't be read (e.g. some instances), HIDE
+    -- the pins rather than mis-place them - exactly how HereBeDragons handles it.
     local rotate = Guards.call(_G.GetCVar, "rotateMinimap") == "1"
-    local facing = rotate and (Guards.call(_G.GetPlayerFacing) or 0) or 0
+    local facing = 0
+    if rotate then
+        facing = Guards.call(_G.GetPlayerFacing)
+        if not facing then return hideFrom(1) end
+    end
     local now = (_G.GetTime and _G.GetTime()) or 0
 
     local i = 0

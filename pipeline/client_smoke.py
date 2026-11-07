@@ -182,6 +182,7 @@ _G.C_Map = {
     GetMapWorldSize = function(m) return 3000.0, 2000.0 end,
 }
 _G.GetPlayerFacing = function() return 0.0 end
+_G.C_Minimap = { GetViewRadius = function() return 233.33 end }
 _G.UiMapPoint = { CreateFromCoordinates = function(m, x, y) return {} end }
 _G.C_SuperTrack = { SetSuperTrackedUserWaypoint = function(b) end }
 _G.C_VignetteInfo = nil
