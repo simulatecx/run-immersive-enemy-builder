@@ -33,17 +33,22 @@ BANNED_ESCAPES = [
     r"C_SpecializationInfo\s*[.(]",
 ]
 
-# Taint law: never write onto / parent into Blizzard frames. The
-# Minimap:CreateTexture/FontString rules are the incident-to-gate defence for
-# the 2026-11-06 taint ("RUN has been blocked" at load): creating REGIONS on the
-# secure Minimap taints the EditMode layout. Pins belong on RUN's own frame (or
-# go through HereBeDragons-Pins, which parents its OWN frames - that is fine).
+# Taint law: never write onto / parent into / anchor onto Blizzard frames.
+# Two incident-to-gate defences:
+#  * Minimap:CreateTexture/FontString - the 2026-11-06 load taint: creating
+#    REGIONS on the secure Minimap taints the EditMode layout.
+#  * SetPoint(... TargetFrame/PlayerFrame ...) - the 2026-11-06 reload taint:
+#    tethering an insecure frame TO a secure unit frame taints its layout and
+#    blocks the next target/player-frame secure action ("RUN has been blocked").
+# Our own frames are free overlays on UIParent; pins go through HereBeDragons-
+# Pins, which parents its OWN frames (that is fine).
 BANNED_TAINT = [
     r"\bTargetFrame\s*\.\s*[A-Za-z_]\w*\s*=",
     r"\bPlayerFrame\s*\.\s*[A-Za-z_]\w*\s*=",
     r"\bMinimap\s*\.\s*[A-Za-z_]\w*\s*=",
     r"SetParent\s*\(\s*TargetFrame", r"SetParent\s*\(\s*PlayerFrame",
     r'CreateFrame\s*\([^)]*,\s*TargetFrame\s*[,)]',
+    r"SetPoint\s*\([^)]*\bTargetFrame\b", r"SetPoint\s*\([^)]*\bPlayerFrame\b",
     r"\bMinimap\s*:\s*CreateTexture\b", r"\bMinimap\s*:\s*CreateFontString\b",
 ]
 

@@ -48,15 +48,21 @@ local function place()
         math.cos(a) * RADIUS, math.sin(a) * RADIUS)
 end
 
+-- Drag tracking runs on a frame OnUpdate (bound only while the button is held),
+-- so it routes through the firewall like every other periodic job + nil-guards
+-- the cursor/minimap reads (they can be absent mid-transition).
 local function dragUpdate()
-    local mx, my = _G.Minimap:GetCenter()
-    local cx, cy = _G.GetCursorPosition()
-    local scale = _G.Minimap:GetEffectiveScale()
-    cx, cy = cx / scale, cy / scale
-    local db = RUN.db()
-    if type(db.ui) ~= "table" then db.ui = {} end
-    db.ui.minimapAngle = atan2(cy - my, cx - mx)
-    place()
+    RUN.safeCall("minimap-button-drag", function()
+        local mx, my = _G.Minimap:GetCenter()
+        local cx, cy = _G.GetCursorPosition and _G.GetCursorPosition()
+        local scale = _G.Minimap:GetEffectiveScale()
+        if not (mx and cx and scale and scale ~= 0) then return end
+        cx, cy = cx / scale, cy / scale
+        local db = RUN.db()
+        if type(db.ui) ~= "table" then db.ui = {} end
+        db.ui.minimapAngle = atan2(cy - my, cx - mx)
+        place()
+    end)
 end
 
 btn:SetScript("OnDragStart", function(self) self:SetScript("OnUpdate", dragUpdate) end)

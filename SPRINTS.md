@@ -165,6 +165,23 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.10 (2026-11-06, private beta): FIX - the "RUN has been blocked" reload
+  taint. Root cause (found by auditing RUN's whole secure surface, not just the
+  minimap): `ui/panel.lua` still ANCHORED the odds/FIGHT panel to the Blizzard
+  `TargetFrame` as its no-saved-position fallback - tethering an insecure frame
+  to that secure unit frame taints its layout, so the next target-frame secure
+  action is blocked (fires every reload on a fresh RUNDB, since there is no
+  saved panelPos yet). The glow was moved off TargetFrame long ago; the panel
+  was the last tether and contradicted that same rule. FIX: the panel is now a
+  free overlay - no-saved-position opens at a safe UIParent spot in the target-
+  frame region; still draggable/saveable via /ra move. INCIDENT-TO-GATE: added
+  `SetPoint(... TargetFrame/PlayerFrame ...)` to the compliance taint lint (the
+  old lint only caught SetParent/CreateFrame-into, so SetPoint-to slipped
+  through). Also closed a broken window: the minimap-button drag `OnUpdate` now
+  routes through the firewall (RUN.safeCall) + nil-guards its cursor/minimap
+  reads. Gate green BOTH flavors 284/284 (compliance 33 files incl. the new
+  rule, client smoke green); both installs redeployed (40 files); dist/
+  RUN-v0.9.10 zip (39 files). Version trio bumped.
 - v0.9.9 (2026-11-06, private beta): MINIMAP PINS now USE HereBeDragons-Pins
   (owner: "use what they use so it works consistently"). VENDORED the
   ecosystem-standard stack into RUN/Libs/ from RareScanner's Forever-working

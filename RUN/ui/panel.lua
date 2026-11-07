@@ -1,6 +1,6 @@
 -- The notoriety unit frame (per-tier styling) + Civ-style odds readout.
--- OWN frame on UIParent, ANCHORED below Blizzard's TargetFrame - never
--- parented into it, never writing keys onto it (taint law). Two layers:
+-- OWN frame on UIParent - a FREE overlay, never anchored to / parented into /
+-- writing keys onto any Blizzard unit frame (taint law). Two layers:
 --   * TIER FRAME (tierFrames option): any titled creature you target gets
 --     its earned presentation - tier-coloured border, TIER badge, title.
 --   * EXPANSIVE ENEMY STATS (expansiveStats option): adds the win-chance
@@ -91,9 +91,10 @@ risk:SetScript("OnClick", function()
     end
 end)
 
--- Draggable: by default the panel follows the Blizzard target frame, but on a
--- custom unit-frame UI (ConsolePort, ElvUI) that frame moves or hides - so the
--- user can click-drag it anywhere (unlock via /ra move), saved per character.
+-- Draggable: the panel is a free overlay - never tethered to a Blizzard unit
+-- frame (that taints TargetFrame and breaks custom UIs like ConsolePort). It
+-- opens at a safe default spot; the user click-drags it anywhere (unlock via
+-- /ra move), saved per character.
 local moving = false
 f:SetScript("OnDragStart", function(self)
     RUN.safeCall("panel-drag", function()
@@ -115,8 +116,11 @@ f:SetScript("OnDragStop", function(self)
     end)
 end)
 
--- Saved drag position if set, else under the Blizzard target frame, else a
--- centre-left fallback. Mouse follows the lock. Never fights an active drag.
+-- Saved drag position if set, else a safe default spot on UIParent up in the
+-- target-frame region. NEVER anchor to the Blizzard TargetFrame: tethering an
+-- insecure frame to that secure frame taints its layout and gets the next
+-- target-frame secure action blocked ("RUN has been blocked"). Same law the
+-- rank glow follows. Mouse follows the lock. Never fights an active drag.
 local function anchor()
     if moving then return end
     f:EnableMouse(not RUN.Settings.get("panelLocked"))
@@ -125,10 +129,8 @@ local function anchor()
     local pos = RUN.validAnchorPos(db.ui and db.ui.panelPos)
     if pos then
         f:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
-    elseif _G.TargetFrame then
-        f:SetPoint("TOP", _G.TargetFrame, "BOTTOM", 0, -4)
     else
-        f:SetPoint("LEFT", UIParent, "LEFT", 40, -60)
+        f:SetPoint("TOP", UIParent, "TOP", -60, -150)
     end
 end
 
