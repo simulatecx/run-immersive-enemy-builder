@@ -28,7 +28,12 @@ def toc_files(toc: Path) -> list[Path]:
     # utf-8-sig: tolerate a BOM (Windows editors add them silently)
     for line in toc.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
-        if not line or line.startswith("##"):
+        if not line or line.startswith("#"):
+            continue
+        # Libs/ = vendored third-party (HereBeDragons); it is client-only and
+        # not headless-safe, so the lupa gate never loads it (it ships in the
+        # zip and runs in-client). RUN's own files still all gate.
+        if line.lower().startswith("libs\\") or line.lower().startswith("libs/"):
             continue
         files.append(ADDON_DIR / line.replace("\\", "/"))
     return files

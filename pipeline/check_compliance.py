@@ -33,13 +33,18 @@ BANNED_ESCAPES = [
     r"C_SpecializationInfo\s*[.(]",
 ]
 
-# Taint law: never write onto / parent into Blizzard frames.
+# Taint law: never write onto / parent into Blizzard frames. The
+# Minimap:CreateTexture/FontString rules are the incident-to-gate defence for
+# the 2026-11-06 taint ("RUN has been blocked" at load): creating REGIONS on the
+# secure Minimap taints the EditMode layout. Pins belong on RUN's own frame (or
+# go through HereBeDragons-Pins, which parents its OWN frames - that is fine).
 BANNED_TAINT = [
     r"\bTargetFrame\s*\.\s*[A-Za-z_]\w*\s*=",
     r"\bPlayerFrame\s*\.\s*[A-Za-z_]\w*\s*=",
     r"\bMinimap\s*\.\s*[A-Za-z_]\w*\s*=",
     r"SetParent\s*\(\s*TargetFrame", r"SetParent\s*\(\s*PlayerFrame",
     r'CreateFrame\s*\([^)]*,\s*TargetFrame\s*[,)]',
+    r"\bMinimap\s*:\s*CreateTexture\b", r"\bMinimap\s*:\s*CreateFontString\b",
 ]
 
 # Lua 5.1 dialect: the client's Lua. The harness runs newer Lua, so constructs
@@ -95,7 +100,10 @@ def strip_lua(text: str) -> str:
 
 def scan() -> int:
     problems = []
-    files = sorted(ADDON_DIR.rglob("*.lua"))
+    # Libs/ is vendored third-party (HereBeDragons stack) - keeps its own
+    # license + conventions; RUN's house laws apply only to RUN's own code.
+    files = [f for f in sorted(ADDON_DIR.rglob("*.lua"))
+             if "Libs" not in f.relative_to(ADDON_DIR).parts]
     if not files:
         print("COMPLIANCE RED: no lua files found under RUN/")
         return 1

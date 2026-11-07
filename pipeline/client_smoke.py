@@ -28,8 +28,10 @@ def toc_files(toc: Path) -> list[Path]:
     files = []
     for line in toc.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
-        if not line or line.startswith("##"):
+        if not line or line.startswith("#"):
             continue
+        if line.lower().startswith("libs\\") or line.lower().startswith("libs/"):
+            continue   # vendored HereBeDragons - client-only, not headless-safe
         files.append(ADDON_DIR / line.replace("\\", "/"))
     return files
 

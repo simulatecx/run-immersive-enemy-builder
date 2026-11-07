@@ -165,6 +165,27 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v0.9.9 (2026-11-06, private beta): MINIMAP PINS now USE HereBeDragons-Pins
+  (owner: "use what they use so it works consistently"). VENDORED the
+  ecosystem-standard stack into RUN/Libs/ from RareScanner's Forever-working
+  copy: LibStub, CallbackHandler-1.0, HereBeDragons-2.0, HereBeDragons-Pins-
+  2.0 (load order in both TOCs, before RUN's files; keep their own licenses
+  per the bundled-libs rule). ui/minimap_pins.lua rewritten as a THIN wrapper
+  - RUN owns only the lifecycle (pool a pin frame per sighting, hand it to
+  HBDPins:AddMinimapIconMap at the creature's coords, tint by tier, expire
+  after 10 min via the firewall ticker); HBD owns ALL positioning (zoom,
+  rotation, indoor/outdoor, shape, map transforms) so pins behave exactly
+  like RareScanner's. Deleted RUN's custom project/radiusYards/offsetYards
+  math + its field-watch caveats (rotation sign, indoor radius - all now
+  HBD's, correct). GATE CHANGE: Libs/ is third-party + not headless-safe, so
+  run_tests.py + client_smoke.py skip it in the Lua loader and
+  check_compliance.py skips it in the scan (RUN's own files all still gate;
+  pins no-op headless since LibStub is absent - positioning is HBD's job,
+  tested in-client). INCIDENT-TO-GATE: added Minimap:CreateTexture/
+  CreateFontString to the taint lint so the 2026-11-06 "RUN has been blocked"
+  taint class can't recur. New pure selftests (pinKey, expired). Gate:
+  compliance + client smoke green, BOTH flavors 284/284; both installs
+  redeployed (40 files incl. Libs); dist/RUN-v0.9.9 zip (39 files).
 - v0.9.8 (2026-11-06, private beta): MINIMAP PINS match the RareScanner/
   HereBeDragons technique (owner installed RareScanner; scanned its files).
   Findings: RareScanner uses HereBeDragons-Pins, which (a) runs fine on

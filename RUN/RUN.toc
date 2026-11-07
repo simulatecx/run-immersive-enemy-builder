@@ -2,11 +2,19 @@
 ## Title: RUN
 ## Notes: "RUN" Immersive Enemy Builder - enhancing the Azeroth we know and love. Enemies grow with every player they fell: ranks, titles, banners, and your odds against them.
 ## Author: SimulateCX
-## Version: 0.9.8
+## Version: 0.9.9
 ## SavedVariables: RUNDB
 ## IconTexture: Interface\Icons\Ability_Rogue_Sprint
 ## X-License: All Rights Reserved
 ## OptionalDeps: Foresight, TomTom
+
+# Libraries (vendored third-party - keep their own license; not headless-gated).
+# HereBeDragons-Pins is the ecosystem-standard minimap/world-map pin engine
+# (same as RareScanner) - RUN uses it so pins work consistently with everyone.
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\HereBeDragons\HereBeDragons-2.0.lua
+Libs\HereBeDragons\HereBeDragons-Pins-2.0.lua
 
 core\guards.lua
 core\init.lua
