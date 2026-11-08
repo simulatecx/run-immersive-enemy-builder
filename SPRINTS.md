@@ -165,6 +165,16 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.0.0 (2026-11-08, PUBLIC LAUNCH): promoted the stable 0.9.10 build to 1.0.0 -
+  no gameplay change, a version milestone. WHY 1.0.0 not 0.9.11: CurseForge/addon
+  managers string-sort versions, so "0.9.10" sorts BELOW "0.9.4" (char-by-char
+  0.9.1 < 0.9.4) and Curse was showing 9.4 as newest; 0.9.11 would lose the same
+  way. 1.0.0 clears the whole 0.9 line in both string and semver order, so it is
+  unambiguously latest - and marks the public launch now that CF + Wago are live.
+  RELEASE_NOTES rewritten for the launch. Version trio -> 1.0.0, gate green both
+  flavors 284/284; tagged v1.0.0 -> release train uploads to CurseForge + Wago +
+  GitHub Releases. LESSON: keep versions semver-clean; the 0.9.10 two-digit patch
+  is what triggered the string-sort trap - next line is 1.0.1, 1.0.2, ...
 - RELEASE TRAIN (2026-11-07, infra - owner: "same process as our overlay"): RUN
   now mirrors Foresight's publish pipeline. Added `.pkgmeta` (BigWigsMods/
   packager: package-as RUN, move-folders RUN/RUN -> RUN, and the repo-root
