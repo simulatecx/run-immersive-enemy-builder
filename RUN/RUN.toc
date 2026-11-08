@@ -8,8 +8,7 @@
 ## X-License: All Rights Reserved
 ## X-Website: https://github.com/simulatecx/run-immersive-enemy-builder
 ## X-Curse-Project-ID: 1787335
-# X-Wago-ID pending: register the Wago Addons project, then uncomment + set its id.
-# ## X-Wago-ID: 000000
+## X-Wago-ID: ANz7Dw64
 ## OptionalDeps: Foresight, TomTom
 
 # Libraries (vendored third-party - keep their own license; not headless-gated).
