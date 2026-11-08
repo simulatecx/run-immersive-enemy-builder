@@ -1,0 +1,46 @@
+# RUN release train (mirrors Foresight): push a version tag (vX.Y.Z) -> ship gate ->
+# BigWigsMods/packager zips RUN/ (per .pkgmeta) and uploads to CurseForge, Wago Addons,
+# and GitHub Releases. Players then auto-update through their addon manager - the
+# compliant distribution channel (the addon itself never networks).
+#
+# ACTIVATION CHECKLIST (owner-gated - CI is inert until these exist):
+#   1. Create the GitHub remote + push (public recommended for an audit-first addon).
+#   2. Register the CurseForge project (the listing is live) and, if wanted, Wago; put
+#      the tokens in repo secrets as CF_API_TOKEN and WAGO_API_TOKEN (WOWI optional).
+#   3. Fill the project ids in BOTH TOCs (## X-Curse-Project-ID / ## X-Wago-ID) - the
+#      placeholder comment block near the top of RUN.toc / RUN_Vanilla.toc.
+#   4. Write .github/RELEASE_NOTES.md for the version, then: git tag v0.9.11 && git push --tags
+# SECURITY: action refs pinned to full commit SHAs; Dependabot proposes pin bumps.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # create the GitHub Release
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - run: pip install lupa
+      - name: Ship gate before any upload
+        run: python pipeline/run_tests.py
+
+  package:
+    needs: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Package + upload (CurseForge / Wago / GitHub Releases)
+        uses: BigWigsMods/packager@e50a250f8705041e40f2fa1ddcb280a686d65aa0 # v2
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_TOKEN }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

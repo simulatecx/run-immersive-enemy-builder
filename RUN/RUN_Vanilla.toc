@@ -6,6 +6,12 @@
 ## SavedVariables: RUNDB
 ## IconTexture: Interface\Icons\Ability_Rogue_Sprint
 ## X-License: All Rights Reserved
+# RELEASE-TRAIN ACTIVATION: fill these in, then uncomment the ## lines (mirror BOTH TOCs).
+#   X-Website          = the GitHub repo URL (once the remote exists)
+#   X-Curse-Project-ID = the numeric id on the live CurseForge project page
+#   X-Wago-ID          = optional, only if you also publish to Wago Addons
+# ## X-Website: https://github.com/<owner>/run-forever
+# ## X-Curse-Project-ID: 000000
 ## OptionalDeps: Foresight, TomTom
 
 # Libraries (vendored third-party - keep their own license; not headless-gated).

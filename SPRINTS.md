@@ -165,6 +165,21 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- RELEASE TRAIN (2026-11-07, infra - owner: "same process as our overlay"): RUN
+  now mirrors Foresight's publish pipeline. Added `.pkgmeta` (BigWigsMods/
+  packager: package-as RUN, move-folders RUN/RUN -> RUN, and the repo-root
+  `data/` IGNORED - it collides with the addon's RUN/data/ during the move, the
+  exact trap that shipped two broken Foresight zips), `.github/workflows/
+  release.yml` (tag vX.Y.Z -> ship gate -> packager uploads to CurseForge + Wago
+  + GitHub Releases; action refs SHA-pinned), `.github/workflows/ci.yml` (gate on
+  every push/PR to main OR master), `.github/dependabot.yml`, `.github/
+  RELEASE_NOTES.md` (player-facing notes, rewritten per tag), `.gitattributes`
+  (LF normalization). Both TOCs carry a commented X-Curse-Project-ID / X-Website
+  activation block. OWNER ACTIVATION (CI inert until done, like Foresight): (1)
+  create the GitHub remote + push; (2) CF/Wago tokens into repo secrets
+  CF_API_TOKEN/WAGO_API_TOKEN; (3) fill the project ids in BOTH TOCs; (4) write
+  RELEASE_NOTES + `git tag vX.Y.Z && git push --tags`. The addon still never
+  networks - players auto-update via their addon manager (the compliant channel).
 - v0.9.10 (2026-11-06, private beta): FIX - the "RUN has been blocked" reload
   taint. Root cause (found by auditing RUN's whole secure surface, not just the
   minimap): `ui/panel.lua` still ANCHORED the odds/FIGHT panel to the Blizzard

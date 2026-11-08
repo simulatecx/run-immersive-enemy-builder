@@ -1,0 +1,35 @@
+# BigWigsMods/packager config (mirrors the Foresight release train): tag vX.Y.Z ->
+# CI runs the ship gate -> the packager zips the RUN/ addon and uploads to CurseForge
+# (+ Wago + GitHub Releases). Players then auto-update through their addon manager -
+# the compliant distribution channel (the addon itself never networks). Only the RUN/
+# addon ships; the pipeline, backend copies, docs, and marketing stay repo-only.
+package-as: RUN
+enable-nolib-creation: no
+
+move-folders:
+    RUN/RUN: RUN
+
+# NO INLINE COMMENTS in this list - the packager's YAML subset does not strip them, so an
+# inline-commented entry silently never matches. The repo-root `data/` (pipeline schema
+# source) MUST be ignored: it collides with the addon's own RUN/data/ during move-folders
+# and would strand every data/*.lua in a nested RUN/RUN/ - a non-functional zip. This is
+# the exact trap Foresight hit twice; keep `data` listed.
+ignore:
+    - pipeline
+    - data
+    - dist
+    - marketing
+    - functions-run
+    - firebase
+    - docs
+    - CLAUDE.md
+    - HANDOFF.md
+    - SPRINTS.md
+    - README.md
+
+# Release notes are a short, hand-written, player-facing file - deliberately NOT SPRINTS.md
+# (the dense dev history). Rewrite .github/RELEASE_NOTES.md with this version's notes before
+# each tag; it becomes the CurseForge + GitHub release notes. (.github is auto-excluded.)
+manual-changelog:
+    filename: .github/RELEASE_NOTES.md
+    markdown-to-bbcode: true

@@ -1,0 +1,32 @@
+# RUN CI gate (mirrors Foresight): runs the SAME ship gate as local (compliance scan +
+# crowd-schema drift + BOTH flavors' TOCs loaded headless + selftests + client smoke) on
+# every push and PR. A red gate blocks merge - the account-safety and correctness
+# guarantees are enforced in the cloud, not just on the dev machine.
+#
+# ACTIVATION: works the moment the repo has a GitHub remote; no secrets needed.
+# (Triggers on main AND master so it fires on RUN's current default branch either way.)
+# SECURITY (release-train law): action refs are pinned to full commit SHAs;
+# Dependabot (.github/dependabot.yml) proposes pin bumps by PR.
+name: CI gate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Install Lua VM harness
+        run: pip install lupa
+      - name: Ship gate (compliance + schema drift + both flavors + client smoke)
+        run: python pipeline/run_tests.py
