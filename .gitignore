@@ -2,6 +2,7 @@
 *.pyc
 __pycache__/
 pipeline/cache/
+pipeline/collected/
 node_modules/
 firestore-debug.log
 firebase-debug.log

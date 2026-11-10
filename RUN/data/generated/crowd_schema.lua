@@ -9,17 +9,18 @@ RUN.gen.crowdSchema = {
     version = 1,
     site = "https://wow-foresight.web.app/run.html",
     maxEvents = 100,
-    kinds = { "death", "slay", "sighting", "wipe" },
+    kinds = { "death", "slay", "sighting", "wipe", "calib" },
     allow = { "v", "kinds", "events", "season", "clientId", "sum", "named", "handle", "armory" },
     anonAllow = { "v", "kinds", "events", "season", "clientId", "sum", "named" },
     required = { "v", "kinds", "events", "season" },
     forbidden = { "realm", "account", "guild", "name", "guid", "ip", "at" },
-    caps = { armory = 200, clientId = 40, events = 100, handle = 24, kinds = 4, season = 8 },
+    caps = { armory = 200, clientId = 40, events = 100, handle = 24, kinds = 5, season = 8 },
     events = {
         death = { allow = { "k", "npc", "mode", "bracket", "zone", "season" }, required = { "k", "npc", "mode", "season" }, caps = { mode = 4, season = 8 } },
         slay = { allow = { "k", "npc", "p", "snap", "mode", "season" }, required = { "k", "npc", "p", "mode", "season" }, caps = { mode = 4, season = 8 }, snapAllow = { "pLevel", "cLevel", "cls" } },
         sighting = { allow = { "k", "npc", "nm", "cls", "zone", "season" }, required = { "k", "npc", "nm", "cls", "season" }, caps = { cls = 10, nm = 48, season = 8 } },
         wipe = { allow = { "k", "npc", "enc", "size", "mode", "season" }, required = { "k", "mode", "season" }, caps = { enc = 48, mode = 4, season = 8 } },
+        calib = { allow = { "k", "npc", "pl", "cl", "cls", "p", "out", "season" }, required = { "k", "npc", "pl", "cl", "cls", "p", "out", "season" }, caps = { cls = 10, out = 5, season = 8 } },
     },
 }
 return RUN.gen.crowdSchema

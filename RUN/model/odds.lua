@@ -162,6 +162,12 @@ function Odds.forUnit(unit)
     })
     verdict.creature = c
     verdict.source = readiness and "foresight" or "coarse"
+    -- Calibration capture (CAL): remember this assessment so a solo win/death
+    -- against the same creature pairs predicted-vs-actual. Consent-gated inside;
+    -- defensive - odds display must never depend on the capture layer.
+    if RUN.Calibration and RUN.Calibration.noteAssessment then
+        pcall(RUN.Calibration.noteAssessment, verdict)
+    end
     return verdict
 end
 

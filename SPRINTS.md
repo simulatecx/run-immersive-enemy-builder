@@ -151,6 +151,23 @@ LAUNCH: gated private beta now -> waitlist opens pre-launch; Forever launch
   opt-in) added via the generated allow-list ONLY. Until then guild wipe
   stats stay local + in-guild P2P.
 
+### Wave 2b - the data flywheel
+- ◐ RUN-P Calibration capture (v1.1.0 BUILT, deploy+tag owner-gated): the
+  QuestieTrace pattern applied to RUN (design record:
+  docs/QUESTIETRACE-ANALYSIS.md). Tri-state consent (`RUNDB.captureConsent`,
+  own dialog - never StaticPopup; `/ra capture on|off|status`; login
+  transparency line; decline discards), (predicted odds, actual outcome)
+  pairs journaled on solo kill/death paired against the last assessment
+  (model/calibration.lua, capped 200, no GUIDs/names/positions), inn-based
+  share reminder (>=1h + resting). `calib` crowd kind end-to-end: schema +
+  mirrors + Share.eventFromCalib + rareKillsOnWrite recompute/aggregation
+  (per-npc calib tally, public block at MIN_BUCKET, per-season decile curve
+  doc) - emulator 51/51 incl. 12 calib checks. Daily review:
+  pipeline/review_calibration.py (owner-auth full digest / public fallback).
+  REMAINING: owner deploys rules->functions->hosting from the marketing
+  worktree (the surface has never deployed; run.html 404), THEN tag v1.1.0
+  (rules-before-code); in-game eyeball of the consent dialog + reminder.
+
 ### Wave 4 - the Hardcore Classic fork
 - ☐ RUN-O Platform adapter + fork: `core/platform.lua` shimming the classic
   quest-log API, vignettes absent (already optional), TOC multi-flavor
@@ -165,6 +182,12 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.1.0 (2026-11-10, BUILT + gated; CurseForge tag HELD for the owner's backend
+  deploy - rules-before-code): RUN-P calibration capture (consent-gated
+  QuestieTrace-pattern capture + `calib` crowd kind + backend aggregation +
+  `pipeline/review_calibration.py` daily digest). Details in the RUN-P story;
+  design record docs/QUESTIETRACE-ANALYSIS.md. Emulator 51/51; the crashed
+  session's half-built module recovered and finished (the 2026-11-10 Bun crash).
 - v1.0.0 (2026-11-08, PUBLIC LAUNCH): promoted the stable 0.9.10 build to 1.0.0 -
   no gameplay change, a version milestone. WHY 1.0.0 not 0.9.11: CurseForge/addon
   managers string-sort versions, so "0.9.10" sorts BELOW "0.9.4" (char-by-char

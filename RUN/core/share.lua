@@ -47,7 +47,7 @@ end
 
 -- Per-kind caps keep one link honest and the URL short; slays are rarest and
 -- most valuable, deaths next. The global cap comes from the generated schema.
-local MAX_PER_KIND = { slay = 10, death = 40, sighting = 30, wipe = 20 }
+local MAX_PER_KIND = { slay = 10, death = 40, sighting = 30, wipe = 20, calib = 30 }
 local MAX_WIPES_PER_KEY = 5
 
 local function schema()
@@ -162,6 +162,18 @@ function Share.eventFromSighting(npcID, s)
                  season = Share.season() }
     if type(s.mapID) == "number" then ev.zone = math.floor(s.mapID) end
     return ev
+end
+
+-- Calibration pairs are consent-gated at capture (model/calibration.lua); the
+-- stored journal is user-editable, so every row re-clamps through that SAME
+-- shape law before a fresh allow-listed event is built. The pairing timestamp
+-- never leaves the machine.
+function Share.eventFromCalib(e)
+    if not (RUN.Calibration and RUN.Calibration.clampEvent) then return nil end
+    local c = RUN.Calibration.clampEvent(e)
+    if not c then return nil end
+    return { k = "calib", npc = c.npc, pl = c.pl, cl = c.cl, cls = c.cls,
+             p = c.p, out = c.out, season = Share.season() }
 end
 
 function Share.eventFromWipe(key)
@@ -299,6 +311,19 @@ function Share.buildPayload(db, now, opts)
             if n < MAX_PER_KIND.wipe then
                 local ev = Share.eventFromWipe(deltas[i].key)
                 if ev then n = n + 1; add(ev) end
+            end
+        end
+    end
+
+    -- calibration pairs (consent-gated capture; the least rare kind, so last
+    -- in line for the envelope cap)
+    if type(db.calib) == "table" then
+        local nc = 0
+        for i = 1, #db.calib do
+            local e = db.calib[i]
+            if type(e) == "table" and type(e.t) == "number" and e.t > since then
+                local ev = Share.eventFromCalib(e)
+                if ev and nc < MAX_PER_KIND.calib then nc = nc + 1; add(ev) end
             end
         end
     end
@@ -503,6 +528,16 @@ if type(RUN.selftestChecks) == "table" then
                 },
                 wipes = { [448] = 3, ["enc:Hogger"] = 1 },
                 wipesShared = { [448] = 1 },
+                calib = {
+                    { npc = 448, pl = 23, cl = 25, cls = "elite", p = 38,
+                      out = "death", t = 30 },
+                    { npc = 448, pl = 23, cl = 25, cls = "elite", p = 62,
+                      out = "win", t = 5 },                       -- before lastShare
+                    { npc = 0, pl = 23, cl = 25, cls = "elite", p = 38,
+                      out = "win", t = 31 },                      -- invalid npc
+                    { npc = 449, pl = 23, cl = 25, cls = "weird", p = "junk",
+                      out = "win", t = 32 },                      -- tampered row
+                },
             }
         end
 
@@ -513,10 +548,11 @@ if type(RUN.selftestChecks) == "table" then
         check("share validate green", payload and S.validate(payload) == true)
         check("share event census", (function()
             if not payload then return false end
-            local n = { death = 0, slay = 0, sighting = 0, wipe = 0 }
+            local n = { death = 0, slay = 0, sighting = 0, wipe = 0, calib = 0 }
             for _, e in ipairs(payload.events) do n[e.k] = n[e.k] + 1 end
-            -- 1 fresh death, 1 slay, 1 fresh sighting, 2+1 wipe deltas
+            -- 1 fresh death, 1 slay, 1 fresh sighting, 2+1 wipe deltas, 1 calib
             return n.death == 1 and n.slay == 1 and n.sighting == 1 and n.wipe == 3
+                and n.calib == 1
         end)())
         check("share death shape", (function()
             if not payload then return false end
@@ -548,6 +584,26 @@ if type(RUN.selftestChecks) == "table" then
                 end
             end
             return false
+        end)())
+        check("share calib shape - reclamped, timestamp stays local", (function()
+            if not payload then return false end
+            for _, e in ipairs(payload.events) do
+                if e.k == "calib" then
+                    return e.npc == 448 and e.pl == 23 and e.cl == 25
+                        and e.cls == "elite" and e.p == 38 and e.out == "death"
+                        and e.season == S.season() and e.t == nil
+                end
+            end
+            return false
+        end)())
+        check("share calib junk/stale rows never ship", (function()
+            if not payload then return false end
+            for _, e in ipairs(payload.events) do
+                if e.k == "calib" and (e.npc == 449 or e.npc == 0 or e.out == "win") then
+                    return false
+                end
+            end
+            return true
         end)())
         check("share forbidden keys never pass", (function()
             if not payload then return false end

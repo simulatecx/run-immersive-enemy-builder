@@ -313,6 +313,63 @@ def main() -> int:
     check("F12 stray-key event skipped, clean one lands",
           bool(tally) and (tally.get("counts") or {}).get("pve") == 1, f"tally {tally}")
 
+    print("== function: calibration rollups (RUN-P) ==")
+    # C1: one calib pair -> tally accumulates, public doc carries NO calib block
+    # below the floor. pl20 vs cl22 elite recomputes to p ~= 0.4354 (predPct 44).
+    npc_cal = 9000701
+
+    def calib_sub(cid, out):
+        return {"v": 1, "kinds": ["calib"], "season": "s0", "clientId": cid,
+                "events": [{"k": "calib", "npc": npc_cal, "pl": 20, "cl": 22,
+                            "cls": "elite", "p": 35, "out": out, "season": "s0"}]}
+
+    s, _ = create("rareKills", calib_sub("fcal000001", "death"), user)
+    check("C1 calib kind passes rules", s == 200, f"status {s}")
+    tally = poll(lambda: (lambda d: d if d and d.get("calib") else None)(
+        get_doc(f"rareKillMeta/tally-{npc_cal}", "owner")[1]))
+    check("C1 tally accumulates fights/wins/sumP",
+          bool(tally) and tally["calib"].get("fights") == 1
+          and tally["calib"].get("wins") == 0
+          and 0 < tally["calib"].get("sumP", 0) < 1, f"tally {tally}")
+    _, doc = get_doc(f"rareKillCounts/{npc_cal}")
+    check("C1 below floor: no public calib block",
+          not doc or "calib" not in doc, f"doc {doc}")
+
+    # C2: four more pairs (3 wins, 1 death) -> fights 5 lifts the calib floor:
+    # winPct 60 vs the RECOMPUTED predPct 44 (client's claimed 35 stays advisory)
+    for i, out in enumerate(["win", "win", "win", "death"]):
+        s, _ = create("rareKills", calib_sub(f"fcal00000{i + 2}", out), user)
+        check(f"C2 write {i + 2} accepted", s == 200, f"status {s}")
+    doc = poll(lambda: (lambda d: d if d and d.get("calib") else None)(
+        get_doc(f"rareKillCounts/{npc_cal}")[1]))
+    check("C2 public calib at the floor",
+          bool(doc) and doc["calib"].get("fights") == 5
+          and doc["calib"].get("winPct") == 60
+          and doc["calib"].get("predPct") == 44, f"doc {doc}")
+
+    # C3: the season curve doc (admin-only) carries the recomputed-p deciles
+    curve = poll(lambda: (lambda d: d if d and d.get("deciles") else None)(
+        get_doc("rareKillMeta/calcurve-s0", "owner")[1]))
+    check("C3 season curve accumulates",
+          bool(curve) and sum(v.get("fights", 0)
+                              for v in curve["deciles"].values()) >= 5
+          and curve["deciles"].get("d4", {}).get("fights", 0) >= 5, f"curve {curve}")
+
+    # C4: junk calib events (unknown cls; out-of-range p) never reach a rollup
+    npc_junk = 9000702
+    sub = {"v": 1, "kinds": ["calib"], "season": "s0", "clientId": "fcaljunk01",
+           "events": [{"k": "calib", "npc": npc_junk, "pl": 20, "cl": 22,
+                       "cls": "weird", "p": 35, "out": "win", "season": "s0"},
+                      {"k": "calib", "npc": npc_junk, "pl": 20, "cl": 22,
+                       "cls": "elite", "p": 120, "out": "win", "season": "s0"}]}
+    s, _ = create("rareKills", sub, user)
+    check("C4 write accepted", s == 200, f"status {s}")
+    time.sleep(3)
+    _, tally = get_doc(f"rareKillMeta/tally-{npc_junk}", "owner")
+    check("C4 junk calib earns nothing",
+          not tally or (tally.get("calib") or {}).get("fights", 0) == 0,
+          f"tally {tally}")
+
     print()
     print(f"emulator tests: {len(PASS)} passed, {len(FAIL)} failed")
     for f in FAIL:

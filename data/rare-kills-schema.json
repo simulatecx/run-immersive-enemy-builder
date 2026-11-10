@@ -5,7 +5,7 @@
   "site": "https://wow-foresight.web.app/run.html",
   "fields": [
     { "key": "v",        "tier": "anon", "kind": "const",  "value": 1,    "required": true,  "doc": "payload schema version" },
-    { "key": "kinds",    "tier": "anon", "kind": "list",   "maxSize": 4,  "of": ["death", "slay", "sighting", "wipe"], "required": true, "doc": "distinct event kinds present in events[]" },
+    { "key": "kinds",    "tier": "anon", "kind": "list",   "maxSize": 5,  "of": ["death", "slay", "sighting", "wipe", "calib"], "required": true, "doc": "distinct event kinds present in events[]" },
     { "key": "events",   "tier": "anon", "kind": "list",   "maxSize": 100, "required": true, "doc": "event objects; per-kind shapes under 'events'" },
     { "key": "season",   "tier": "anon", "kind": "string", "maxSize": 8,  "matches": "[a-z0-9]+", "required": true, "doc": "season tag (s0 until the Hardcore-kickoff reset)" },
     { "key": "clientId", "tier": "anon", "kind": "string", "maxSize": 40, "required": false, "doc": "pseudonymous dedup/rate-limit token, never identity" },
@@ -56,6 +56,19 @@
         { "key": "enc",    "kind": "string", "maxSize": 48, "required": false, "doc": "encounter name (game data)" },
         { "key": "size",   "kind": "number", "min": 0, "max": 40, "required": false, "doc": "group size when known" },
         { "key": "mode",   "kind": "string", "maxSize": 4, "of": ["pve", "pvp", "hc"], "required": true },
+        { "key": "season", "kind": "string", "maxSize": 8, "required": true }
+      ]
+    },
+    "calib": {
+      "doc": "consent-gated odds-calibration pair (RUN-P): the predicted solo win chance vs what actually happened; pl/cl/cls are the recomputable odds inputs (the slay-snap precedent) and the server recomputes p, treating the client's as advisory",
+      "fields": [
+        { "key": "k",      "kind": "const",  "value": "calib", "required": true },
+        { "key": "npc",    "kind": "number", "min": 1, "max": 10000000, "required": true, "doc": "creature npcID (species)" },
+        { "key": "pl",     "kind": "number", "min": 1, "max": 100, "required": true, "doc": "player level at assess time (exact - the odds input, as slay.snap.pLevel)" },
+        { "key": "cl",     "kind": "number", "min": -1, "max": 103, "required": true, "doc": "creature level; -1 = skull" },
+        { "key": "cls",    "kind": "string", "maxSize": 10, "of": ["normal", "elite", "rare", "rareelite", "worldboss", "trivial", "minus"], "required": true },
+        { "key": "p",      "kind": "number", "min": 1, "max": 99, "required": true, "doc": "client-predicted win %, ADVISORY only - the server recomputes from pl/cl/cls" },
+        { "key": "out",    "kind": "string", "maxSize": 5, "of": ["win", "death"], "required": true, "doc": "what actually happened, solo only" },
         { "key": "season", "kind": "string", "maxSize": 8, "required": true }
       ]
     }
