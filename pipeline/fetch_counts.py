@@ -1,13 +1,15 @@
 """Bake the public crowd rollups into RUN/data/generated/crowd_counts.lua.
 
-Reads the PUBLIC `rareKillCounts` collection over the Firestore REST API (the
-rules allow unauthenticated reads of the pre-suppressed rollups only; raw
-rareKills stay write-only) and emits the empty-safe Lua table the notoriety
-blend reads: RUN.gen.crowdCounts[npc] = { total = n, wipes = n }.
+Reads the `rareKillCounts` rollups over the Firestore REST API with a gcloud OAuth
+token (the rules allow public reads, but App Check is enforced project-wide, so an
+unauthenticated read is 403 - server-to-server OAuth bypasses it, the same method
+Foresight's pipeline/fetch_baselines.py uses; raw rareKills stay write-only). Run
+`gcloud auth login` once. Emits the empty-safe Lua table the notoriety blend reads:
+RUN.gen.crowdCounts[npc] = { total = n, wipes = n }.
 
-NEVER blocks the gate: on ANY failure (offline, 403 before the rules land,
-quota, junk data) an existing bake is left alone - or the empty table is
-written when none exists - and the exit code stays 0. Run it before packaging
+NEVER blocks the gate: on ANY failure (offline, no gcloud token, 403, quota, junk
+data) an existing bake is left alone - or the empty table is written when none
+exists - and the exit code stays 0. Run it before packaging
 a release zip so fresh counts ride along. Suppressed buckets ({ low: true })
 and encounter-keyed wipe docs are skipped: the in-game blend only ever sees
 published per-npc totals.
@@ -18,6 +20,8 @@ Usage: python pipeline/fetch_counts.py
 from __future__ import annotations
 
 import json
+import shutil
+import subprocess
 import sys
 import urllib.parse
 import urllib.request
@@ -47,6 +51,20 @@ HEADER = (
 FOOTER = "}\nreturn RUN.gen.crowdCounts\n"
 
 
+def _access_token() -> str:
+    # App Check is enforced project-wide, so an unauthenticated REST read is 403 even
+    # though the rules allow public reads (Foresight's own `aggregates` is 403 the same
+    # way). Server-to-server gcloud OAuth bypasses App Check - the same method Foresight's
+    # pipeline/fetch_baselines.py uses. Resolve the full path so Windows finds gcloud.cmd.
+    exe = shutil.which("gcloud") or "gcloud"
+    res = subprocess.run([exe, "auth", "print-access-token"],
+                         capture_output=True, text=True, timeout=30)
+    if res.returncode != 0 or not res.stdout.strip():
+        raise RuntimeError("gcloud token unavailable (run `gcloud auth login`): "
+                           + (res.stderr or "").strip())
+    return res.stdout.strip()
+
+
 def _num(fields: dict, key: str):
     v = fields.get(key)
     if not isinstance(v, dict):
@@ -67,13 +85,15 @@ def _num(fields: dict, key: str):
 def fetch_counts() -> dict[int, dict]:
     """npc -> { total, wipes } from every published (non-suppressed) npc doc."""
     counts: dict[int, dict] = {}
+    bearer = _access_token()
     token = None
     while True:
         qs = {"pageSize": str(PAGE_SIZE)}
         if token:
             qs["pageToken"] = token
         url = BASE + "?" + urllib.parse.urlencode(qs)
-        with urllib.request.urlopen(url, timeout=TIMEOUT) as resp:
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {bearer}"})
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             body = json.loads(resp.read().decode("utf-8"))
         for doc in body.get("documents", []):
             fields = doc.get("fields", {})
