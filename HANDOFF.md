@@ -104,6 +104,72 @@
 > `tierGlow` setting) - the owner-asked target-frame treatment that
 > expands around the stock frame without touching it.
 
+> 2026-11-08: **v1.0.0 PUBLIC LAUNCH - RUN is LIVE on CurseForge + Wago +
+> GitHub Releases (~2000 users).** §1's "WAITLIST-FIRST / NOT on CurseForge"
+> and W4's waitlist framing are SUPERSEDED (the 2026-11-03 CF-reopen
+> decision executed). The 1.0.0 number cleared the 0.9.x string-sort trap -
+> the lesson is recorded in SPRINTS Shipped. Users are REAL now: every law
+> about frozen wire tags, additive RUNDB, and rules-before-code is live-fire.
+
+> 2026-11-10 - RUN-P CALIBRATION CAPTURE (executed from the overlay/Foresight
+> chat; THIS block is the bridge into this project): **v1.1.0 BUILT +
+> COMMITTED + PUSHED (master `bd75e77`); the CurseForge tag is HELD** for the
+> deploy order below. Baseline at this block: gate green BOTH flavors
+> 293/293 (`python pipeline/run_tests.py`), emulator suite 51/51, version
+> trio 1.1.0, deployed to both live installs. Design record:
+> `docs/QUESTIETRACE-ANALYSIS.md`; story: SPRINTS Wave 2b "RUN-P".
+>
+> WHAT SHIPPED (locate by content, not line numbers):
+> `RUN/model/calibration.lua` - tri-state `RUNDB.captureConsent` (nil=never
+> asked / true / false="never ask again"; OWN dialog frame, never
+> StaticPopup), `/ra capture on|off|status`, login transparency line,
+> >=1h+resting inn share reminder; pairs the LAST odds assessment of a
+> creature (hooked in `Odds.forUnit`, guarded) with a solo PARTY_KILL /
+> PLAYER_DEAD outcome into `db.calib` (cap 200, no GUIDs/names/positions).
+> `Share.eventFromCalib` (core/share.lua) re-clamps every journal row through
+> `Calibration.clampEvent` before the allow-list build - the `calib` kind now
+> rides `/ra share` (schema `data/rare-kills-schema.json`: kinds cap 4->5;
+> ALL mirrors regenerated + parity green, including the worktree rules
+> block). Backend (`functions-run/index.js` = worktree `functions/
+> rareKills.js`, same bytes): `validCalib` RECOMPUTES predicted odds from
+> pl/cl/cls (client p stays advisory), per-npc `tally.calib
+> {fights,wins,sumP,sumPc}`, public `calib {fights,winPct,predPct}` block
+> only at MIN_BUCKET, per-season decile doc `rareKillMeta/calcurve-<season>`.
+> Daily review: `pipeline/review_calibration.py` (owner gcloud = full
+> volume/curve/gaps/deadliest digest; no auth = public fallback; saves to
+> pipeline/collected/, gitignored). Worktree commit `528579f`; branch
+> `simulatecx/marketing` now exists on origin.
+>
+> QUEUE DELTAS: **W3 is THE critical path and now carries the calib surface.
+> run.html is 404 TODAY - 2000 live users' shares land NOWHERE.** Owner
+> order, from the worktree: deploy rules -> functions -> hosting, verify one
+> end-to-end share per flavor, THEN `git tag v1.1.0 && git push origin
+> v1.1.0` (rules-before-code: a calib payload against the OLD deployed rules
+> fails `kinds.hasOnly` and bounces the user's WHOLE share). W2's field list
+> grows three checks: the first-login consent dialog, `/ra capture` tri-state
+> persistence (decline must survive /reload - the gate caught the crashed
+> session's `db.x or nil` idiom collapsing a stored false into nil; a
+> selftest pins it now - NEVER use and/or for tri-state reads), and the inn
+> reminder. DAILY RITUAL once W3 lands: `python
+> pipeline/review_calibration.py` (or tell the agent "review RUN data");
+> odds-curve changes go through `data/overrides.lua` + a reviewed commit,
+> never auto-tuned.
+>
+> TOOLING PIN (emulator): use `npx -y firebase-tools@14 emulators:start
+> --only firestore,functions,auth --project demo-wow-foresight` FROM the
+> `firebase/` directory - v15 requires Java 21 (machine has 17), v13 cannot
+> load firebase-functions v7, and running from the repo root hits a
+> config-resolution quirk. Refresh `firebase/firestore.test.rules` from the
+> worktree's `web/firestore.rules` first (the firebase.json `$doc` says how),
+> then `python functions-run/test/emulator_test.py`.
+>
+> OUT OF SCOPE unless the owner reopens: auto-tuning the odds model from
+> crowd data; capturing GROUP fights (solo-only by design - the odds are a
+> solo prediction, group outcomes would poison the curve); any new
+> identifying field; wiring the curve into `Odds.compute` (that is the
+> phase-E consumer, a FUTURE story - it ships only with baked, human-reviewed
+> data).
+
 ## 1. What this product is
 
 **RUN - "Immersive Enemy Builder: enhancing the Azeroth we know and love."**
