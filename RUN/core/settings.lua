@@ -28,6 +28,8 @@ Settings.defaults = {
     eulogy = false,          -- show the fallen's character name on heard deaths (display-only;
                              -- the name already rides the addon-message transport regardless)
     lastWords = true,        -- your final public chat line rides your death-ping (Hardcore classic)
+    deathFeed = true,        -- the scrolling feed of deaths heard over the channel (Hardcore-style)
+    feedLocked = true,       -- lock the death feed in place; unlock (/ra move) to drag it
     tierFrames = true,       -- tier-styled unit frame for titled enemies (the Nemesis frame)
     tierGlow = true,         -- the tier-escalating rank effect for your target (ember -> blood)
     glowLocked = true,       -- lock the rank glow in place; unlock (/ra glow or /ra move) to drag it
@@ -56,6 +58,8 @@ Settings.defs = {
     { key = "strictTrust",    label = "Strict trust (corroborated only)" },
     { key = "eulogy",         label = "Name the fallen (eulogy mode)" },
     { key = "lastWords",      label = "Broadcast my last words" },
+    { key = "deathFeed",      label = "Death feed (deaths heard)" },
+    { key = "feedLocked",     label = "Lock death feed position" },
     { key = "tierFrames",     label = "Tier frames for titled enemies" },
     { key = "tierGlow",       label = "Rank glow (notoriety effect)" },
     { key = "glowLocked",     label = "Lock rank glow position" },

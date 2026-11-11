@@ -182,6 +182,21 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.2.0 DEATH FEED (2026-11-11, owner: "it should be in our UI like the hardcore
+  addon"): a Hardcore-style scrolling feed of the deaths RUN HEARS over the shared
+  death-ping channel - the living-world pulse. New `ui/feed.lua`: own frame on
+  UIParent, skinned (ui/skin.lua), draggable/lockable via the unified /ra move
+  (now arranges glow + panel + feed) with its own `/ra feed` on/off, position in
+  RUNDB.ui.feedPos. Fed from `model/deathping.lua` onPing - hooked so EVERY heard
+  death scrolls the feed (gated by `deathFeed`, default on), while chat lines +
+  alerts stay notable-only (the feed carries the volume without chat spam).
+  Monster-centric lines ("<creature> slew a level N hero in <zone> (K slain)"); no
+  player names unless eulogy is on (chosen handle/char, never realm/account). Lines
+  fade + the frame hides when empty via the firewall ticker (no per-line timers).
+  Tier-tinted. Pure helpers selftested (Feed.line/ring/faded). Additive RUNDB
+  (feedPos + 2 settings). Gate green BOTH flavors 297/297; deployed both installs;
+  dist/RUN-v1.2.0 zip. NOTE: the feed shows LIVE same-realm pings (deathping is
+  realm-scoped); worldwide totals are the separate baked crowd layer (W3).
 - W3 BACKEND GO-LIVE (2026-11-11): the RUN crowd backend is DEPLOYED to
   wow-foresight - worldwide death aggregation is now live end-to-end (rules ->
   rareKillsOnWrite function -> rareKillCounts rollups -> fetch_counts bake). THE

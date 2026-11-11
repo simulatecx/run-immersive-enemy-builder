@@ -6,7 +6,7 @@ local ADDON, RUN = ...
 if not RUN then RUN = _G.RunAdvisor or {}; end
 _G.RunAdvisor = RUN
 
-RUN.version = "1.1.0"
+RUN.version = "1.2.0"
 
 -- THE season constants (WP-G / RUN-G) - one per GAME LINE, both living here so
 -- every flip happens in this file. Each crowd payload stamps the tag of the

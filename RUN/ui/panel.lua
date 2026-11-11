@@ -333,19 +333,22 @@ end)
 RUN.on("PLAYER_ENTERING_WORLD", function() Panel.update() end)
 
 -- /ra move: one arrange mode for every movable RUN frame - unlocks the rank
--- glow AND the odds/FIGHT panel to drag, then /ra move again to lock. Keeps
--- both in sync so there is a single gesture to position RUN's overlays.
+-- glow, the odds/FIGHT panel AND the death feed to drag, then /ra move again to
+-- lock. Keeps them in sync so there is a single gesture to position RUN's overlays.
 RUN.commands = RUN.commands or {}
 RUN.commands["move"] = function()
     local anyLocked = RUN.Settings.get("glowLocked") or RUN.Settings.get("panelLocked")
+        or RUN.Settings.get("feedLocked")
     local lock = not anyLocked   -- anything locked -> unlock all; else lock all
     RUN.Settings.set("glowLocked", lock)
     RUN.Settings.set("panelLocked", lock)
+    RUN.Settings.set("feedLocked", lock)
     if lock then
         RUN.print("RUN frames LOCKED - positions saved.")
     else
-        RUN.print("RUN frames UNLOCKED - drag the rank glow and the odds panel "
-            .. "(target an enemy to show it) where you want them, then /ra move to lock.")
+        RUN.print("RUN frames UNLOCKED - drag the rank glow, the odds panel "
+            .. "(target an enemy to show it) and the death feed where you want them, "
+            .. "then /ra move to lock.")
     end
     if RUN.Panel and RUN.Panel.refresh then RUN.Panel.refresh() end
     if RUN.Glow and RUN.Glow.refresh then RUN.Glow.refresh() end

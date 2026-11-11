@@ -514,8 +514,15 @@ local function onPing(ping, who, now)
         broadcast(Deathping.encodeAck(ping.sum))
     end
 
-    -- display: only notable deaths speak up (known/seen rares or notorious species)
     local noto = RUN.Notoriety.describe(ping.npc, "normal")
+    local name = Deathping.npcName(ping.npc)
+
+    -- the ambient death feed shows EVERY heard death (gated by deathFeed) - the
+    -- living-world pulse. The chat line + alert below stay notable-only, so the
+    -- feed carries the volume without spamming chat.
+    if RUN.Feed then RUN.Feed.add(name, ping.bracket, ping.mapID, noto.total, who, noto.tier) end
+
+    -- display: only notable deaths speak up (known/seen rares or notorious species)
     local known = RUN.raresMerged()[ping.npc]
         or (RUN.Detect.sightingFor and RUN.Detect.sightingFor(ping.npc))
     local notable = (known ~= nil) or noto.tier >= 3
@@ -523,7 +530,6 @@ local function onPing(ping, who, now)
     -- the heard COUNT is already recorded above; only the pop-up is muted in
     -- dungeons/raids (owner 2026-11-05).
     if RUN.Detect.quietHere() then return end
-    local name = Deathping.npcName(ping.npc)
     local titled = noto.title and (name .. " \"" .. noto.title .. "\"") or name
     local line
     if RUN.Settings.get("eulogy") then
