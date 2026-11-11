@@ -104,6 +104,20 @@
 > `tierGlow` setting) - the owner-asked target-frame treatment that
 > expands around the stock frame without touching it.
 
+> 2026-11-11 - W3 BACKEND GO-LIVE **DONE** (do not re-deploy): the RUN crowd
+> backend is DEPLOYED to wow-foresight; worldwide death aggregation is live
+> (rules -> rareKillsOnWrite -> rareKillCounts -> fetch_counts bake). W3 below is
+> COMPLETE. It was NOT a clean merge: `simulatecx/marketing` was 66 commits behind
+> Foresight main, so a merge/branch-deploy would have REVERTED Foresight - instead
+> RUN's additive surface was ported onto CURRENT main (4 net-new files + appended
+> rule blocks + 1 export; **1442 insertions, 0 deletions**; emulator 51/51 incl.
+> Foresight-regression; Foresight verified intact, site+aggregates 200). Deployed
+> rules -> functions:rareKillsOnWrite -> hosting; Foresight `main` pushed. GOTCHA:
+> App Check is enforced on READS, so `fetch_counts.py` now needs a gcloud OAuth
+> token (fixed; was a false 403). Counts stay EMPTY until players opt-in share
+> (/ra share -> run.html), then re-bake + release. Detail: SPRINTS "W3 BACKEND
+> GO-LIVE" + docs/ECOSYSTEM.md.
+
 > 2026-11-08: **v1.0.0 PUBLIC LAUNCH - RUN is LIVE on CurseForge + Wago +
 > GitHub Releases (~2000 users).** §1's "WAITLIST-FIRST / NOT on CurseForge"
 > and W4's waitlist framing are SUPERSEDED (the 2026-11-03 CF-reopen

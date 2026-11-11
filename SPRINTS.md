@@ -182,6 +182,26 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- W3 BACKEND GO-LIVE (2026-11-11): the RUN crowd backend is DEPLOYED to
+  wow-foresight - worldwide death aggregation is now live end-to-end (rules ->
+  rareKillsOnWrite function -> rareKillCounts rollups -> fetch_counts bake). THE
+  CATCH we found: the deployable surface was on Foresight's `simulatecx/marketing`
+  branch, which was **66 commits behind main** - a merge or branch-deploy would
+  have REVERTED Foresight (deleted bridge_api.lua, reverted the web app). So
+  instead we ported ONLY RUN's additive surface onto CURRENT main: 4 net-new files
+  (functions/rareKills.js == the emulator-tested canonical, web/run.html,
+  web/run-crowd-schema.js, marketing-site/run.html) + appended rule blocks + 1
+  export line. Proof of separation: **1442 insertions, 0 deletions** vs main;
+  emulator 51/51 against main-current rules incl. the Foresight-regression check;
+  Foresight verified intact after deploy (site + aggregates HTTP 200). Deployed in
+  LAW 1 order: rules -> functions:rareKillsOnWrite -> hosting. Foresight `main`
+  pushed (origin == prod, so future Foresight deploys won't revert RUN). GOTCHA
+  logged: App Check is enforced on READS too, so `fetch_counts.py` was 403 on
+  unauthenticated REST (Foresight's aggregates is 403 the same way - the old
+  "403 = rules not landed" comment was wrong); fixed to read with a gcloud OAuth
+  token (Foresight fetch_baselines.py pattern) - reads 200 now, bakes 0 until
+  players share. STILL NEEDED for worldwide data to appear: player opt-in shares
+  (/ra share) -> run.html -> rareKills, then re-bake + release.
 - MINIMAP DOT now TRACKS the rare (2026-11-10, folds into the HELD v1.1.0 -
   client-only, ships with it): fixed two owner-reported pin bugs. (1) The dot
   landed at the PLAYER's position - a nameplate sighting has no true rare position

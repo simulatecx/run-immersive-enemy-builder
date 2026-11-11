@@ -53,7 +53,12 @@ the record in its triage history; revive only by owner decision).
   (293/293 at writing). Doc spine synced through the "Record loop: ARR
   license batch + RUN shared-surface spine sync" commit.
 - Firebase project: `wow-foresight` (the ONLY backend). RUN's rules blocks +
-  `functions/rareKills.js` are COMMITTED BUT NOT DEPLOYED.
+  `functions/rareKills.js` are **DEPLOYED (W3, 2026-11-11)** - ported additively
+  onto Foresight `main` (the simulatecx/marketing branch was 66 commits stale, so
+  a merge would have reverted Foresight; only RUN's net-new files + appended rule
+  blocks + one export landed, 0 deletions). Foresight verified intact (site +
+  aggregates 200). NOTE: App Check is ENFORCED on reads too - pipeline reads need
+  a gcloud OAuth token (fetch_counts.py fixed to match fetch_baselines.py).
 
 **House laws binding every future change** (full text: run-forever
 `docs/NOTES.md`, marketing `CLAUDE.md`): display-and-advice only, Lua 5.1,
@@ -109,8 +114,8 @@ project, per-collection export/import splits it cleanly.
 | Foresight addon v0.48.0 | LIVE on CurseForge (Forever) |
 | Foresight crowd (contributions/aggregates/champions/verifiedRules) | LIVE |
 | RUN addon v0.8.0 dual-flavor | Deployed to both local installs; private zip; 239/239 |
-| RUN crowd backend (schema->mirrors, share link, function, rules) | COMMITTED, NOT DEPLOYED (emulator 40/40) |
-| Armory "The Deadliest" boards + web/run.html (waitlist + receiver) | COMMITTED, NOT DEPLOYED |
+| RUN crowd backend (schema->mirrors, share link, function, rules) | **LIVE** (W3 deployed 2026-11-11 to wow-foresight; additive onto Foresight main, 0 deletions; emulator 51/51; rareKillCounts read 200 w/ OAuth) |
+| web/run.html receiver + run-crowd-schema | **LIVE** (hosting deployed 2026-11-11, HTTP 200). marketing-site/run.html waitlist page still W4 (not in web/, not hosted) |
 | RUN marketing set (6 cards + 1600x900 composite, ember/blood brand) | `marketing/marketing-site/export/run-cards/` + `run-gallery-1600x900.png` |
 | Foresight marketing set + microsite | `marketing-site/` (uncommitted assets by choice) |
 | App Check write-gate | DISABLED project-wide (inherited Firebase backend issue; restore on both `contributions` and `rareKills` together) |
