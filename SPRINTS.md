@@ -182,6 +182,24 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- MINIMAP DOT now TRACKS the rare (2026-11-10, folds into the HELD v1.1.0 -
+  client-only, ships with it): fixed two owner-reported pin bugs. (1) The dot
+  landed at the PLAYER's position - a nameplate sighting has no true rare position
+  (the client won't hand out a non-target unit's coords), so the pin sat at your
+  feet. (2) It re-fired continuously. FIX (RareScanner's technique): the minimap
+  dot is now VIGNETTE-driven - keyed by the vignette GUID, repositioned on every
+  VIGNETTE_MINIMAP_UPDATED so it FOLLOWS the rare across the minimap, retired on
+  the vignette's onMinimap=false (10-min expiry backstop). No vignette position ->
+  no dot (never a dot at the player's feet). The dot is DECOUPLED from the banner:
+  gated by minimapPins alone (subtle default, shows even with the banner off); the
+  banner still fires ONCE, dedup hardened on the vignette GUID (always present) vs
+  the object GUID (can be nil, which let it re-fire). Pin API add()/pinKey() ->
+  place(key,...)/remove(key); the nameplate path no longer drops a pin. Gate green
+  both flavors 292/292 (dropped the now-dead pinKey selftest), client smoke green
+  (C_VignetteInfo is nil there -> handler no-ops). NOTE: classic-era rares that
+  emit no vignette get no dot (correct - no fake pin). The v1.1.0 RELEASE_NOTES
+  must mention this when the owner writes them at tag time. Also pending the
+  owner's call: whether plain rares should be pin-only by default (banner opt-in).
 - v1.1.0 (2026-11-10, BUILT + gated; CurseForge tag HELD for the owner's backend
   deploy - rules-before-code): RUN-P calibration capture (consent-gated
   QuestieTrace-pattern capture + `calib` crowd kind + backend aggregation +

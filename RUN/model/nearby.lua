@@ -3,8 +3,12 @@
 --      (~60yd), even behind you. Reliable, but needs enemy nameplates enabled.
 --   2. C_VignetteInfo - the mainline "silver dragon on the minimap" system.
 --      The API exists on Forever; whether classic-era rares EMIT vignettes is
---      unverified - wired defensively as a bonus (and it gives TRUE coords).
--- Ping = banner + sound + kill-rank line + auto-mark. Once per creature.
+--      unverified - wired defensively (and it gives the rare's TRUE coords).
+-- Two separate outputs, so a sighting is low-key by default:
+--   * the BANNER (banner + sound + kill-rank line + auto-mark) - the loud signal,
+--     fired ONCE per creature, gated by nearbyPing + the per-tier ping toggles.
+--   * the MINIMAP DOT - a subtle, tier-coloured marker that TRACKS the rare via
+--     its vignette, gated by minimapPins alone (shows even with the banner off).
 -- Display-only throughout.
 
 local _, RUN = ...
@@ -143,10 +147,10 @@ function Nearby.ping(info, mapID, x, y)
         RUN.Detect.recordSighting(info, bmap, bx, by)
     end
 
-    -- the minimap blip (owner 2026-11-06): drop a tier-coloured dot where it is.
-    if RUN.MinimapPins then
-        RUN.MinimapPins.add(info.npcID, info.name, bmap, bx, by, noto.tier)
-    end
+    -- NOTE: the minimap dot is NOT dropped here. A nameplate sighting has no true
+    -- rare position (the client won't give a non-target unit's coords), so a dot
+    -- here would just sit at the player's feet. The dot is a vignette-only,
+    -- tracking concern - see the VIGNETTE_MINIMAP_UPDATED handler below.
 
     local r, g, b
     if noto.tier >= 1 then r, g, b = RUN.Notoriety.colorFor(noto.tier) end
@@ -175,18 +179,26 @@ RUN.on("NAME_PLATE_UNIT_ADDED", function(unit)
     end
 end)
 
--- Signal 2: vignettes (defensive - may simply never fire on Forever).
-RUN.on("VIGNETTE_MINIMAP_UPDATED", function(vignetteGUID)
-    if not RUN.Settings.get("nearbyPing") then return end
+-- Signal 2: vignettes - the rare's TRUE, moving position (RareScanner's source,
+-- defensive since classic-era may never emit one). This is where the minimap dot
+-- lives: the subtle dot TRACKS the vignette (repositioned every update, keyed by
+-- the vignette so it follows the rare and is independent of the banner), while
+-- the banner ALERT fires once. No vignette position = no dot (never a dot at the
+-- player's feet). The dot is gated by minimapPins; the banner by nearbyPing.
+RUN.on("VIGNETTE_MINIMAP_UPDATED", function(vignetteGUID, onMinimap)
     local CV = _G.C_VignetteInfo
-    if not (CV and CV.GetVignetteInfo) then return end
+    if not (CV and CV.GetVignetteInfo) or not vignetteGUID then return end
+
+    -- Vignette left the minimap -> retire its tracking dot.
+    if onMinimap == false then
+        if RUN.MinimapPins then RUN.MinimapPins.remove(vignetteGUID) end
+        return
+    end
+
     local ok, v = pcall(CV.GetVignetteInfo, vignetteGUID)
     if not ok or type(v) ~= "table" then return end
-    local npcID = RUN.Detect.npcIdFromGUID(v.objectGUID)
-    local info = {
-        guid = v.objectGUID, npcID = npcID,
-        name = v.name, classification = "rare", notable = true,
-    }
+
+    -- True map position - the whole reason to use the vignette.
     local mapID = Guards.call(_G.C_Map and _G.C_Map.GetBestMapForUnit, "player")
     local x, y
     if mapID and CV.GetVignettePosition then
@@ -196,7 +208,26 @@ RUN.on("VIGNETTE_MINIMAP_UPDATED", function(vignetteGUID)
             if okXY then x, y = px, py end
         end
     end
-    Nearby.ping(info, mapID, x, y)
+    if not (mapID and x and y) then return end   -- no true position -> no dot
+
+    local npcID = RUN.Detect.npcIdFromGUID(v.objectGUID)
+    local noto = RUN.Notoriety.describe(npcID, "rare")
+
+    -- TRACK: reposition the subtle dot every update so it follows the rare.
+    if RUN.MinimapPins then
+        RUN.MinimapPins.place(vignetteGUID, mapID, x, y, noto.tier)
+    end
+
+    -- ALERT: the loud signal, ONCE per vignette. Dedup on the vignette GUID (not
+    -- the object GUID, which can be nil and would let a continuously-updating
+    -- vignette re-fire). Nearby.ping still applies the nearbyPing master + gates.
+    if not alreadyPinged("vig:" .. tostring(vignetteGUID)) then
+        local info = {
+            guid = v.objectGUID, npcID = npcID,
+            name = v.name, classification = "rare", notable = true,
+        }
+        Nearby.ping(info, mapID, x, y)
+    end
 end)
 
 -- (The nameplates-off login nudge moved to the one-click Enable prompt in
