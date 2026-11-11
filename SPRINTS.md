@@ -200,8 +200,9 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
   emit no vignette get no dot (correct - no fake pin). The v1.1.0 RELEASE_NOTES
   must mention this when the owner writes them at tag time. Also pending the
   owner's call: whether plain rares should be pin-only by default (banner opt-in).
-- v1.1.0 (2026-11-10, BUILT + gated; CurseForge tag HELD for the owner's backend
-  deploy - rules-before-code): RUN-P calibration capture (consent-gated
+- v1.1.0 (2026-11-10, SHIPPED - owner confirmed the W3 backend deploy landed, so
+  the held tag was released; CurseForge + Wago + GitHub): RUN-P calibration
+  capture (consent-gated
   QuestieTrace-pattern capture + `calib` crowd kind + backend aggregation +
   `pipeline/review_calibration.py` daily digest). Details in the RUN-P story;
   design record docs/QUESTIETRACE-ANALYSIS.md. Emulator 51/51; the crashed
