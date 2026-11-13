@@ -380,11 +380,15 @@ local function heardLine(e)
     local bracket = (type(e.bracket) == "number" and e.bracket > 0)
         and (" " .. DIM .. "~L" .. e.bracket .. "|r") or ""
     local mark = e.corro and "|cff6fcf7a[2+]|r" or "|cff857868[?]|r"
-    local sender = ""
-    if RUN.Settings.get("eulogy") and type(e.sender) == "string" then
-        sender = " " .. DIM .. "- " .. e.sender:gsub("|", "") .. "|r"
+    -- the fallen: their CHARACTER name rides the ping as the message sender (it
+    -- cannot be hidden on the transport). Shown when eulogy is on - the "who" of
+    -- the death, Hardcore-style. Display-only; never a realm/account/guild name.
+    local victim = ""
+    if RUN.Settings.get("eulogy") and type(e.sender) == "string"
+        and e.sender ~= "" and e.sender ~= "?" then
+        victim = " " .. DIM .. "slew|r |cffe8d2a0" .. e.sender:gsub("|", "") .. "|r"
     end
-    local line = DIM .. fmtHeardWhen(e.t) .. "|r  " .. mark .. " " .. titled .. bracket .. sender
+    local line = DIM .. fmtHeardWhen(e.t) .. "|r  " .. mark .. " " .. titled .. victim .. bracket
     if type(e.words) == "string" and e.words ~= "" then
         -- last words (quoted + dimmed; WoW fontstrings have no inline italics)
         line = line .. "\n        |cffcbbfa3\"" .. e.words:gsub("|", ""):sub(1, 80) .. "\"|r"
@@ -396,7 +400,7 @@ local function renderHeard()
     local entries, page, pages, total =
         Window.heardPage(RUN.db().heardLog, heardPageNum, HEARD_PER_PAGE)
     heardPageNum = page
-    local lines = { GOLD .. "Deaths heard nearby|r " .. DIM .. "(the RUN network, newest first)|r", " " }
+    local lines = { GOLD .. "Deaths heard|r " .. DIM .. "(the RUN network on your realm, newest first)|r", " " }
     if total == 0 then
         table.insert(lines, DIM .. "  nothing heard yet - when a RUN player falls")
         table.insert(lines, DIM .. "  near you, the creature's legend grows here.|r")

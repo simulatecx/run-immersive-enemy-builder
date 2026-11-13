@@ -438,7 +438,7 @@ function RUN.selftest()
     check("settings default heardAlerts on", S.get("heardAlerts") == true)
     check("settings default tierFrames on", S.get("tierFrames") == true)
     check("settings default riskButton on", S.get("riskButton") == true)
-    check("settings default eulogy OFF", S.get("eulogy") == false)
+    check("settings default eulogy on (Hardcore-style name the fallen)", S.get("eulogy") == true)
     check("settings default lastWords on", S.get("lastWords") == true)
     check("settings defs cover all keys", (function()
         local covered = {}

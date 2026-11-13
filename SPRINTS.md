@@ -182,6 +182,21 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.2.1 NAME THE FALLEN (2026-11-12, owner: "like the hardcore addon... what
+  killed who, and the name"): the death feed + alert banner + Ledger "Deaths
+  Heard" page now show the VICTIM's character name ("<Creature> slew <Name>
+  ~L20"). The name was always captured (it rides the death-ping as the message
+  sender - unhideable on the transport) and `heardLine` already rendered it, but
+  behind `eulogy` which defaulted OFF. Flipped `eulogy` default -> ON (the
+  selftest that asserted OFF updated to ON); added the victim name to the heard
+  ALERT body (was monster-only); reworded the heard line to "slew <Name>" so it
+  reads as a kill. COMPLIANCE: it's a CHARACTER name, display-only, never
+  realm/account/guild/real-name (those stay forbidden; the backend schema still
+  bars identifying fields - only the LOCAL P2P display shows the char name, which
+  is the Hardcore norm). Also fixed the "Deaths heard nearby" header -> "on your
+  realm" (the channel is realm-wide, not proximity-based). Gate 297/297 both
+  flavors; deployed both installs. Users wanting monster-only turn off "Name the
+  fallen (eulogy mode)".
 - v1.2.0 DEATH FEED (2026-11-11, owner: "it should be in our UI like the hardcore
   addon"): a Hardcore-style scrolling feed of the deaths RUN HEARS over the shared
   death-ping channel - the living-world pulse. New `ui/feed.lua`: own frame on

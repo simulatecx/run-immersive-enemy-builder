@@ -1,15 +1,13 @@
-## 1.2.0 - the death feed
+## 1.2.1 - name the fallen
 
-A new living-world death feed, in the spirit of the Hardcore addon. When another
-RUN player on your realm is slain by a creature, it scrolls past in a small feed:
-"<creature> slew a level N hero in <zone> (K slain)". It's the pulse of the world
-around you - who's dying, to what, and where.
+The death feed, the alerts, and the "Deaths Heard" page now show **who** died, not
+just what killed them - "<Creature> slew <Name> ~L20," Hardcore-style. The fallen
+player's character name already travels with the death-ping, so this is purely a
+display change (never a realm, account, or guild name). It's on by default now;
+turn it off with the "Name the fallen (eulogy mode)" option for a monster-only view.
 
-- On by default, and it stays hidden until there's something to show.
-- Monster-centric: no player names unless you turn on eulogy mode.
-- Drag it anywhere with /ra move (it arranges alongside the rank glow and odds
-  panel now), or toggle it with /ra feed.
-- Lines fade on their own; nothing spams your chat.
+Also: the "Deaths Heard" list header now says "on your realm" - the RUN death
+network is realm-wide, not just nearby.
 
 Works on WoW: Forever (1.60.x) and Classic Era (1.15.x). Display-and-advice only,
 official APIs only, never networks - you auto-update through your addon manager.

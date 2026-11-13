@@ -25,8 +25,9 @@ Settings.defaults = {
     minimapButton = true,    -- the minimap button (opens the Account Ledger / options)
     heardAlerts = true,      -- banner when a notable creature claims another victim nearby
     strictTrust = false,     -- publicly-shown heard counts use only corroborated pings (2+ witnesses)
-    eulogy = false,          -- show the fallen's character name on heard deaths (display-only;
-                             -- the name already rides the addon-message transport regardless)
+    eulogy = true,           -- show the fallen's CHARACTER name on heard deaths - the Hardcore
+                             -- "who died to what" (display-only; the name already rides the
+                             -- addon-message transport regardless; never realm/account/guild)
     lastWords = true,        -- your final public chat line rides your death-ping (Hardcore classic)
     deathFeed = true,        -- the scrolling feed of deaths heard over the channel (Hardcore-style)
     feedLocked = true,       -- lock the death feed in place; unlock (/ra move) to drag it

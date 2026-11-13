@@ -539,7 +539,15 @@ local function onPing(ping, who, now)
     end
     RUN.print("heard: " .. line)
     if RUN.Settings.get("heardAlerts") and RUN.Alert then
-        RUN.Alert.show(titled, "has claimed another victim - " .. noto.total .. " and counting")
+        -- the death-alert body names the fallen when eulogy is on (what killed WHO),
+        -- else stays monster-centric.
+        local body
+        if RUN.Settings.get("eulogy") and who and who ~= "" and who ~= "?" then
+            body = "slew " .. who .. " - " .. noto.total .. " and counting"
+        else
+            body = "has claimed another victim - " .. noto.total .. " and counting"
+        end
+        RUN.Alert.show(titled, body)
     end
 end
 
