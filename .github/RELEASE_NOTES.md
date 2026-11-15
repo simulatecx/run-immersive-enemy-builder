@@ -1,13 +1,15 @@
-## 1.2.1 - name the fallen
+## 1.2.2 - record PvP deaths + name the killer
 
-The death feed, the alerts, and the "Deaths Heard" page now show **who** died, not
-just what killed them - "<Creature> slew <Name> ~L20," Hardcore-style. The fallen
-player's character name already travels with the death-ping, so this is purely a
-display change (never a realm, account, or guild name). It's on by default now;
-turn it off with the "Name the fallen (eulogy mode)" option for a monster-only view.
+Deaths to another player are now recorded and show who killed you. Before, a
+player-vs-player death often logged as "unknown cause": on WoW: Forever the PvP
+combat log can be hidden from addons, and RUN's fallback (your target when you
+were hit) deliberately ignored players. Now that fallback includes players, so
+the enemy you're fighting is credited - "/ra deaths" shows "<Player> (another
+player)" with your zone and level.
 
-Also: the "Deaths Heard" list header now says "on your realm" - the RUN death
-network is realm-wide, not just nearby.
+Heads-up on the limits: if you're jumped by someone you never targeted (a
+stealth gank from behind), there may be no readable signal and it can still log
+as unknown - that's a hard client restriction, not something RUN can see around.
 
 Works on WoW: Forever (1.60.x) and Classic Era (1.15.x). Display-and-advice only,
 official APIs only, never networks - you auto-update through your addon manager.

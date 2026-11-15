@@ -356,6 +356,21 @@ function RUN.selftest()
     check("mode pvp on player blow", A.classifyMode(false, "Player-1096-ABC") == "pvp")
     check("mode pve default", A.classifyMode(false, "Creature-0-1-1-1-448-X") == "pve"
         and A.classifyMode(false, nil) == "pve")
+    -- PvP death attribution: on Forever the PvP combat log can be secret, so CLEU
+    -- (the `hit`) comes up empty. A fresh wound-time PLAYER target must then claim
+    -- the kill, named, and classify pvp (regression for the 2026-11-13 miss).
+    check("pvp: wound-time player target claims the kill when CLEU is empty", (function()
+        local fb = { name = "Ganker", guid = "Player-1096-DEF", npc = nil, t = 100 }
+        local hit, how = A.choose(nil, fb, 105)
+        return hit == fb and how == "fallback"
+            and hit.name == "Ganker"
+            and A.classifyMode(false, hit.guid) == "pvp"
+    end)())
+    check("pvp: a stale player target does NOT claim the kill", (function()
+        local fb = { name = "Ganker", guid = "Player-1096-DEF", npc = nil, t = 100 }
+        local _, how = A.choose(nil, fb, 100 + 11)   -- >10s stale
+        return how == "unknown"
+    end)())
     check("flagLine with title", T.flagLine({ label = "Elite" }, { label = "Deadly" }, 5, 0,
         "the Widowmaker") == "Elite \"the Widowmaker\" - Deadly (killed you 5x)")
     check("flagLine title only lead", T.flagLine(nil, { label = "Deadly" }, 5, 0,

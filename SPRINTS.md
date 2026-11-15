@@ -182,6 +182,21 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.2.2 FIX PvP DEATH ATTRIBUTION (2026-11-13, owner bug report: "killed by
+  another player and it isnt recording... should show the player name"). ROOT
+  CAUSE: on Forever the PvP combat log can be SECRET, so `onCleu` drops the enemy
+  player via the isSecret guard; AND the wound-time fallback EXCLUDED players
+  (`not info.isPlayer` at attribution.lua:155) - so a player killer had zero
+  signal and the death logged as "unknown cause". FIX: the wound-time fallback
+  now snapshots a hostile PLAYER target too (creature OR player), so when CLEU is
+  empty the targeted enemy claims the kill; classifyMode already returns "pvp" for
+  a Player- guid, npcIdFromGUID safely returns nil. Display: /ra deaths + the
+  on-death print now append "(another player)" for pvp mode. LIMIT (documented):
+  a gank where you never targeted the killer still logs unknown (no readable
+  signal - client restriction). Regression selftests added (fresh player target
+  claims pvp; stale target does not). All LOCAL (PvP deaths have no npc, so they
+  never broadcast or share - creature-centric wire format unchanged). Gate 299/299
+  both flavors; deployed both installs.
 - v1.2.1 NAME THE FALLEN (2026-11-12, owner: "like the hardcore addon... what
   killed who, and the name"): the death feed + alert banner + Ledger "Deaths
   Heard" page now show the VICTIM's character name ("<Creature> slew <Name>

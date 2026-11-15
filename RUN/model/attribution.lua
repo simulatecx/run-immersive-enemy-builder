@@ -146,13 +146,16 @@ RUN.on("COMBAT_LOG_EVENT_UNFILTERED", function()
 end)
 
 -- The fallback signal (proven by the Hardcore addon): when you take a hit,
--- snapshot whatever you have targeted. If the combat-log path comes up empty
--- at death, a fresh wound-time target claims the kill.
+-- snapshot whatever hostile you have targeted - creature OR PLAYER. On Forever
+-- the PvP combat log can be SECRET, so the CLEU path comes up empty for a player
+-- killer; the wound-time target is then the only signal for "who killed me" in
+-- PvP. The fallback only claims the kill when CLEU found nothing, so this never
+-- mis-attributes a PvE death (where CLEU wins) to a player you happened to click.
 RUN.on("UNIT_COMBAT", function(unit, action)
     if unit ~= "player" or action ~= "WOUND" then return end
     if not RUN.Settings.get("recordDeaths") then return end
     local info = RUN.Detect.unitInfo("target")
-    if info and info.hostile and not info.isPlayer and not info.dead then
+    if info and info.hostile and not info.dead then
         woundTarget = {
             name = info.name, guid = info.guid, npc = info.npcID,
             t = _G.GetTime and _G.GetTime() or 0,
@@ -203,7 +206,9 @@ RUN.on("PLAYER_DEAD", function()
     while #db.deaths > DEATHS_MAX do table.remove(db.deaths, 1) end
     Attribution.lastDeath = entry   -- read by the death-ping broadcaster
 
-    RUN.print("death recorded: " .. (killer or "unknown cause")
+    local shown = killer or "unknown cause"
+    if entry.mode == "pvp" then shown = shown .. " (another player)" end
+    RUN.print("death recorded: " .. shown
         .. (entry.zone and (" in " .. entry.zone) or "") .. " (stays on your machine)")
 end)
 
@@ -229,7 +234,9 @@ function Attribution.printDeaths()
         if Attribution.validEntry(e) then
             shown = shown + 1
             local when = (_G.date and _G.date("%m/%d %H:%M", e.when)) or tostring(e.when)
-            RUN.print(when .. " - " .. (e.killer or "unknown cause")
+            local killer = e.killer or "unknown cause"
+            if e.mode == "pvp" then killer = killer .. " (another player)" end
+            RUN.print(when .. " - " .. killer
                 .. (e.who and (" [" .. e.who .. (e.level and (" L" .. e.level) or "") .. "]")
                     or (e.level and (" (you were L" .. e.level .. ")") or ""))
                 .. (e.zone and (" - " .. e.zone) or ""))
