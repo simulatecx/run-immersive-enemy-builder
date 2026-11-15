@@ -27,7 +27,7 @@ The ecosystem map + work queue: `docs/ECOSYSTEM.md`. Platform research:
   `firebase/`); the marketing repo carries the deployable copies.
 - Deploys are owner-gated and ORDERED: rules -> functions -> hosting
   (rules-before-code). Emulator-test before proposing any deploy.
-- Wire formats are FROZEN (RDP1/RDA1/RLW1/RVH1/RWP1). New behavior = a NEW
+- Wire formats are FROZEN (RDP1/RDA1/RLW1/RVH1/RWP1/RPK1). New behavior = a NEW
   tag with strict fail-closed decode; never change an existing tag - old
   clients are already in the field.
 - RUNDB is additive + type-validated on every read; never rename/retype a

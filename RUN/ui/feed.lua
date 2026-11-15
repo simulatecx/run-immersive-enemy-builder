@@ -41,6 +41,15 @@ function Feed.faded(when, now, ttl)
     return ((tonumber(now) or 0) - (tonumber(when) or 0)) > (tonumber(ttl) or LINE_TTL)
 end
 
+-- Pure: a PvP player-kill feed line (headless-tested). Victim + killer are
+-- character names (realm already stripped upstream); nil-safe placeholders.
+function Feed.killLine(victim, killer, zone)
+    victim = (type(victim) == "string" and victim ~= "" and victim) or "A hero"
+    killer = (type(killer) == "string" and killer ~= "" and killer) or "another player"
+    local where = (type(zone) == "string" and zone ~= "") and (" in " .. zone) or ""
+    return victim .. " was slain by " .. killer .. where
+end
+
 if type(RUN.selftestChecks) == "table" then
     table.insert(RUN.selftestChecks, function(check)
         check("feed line is monster-centric by default",
@@ -60,6 +69,9 @@ if type(RUN.selftestChecks) == "table" then
         check("feed fade honours the window",
             Feed.faded(0, 31, 30) == true and Feed.faded(0, 29, 30) == false
             and Feed.faded(nil, 0, 30) == false)
+        check("feed pvp kill line + nil-safe",
+            Feed.killLine("Alyx", "Ganker", "Durotar") == "Alyx was slain by Ganker in Durotar"
+            and Feed.killLine(nil, nil, nil) == "A hero was slain by another player")
     end)
 end
 
@@ -167,6 +179,22 @@ function Feed.add(creature, bracket, mapID, total, who, tier)
     if tonumber(tier) and tonumber(tier) >= 1 then r, g, b = RUN.Notoriety.colorFor(tier) end
     Feed.ring(lines, { text = text, when = (_G.GetTime and _G.GetTime()) or 0,
                        r = r, g = g, b = b }, MAX_LINES)
+    render()
+end
+
+-- Record one heard PvP kill (a RUN player slain by another player), Hardcore-
+-- style. Gated by deathFeed AND eulogy (it names players; eulogy off = the
+-- monster-only view suppresses it). Tinted red. `mapID` -> zone name.
+function Feed.addKill(victim, killer, mapID)
+    if not RUN.Settings.get("deathFeed") or not RUN.Settings.get("eulogy") then return end
+    local zone
+    if mapID and _G.C_Map and _G.C_Map.GetMapInfo then
+        local info = RUN.Guards and RUN.Guards.call(_G.C_Map.GetMapInfo, mapID)
+        zone = type(info) == "table" and info.name or nil
+    end
+    Feed.ring(lines, { text = Feed.killLine(victim, killer, zone),
+                       when = (_G.GetTime and _G.GetTime()) or 0,
+                       r = 1, g = 0.45, b = 0.45 }, MAX_LINES)   -- reddish: a PvP kill
     render()
 end
 

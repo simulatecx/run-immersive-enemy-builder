@@ -182,6 +182,23 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.3.0 PvP DEATHS IN THE FEED (2026-11-15, owner: "build to show how hardcore
+  works as well - and then deploy"). Hardcore broadcasts player deaths; RUN now
+  does too, additively. NEW FROZEN WIRE TAG `RPK1` (per LAW 1 - RDP1 is
+  creature-only and untouched): "RPK1:<killer>:<mapID>:<bracket>:<sum>", strict
+  fail-closed decode, fletcher16, rate-limited + deduped like the others. The
+  VICTIM is the message sender (game-provided); the killer is a `sanitizeName`'d
+  CHARACTER name - **realm STRIPPED** (realm is forbidden PII), pipe/colon-safe,
+  16-clamped. Broadcast in deathping PLAYER_DEAD when mode==pvp + killer known
+  (gated by shareDeaths); received -> `Feed.addKill` -> red feed line "<Victim>
+  was slain by <Killer> in <Zone>" (gated by deathFeed AND eulogy - eulogy off =
+  monster-only view hides it) + a "heard:" chat line. COMPLIANCE: in-game P2P
+  (SendAddonMessage), never external; PvP deaths have NO npc so they NEVER enter
+  the rareKills/Firebase payload (backend schema unchanged); character name only,
+  realm-stripped. Last words stay creature-only (RDP1; they attach to a heard-
+  journal entry a PvP kill doesn't create). Pure selftests: sanitizeName,
+  RPK1 roundtrip/tamper/garbage, killLine. Gate 305/305 both flavors; deployed
+  both installs. The frozen tag set is now RDP1/RDA1/RLW1/RVH1/RWP1/RPK1.
 - v1.2.3 HARDCORE AUDIT + HARDEN (2026-11-15, owner: "do we need to audit the
   Hardcore code again?"). Audited the installed Hardcore addon (_classic_era_/
   AddOns/Hardcore, DeathLog.lua + Hardcore.lua). FINDINGS: (1) our v1.2.2 PvP fix

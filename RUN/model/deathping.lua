@@ -108,6 +108,40 @@ function Deathping.decodeHello(msg)
     return v
 end
 
+-- Pure: a broadcastable CHARACTER name - realm STRIPPED (realm is forbidden PII),
+-- pipes/colons removed so it is delimiter-safe, length-clamped. nil if empty.
+function Deathping.sanitizeName(name)
+    if type(name) ~= "string" then return nil end
+    name = name:match("^[^-]+") or name                 -- drop "-Realm" - realm never leaves
+    name = name:gsub("[|:]", ""):gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then return nil end
+    if #name > 16 then name = name:sub(1, 16) end
+    return name
+end
+
+-- Pure: the PvP player-kill ping "RPK1:<killer>:<mapID>:<bracket>:<sum>" - a NEW
+-- frozen tag (RDP1 is creature-only; a PvP death has no npc). The VICTIM is the
+-- message sender (the game sets it); the killer is a sanitized character name.
+-- Display-only, in-game P2P, like the Hardcore eulogy: a PvP death carries no npc,
+-- so it NEVER enters a crowd/Firebase payload. Strict, fail-closed decode.
+function Deathping.encodeKill(killer, mapID, bracket)
+    killer = Deathping.sanitizeName(killer)
+    mapID = tonumber(mapID) or 0; bracket = tonumber(bracket) or 0
+    if not killer then return nil end
+    local body = killer .. ":" .. mapID .. ":" .. bracket
+    return "RPK1:" .. body .. ":" .. Deathping.fletcher16(body)
+end
+
+function Deathping.decodeKill(msg)
+    if type(msg) ~= "string" then return nil end
+    local killer, mapID, bracket, sum = msg:match("^RPK1:([^:]+):(%d+):(%d+):(%d+)$")
+    if not killer then return nil end
+    if tonumber(sum) ~= Deathping.fletcher16(killer .. ":" .. mapID .. ":" .. bracket) then return nil end
+    killer = Deathping.sanitizeName(killer)
+    if not killer then return nil end
+    return { killer = killer, mapID = tonumber(mapID), bracket = tonumber(bracket), sum = tonumber(sum) }
+end
+
 -- ---------------------------------------------------------------------------
 -- Pure: the in-guild wipe ping "RWP1:<npcOrEnc>:<size>:<sum>" (frozen format).
 -- npcOrEnc is the RUNDB.wipes key with ":" swapped for "~" in enc keys (decode
@@ -372,6 +406,32 @@ table.insert(RUN.selftestChecks, function(check)
         and Deathping.wipeKeyName(999998) == "creature #999998")
 end)
 
+-- RPK1 PvP player-kill ping: frozen wire format, realm-stripped, fail-closed.
+table.insert(RUN.selftestChecks, function(check)
+    local enc, dec = Deathping.encodeKill, Deathping.decodeKill
+    check("kill name strips realm + delimiters + clamps", Deathping.sanitizeName("Ganker-Firemaw") == "Ganker"
+        and Deathping.sanitizeName("Bad|:Name") == "BadName"
+        and Deathping.sanitizeName(string.rep("a", 40)) == string.rep("a", 16)
+        and Deathping.sanitizeName("") == nil and Deathping.sanitizeName("   ") == nil
+        and Deathping.sanitizeName(nil) == nil)
+    check("kill ping roundtrip (realm dropped)", (function()
+        local d = dec(enc("Ganker-Firemaw", 1453, 50))
+        return d and d.killer == "Ganker" and d.mapID == 1453 and d.bracket == 50
+            and type(d.sum) == "number"
+    end)())
+    check("kill ping bad killer rejected", enc("", 1, 10) == nil
+        and enc("   ", 1, 10) == nil and enc(nil, 1, 10) == nil)
+    check("kill ping tamper rejected", (function()
+        local msg = enc("Ganker", 1453, 50)
+        return dec(msg:gsub("Ganker", "Victim", 1)) == nil
+            and dec(msg:gsub(":50:", ":60:", 1)) == nil
+    end)())
+    check("kill ping garbage rejected", dec(nil) == nil and dec("RPK1:::") == nil
+        and dec("RPK1:Ganker:1453:50") == nil
+        and dec("RDP1:448:1:10:" .. Deathping.fletcher16("448:1:10")) == nil
+        and dec("RPK1:Ganker:1453:bad:" .. Deathping.fletcher16("Ganker:1453:bad")) == nil)
+end)
+
 -- Everything below wires the client.
 if not _G.CreateFrame then return Deathping end
 
@@ -450,15 +510,23 @@ end)
 RUN.on("PLAYER_DEAD", function()
     if not RUN.Settings.get("shareDeaths") then return end
     local last = RUN.Attribution.lastDeath
-    if not last or not last.npc then return end   -- env/unknown deaths never ping
+    if not last then return end
     local bracket = math.floor((tonumber(last.level) or 0) / 10) * 10
-    local msg = Deathping.encode(last.npc, last.mapID or 0, bracket)
-    if not msg then return end
+    local msg
+    if last.npc then
+        msg = Deathping.encode(last.npc, last.mapID or 0, bracket)         -- creature death (RDP1)
+    elseif last.mode == "pvp" and last.killer then
+        msg = Deathping.encodeKill(last.killer, last.mapID or 0, bracket)  -- slain by a player (RPK1)
+    end
+    if not msg then return end   -- env / unknown-cause deaths never ping
     broadcast(msg)
-    if RUN.Settings.get("lastWords") and lastSaid then
+    -- Last words ride a creature death only (RDP1); they attach to the receiver's
+    -- heard-journal entry, which a PvP kill (feed-only) does not create.
+    local rdp = Deathping.decode(msg)
+    if rdp and RUN.Settings.get("lastWords") and lastSaid then
         local now = _G.GetTime and _G.GetTime() or 0
         if (now - lastSaid.t) <= 120 then
-            broadcast(Deathping.encodeWords(Deathping.decode(msg).sum, lastSaid.words))
+            broadcast(Deathping.encodeWords(rdp.sum, lastSaid.words))
         end
     end
 end)
@@ -483,8 +551,9 @@ function Deathping.sendWipePing(key, size)
     end
 end
 
--- Receive: five message kinds, all strict-decoded, deduped, rate-limited.
+-- Receive: six message kinds, all strict-decoded, deduped, rate-limited.
 local ackRate = {}
+local killRecvRate = {}
 local versionNotified = false
 
 local function findRecentHeard(sum, sender, now)
@@ -589,6 +658,22 @@ RUN.on("CHAT_MSG_ADDON", function(prefix, msg, channel, sender)
             if RUN.Settings.get("eulogy") then
                 RUN.print(who .. "'s last words: \"" .. lw.words .. "\"")
             end
+        end
+        return
+    end
+
+    local kill = Deathping.decodeKill(msg)
+    if kill then
+        -- a RUN player was slain by another player (PvP). Feed-only, like the
+        -- Hardcore eulogy: display gated by eulogy (it names players), rate-limited
+        -- + deduped. No creature => no heard-count, nothing to the backend.
+        if not Deathping.allowSender(killRecvRate, who, now) then return end
+        local dkey = msg .. "#" .. who
+        if seenSums[dkey] and (now - seenSums[dkey]) < 30 then return end
+        seenSums[dkey] = now
+        if RUN.Feed then RUN.Feed.addKill(who, kill.killer, kill.mapID) end
+        if RUN.Settings.get("eulogy") then
+            RUN.print("heard: " .. who .. " was slain by " .. kill.killer)
         end
         return
     end
