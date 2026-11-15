@@ -133,7 +133,7 @@ local function onCleu()
     else
         pushDamage({
             guid = sourceGUID,
-            name = sourceName,
+            name = (not G.isSecret(sourceName)) and sourceName or "an unknown enemy",
             npc = RUN.Detect.npcIdFromGUID(sourceGUID),
         })
     end
@@ -156,8 +156,17 @@ RUN.on("UNIT_COMBAT", function(unit, action)
     if not RUN.Settings.get("recordDeaths") then return end
     local info = RUN.Detect.unitInfo("target")
     if info and info.hostile and not info.dead then
+        -- The name/guid can be a SECRET VALUE on Forever (concatenating one later
+        -- ERRORS). A secret/missing name degrades to a readable placeholder and a
+        -- secret guid drops to nil - the same issecretvalue guard the Hardcore
+        -- addon uses (audited 2026-11-15).
+        local G = RUN.Guards
+        local nm = info.name
+        if type(nm) ~= "string" or G.isSecret(nm) then nm = "an unknown enemy" end
         woundTarget = {
-            name = info.name, guid = info.guid, npc = info.npcID,
+            name = nm,
+            guid = (not G.isSecret(info.guid)) and info.guid or nil,
+            npc = info.npcID,
             t = _G.GetTime and _G.GetTime() or 0,
         }
     end

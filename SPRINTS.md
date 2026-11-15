@@ -182,6 +182,23 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.2.3 HARDCORE AUDIT + HARDEN (2026-11-15, owner: "do we need to audit the
+  Hardcore code again?"). Audited the installed Hardcore addon (_classic_era_/
+  AddOns/Hardcore, DeathLog.lua + Hardcore.lua). FINDINGS: (1) our v1.2.2 PvP fix
+  MATCHES Hardcore's proven technique exactly - its UNIT_COMBAT WOUND handler uses
+  the current hostile target as the source for ANY enemy (no player special-case);
+  (2) the gank limit is INHERENT - Hardcore also logs "an unknown enemy" for
+  "damage from behind without a target"; (3) Hardcore's Dungeons.lua states CLEU
+  (COMBAT_LOG_EVENT_UNFILTERED) is FORBIDDEN on Forever - so the wound-time target
+  is the ONLY attribution path there, making the v1.2.2 fix load-bearing. GAP
+  FOUND + FIXED: Hardcore guards the target name with issecretvalue; RUN did not -
+  on Forever a SECRET target name flowed into the death record and would error on
+  display (firewall caught it but attribution was lost). FIX: the wound-time
+  capture + the CLEU name now degrade a secret/missing name to "an unknown enemy"
+  and drop a secret guid to nil (RUN.Guards.isSecret). Gate 299/299 both flavors
+  (client-smoke secrets path green); deployed both installs. KEY FACT for future:
+  CLEU is forbidden on Forever - never rely on it; the wound-time target is the
+  attribution backbone there.
 - v1.2.2 FIX PvP DEATH ATTRIBUTION (2026-11-13, owner bug report: "killed by
   another player and it isnt recording... should show the player name"). ROOT
   CAUSE: on Forever the PvP combat log can be SECRET, so `onCleu` drops the enemy
