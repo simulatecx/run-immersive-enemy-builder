@@ -79,8 +79,26 @@ function Nearby.pruneSeen(seen, now)
     return kept
 end
 
+-- Pure: the cooldown key for a nearby ping. Keyed by the creature TYPE (npcID) so
+-- the SAME elite is hit only ONCE, not once per instance - the difference between
+-- three pings for three Dark Iron Dwarves and one (owner 2026-11-20). Falls back
+-- to name, then the unit guid, when npcID is unavailable (a secret guid on
+-- Forever). This is what makes RUN usable in a dungeon or a packed world pull.
+function Nearby.pingKey(info)
+    if type(info) ~= "table" then return nil end
+    return info.npcID or info.name or info.guid
+end
+
 if type(RUN.selftestChecks) == "table" then
     table.insert(RUN.selftestChecks, function(check)
+        check("nearby pingKey dedups by creature TYPE, not per-unit", (function()
+            local a = Nearby.pingKey({ npcID = 448, name = "Hogger", guid = "Creature-X-A" })
+            local b = Nearby.pingKey({ npcID = 448, name = "Hogger", guid = "Creature-X-B" })
+            return a == 448 and b == 448 and a == b              -- same type, diff unit -> one key
+                and Nearby.pingKey({ name = "Rare", guid = "g" }) == "Rare"  -- no npcID -> name
+                and Nearby.pingKey({ guid = "g" }) == "g"                     -- last resort
+                and Nearby.pingKey(nil) == nil
+        end)())
         check("nearby pruneSeen drops expired, keeps fresh", (function()
             -- ages at now=1000: a=1000 drop, b=600 drop (boundary is >=600),
             -- c=100 keep
@@ -123,7 +141,7 @@ function Nearby.ping(info, mapID, x, y)
     local noto = RUN.Notoriety.describe(info.npcID, info.classification)
     if noto.softElite then info.notorious = true end
     if not RUN.Settings.get(Nearby.gateFor(info)) then return end
-    if alreadyPinged(info.guid or info.npcID) then return end
+    if alreadyPinged(Nearby.pingKey(info)) then return end   -- once per elite TYPE
 
     local line = Nearby.rankLine(noto.kills, noto.heard)
     if noto.title then

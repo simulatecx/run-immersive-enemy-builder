@@ -70,11 +70,14 @@ function Detect.tierOf(classification)
 end
 
 -- Pure: RUN's proactive notifications (nearby banners, heard-death alerts) are
--- MUTED inside instances when the quietInstances option is on - a dungeon full
--- of elites is noise, not news. Data (death journal, heard counts) keeps flowing
--- silently; only the pop-ups are suppressed. instanceKind is the 2nd return of
--- IsInInstance ("none"/"party"/"raid"/"pvp"/"arena").
-local MUTE_KINDS = { party = true, raid = true, pvp = true, arena = true }
+-- MUTED in the CHAOTIC instances - raids, battlegrounds, arenas - when the
+-- quietInstances option is on. DUNGEONS (party) are NO LONGER muted: the nearby
+-- ping now fires once per creature TYPE (Nearby.pingKey), so a dungeon shows each
+-- elite ONCE instead of spamming every instance - which is what makes RUN usable
+-- in a dungeon (owner 2026-11-20). Data (death journal, heard counts) keeps
+-- flowing silently regardless. instanceKind is the 2nd return of IsInInstance
+-- ("none"/"party"/"raid"/"pvp"/"arena").
+local MUTE_KINDS = { raid = true, pvp = true, arena = true }
 function Detect.isInstanceKind(kind)
     return MUTE_KINDS[kind] == true
 end
@@ -84,14 +87,16 @@ end
 
 if type(RUN.selftestChecks) == "table" then
     table.insert(RUN.selftestChecks, function(check)
-        check("detect instance kinds mute, open world does not",
-            Detect.isInstanceKind("party") and Detect.isInstanceKind("raid")
-            and Detect.isInstanceKind("pvp") and Detect.isInstanceKind("arena")
+        check("detect mute-kinds: raids/bgs/arenas yes, DUNGEONS + world no",
+            Detect.isInstanceKind("raid") and Detect.isInstanceKind("pvp")
+            and Detect.isInstanceKind("arena")
+            and not Detect.isInstanceKind("party")    -- dungeons now WORK (deduped once/type)
             and not Detect.isInstanceKind("none") and not Detect.isInstanceKind(nil))
-        check("detect notifications muted only in-instance + opted in", (function()
-            return Detect.notificationsMuted("party", true) == true
-                and Detect.notificationsMuted("party", false) == false   -- opt-out
-                and Detect.notificationsMuted("none", true) == false       -- open world
+        check("detect notifications muted only in raid/bg + opted in", (function()
+            return Detect.notificationsMuted("raid", true) == true
+                and Detect.notificationsMuted("raid", false) == false    -- opt-out
+                and Detect.notificationsMuted("party", true) == false     -- dungeons work
+                and Detect.notificationsMuted("none", true) == false        -- open world
                 and Detect.notificationsMuted(nil, true) == false
         end)())
     end)

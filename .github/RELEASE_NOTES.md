@@ -1,16 +1,14 @@
-## 1.3.0 - PvP deaths in the feed (the full Hardcore treatment)
+## 1.3.1 - one ping per elite (dungeons now work)
 
-Until now the live death feed only carried deaths to creatures. Now, like the
-Hardcore addon, player-vs-player deaths ride it too: when a RUN player on your
-realm is cut down by another player, it scrolls past in red - "<Victim> was slain
-by <Killer> in <Zone>."
+RUN now alerts you to each elite ONCE, by creature type - not once for every
+single copy you walk past. Three Dark Iron Dwarves used to mean three pings; now
+it's one. This is the fix that makes RUN usable in a dungeon or a packed world
+pull instead of a wall of notifications.
 
-- Both names are character names only (the killer's realm is stripped before it's
-  ever sent), shown locally over the in-game RUN channel - never to any server.
-- On by default with the feed; turn off "Name the fallen (eulogy mode)" for the
-  monster-only view and PvP lines are hidden.
-- PvP deaths stay a live, local thing - they have no creature, so they're never
-  counted in the crowd data.
+And because of that, dungeons are no longer silenced: you'll get the one-per-elite
+heads-up inside dungeons now. The "Quiet in raids & battlegrounds" option still
+hushes the genuinely chaotic instances (raids, BGs, arenas) - those stay quiet by
+default.
 
 Works on WoW: Forever (1.60.x) and Classic Era (1.15.x). Display-and-advice only,
 official APIs only, never networks - you auto-update through your addon manager.

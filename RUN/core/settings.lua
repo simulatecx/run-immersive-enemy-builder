@@ -15,7 +15,8 @@ Settings.defaults = {
     minimapPins = true,      -- tier-coloured minimap blip where a rare/elite was seen
     recordDeaths = true,     -- local journal of what killed you (never leaves your machine)
     nearbyPing = true,       -- master switch for all nearby pings
-    quietInstances = true,   -- mute RUN's pop-up notifications in dungeons/raids (data still tracked)
+    quietInstances = true,   -- mute RUN's pop-ups in the CHAOTIC instances (raids, BGs, arenas);
+                             -- dungeons are NOT muted - the ping dedups once per elite type (data still tracked)
     pingNormal = false,      -- nearby ping for normal mobs (off: too chatty; on = total awareness)
     pingElite = true,        -- nearby ping for elites (gold dragon)
     pingUnique = true,       -- nearby ping for rares, rare elites and bosses
@@ -45,7 +46,7 @@ Settings.defs = {
     { key = "flags",          label = "Tooltip flags + kill ranks" },
     { key = "expansiveStats", label = "Expansive Enemy Stats" },
     { key = "nearbyPing",     label = "Nearby pings (master)" },
-    { key = "quietInstances", label = "Quiet in dungeons & raids" },
+    { key = "quietInstances", label = "Quiet in raids & battlegrounds" },
     { key = "pingQuest",      label = "Ping quest targets" },
     { key = "questPlates",    label = "Quest flag on nameplates" },
     { key = "pingUnique",     label = "Ping rares and bosses" },

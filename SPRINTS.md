@@ -182,6 +182,21 @@ starts - RUN-M's "~100 players" number is what RUN-E's baked counts feed.
 
 ## Shipped
 
+- v1.3.1 ONE PING PER ELITE + DUNGEONS WORK (2026-11-20, owner: "run desperately
+  needs to only scan or hit the same elite once - then it would work in dungeons,
+  or in the world"). ROOT CAUSE: the nearby ping deduped per-UNIT (`info.guid`),
+  so every instance of the same elite TYPE pinged separately (3 Dark Iron Dwarves
+  = 3 pings). FIX: new pure `Nearby.pingKey(info)` = `npcID or name or guid` -
+  dedup by creature TYPE, so the same elite is hit once (600s window); fallbacks
+  cover a secret guid on Forever. The blanket dungeon mute was a band-aid for this
+  spam, so with the dedup it is no longer needed: removed `party` from
+  detect.lua MUTE_KINDS - DUNGEONS now work (one ping per elite type); raids/BGs/
+  arenas stay muted by quietInstances (default on). Setting relabeled "Quiet in
+  raids & battlegrounds". recordSighting already dedups per-npcID; quest-plate
+  badges still show per-mob (that is per-instance by design). Selftests: pingKey
+  dedup-by-type + the updated mute-kinds. Gate 306/306 both flavors; deployed both
+  installs. NOTE: users who want dungeons silent again can't via quietInstances
+  anymore (it's raids/BGs only) - revisit if anyone asks for a dungeon-specific mute.
 - v1.3.0 PvP DEATHS IN THE FEED (2026-11-15, owner: "build to show how hardcore
   works as well - and then deploy"). Hardcore broadcasts player deaths; RUN now
   does too, additively. NEW FROZEN WIRE TAG `RPK1` (per LAW 1 - RDP1 is
